@@ -253,7 +253,7 @@ Swal.fire({
 
                                                     <p>
                                                         Dengan ini saya menyatakan bersedia mengikuti program magang yang akan dilaksanakan pada tanggal
-                                                        <strong><?= format_tanggal_indonesia(date('d M Y', strtotime($pendaftaran['tanggal_masuk']))) ?></strong> s/d <strong><?= format_tanggal_indonesia(date('d M Y', strtotime($pendaftaran['tanggal_selesai']))) ?>, 
+                                                        <strong><?= format_tanggal_indonesia(date('d M Y', strtotime($pendaftaran['tanggal_masuk']))) ?></strong> s/d <strong><?= format_tanggal_indonesia(date('d M Y', strtotime($pendaftaran['tanggal_selesai']))) ?></strong>, 
                                                         serta berkomitmen menjalankan seluruh kegiatan magang dengan penuh tanggung jawab dan disiplin sesuai ketentuan yang berlaku.
                                                     </p>
 

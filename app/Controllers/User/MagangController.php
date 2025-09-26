@@ -67,7 +67,7 @@ class MagangController extends BaseController
             ->join('unit_kerja', 'unit_kerja.unit_id = magang.unit_id')
             ->select('magang.magang_id as magang_id, magang.*, unit_kerja.*')
             ->where('user_id', $userId)
-            ->whereIn('status_akhir', ['pendaftaran', 'proses', 'magang'])
+            ->whereIn('status_akhir', ['pendaftaran', 'proses', 'magang','lulus'])
             ->orderBy('tanggal_daftar', 'DESC')
             ->first();
 
@@ -128,7 +128,7 @@ class MagangController extends BaseController
         // Cek apakah user sudah pernah daftar magang (status belum ditolak)
         $existingMagang = $this->magangModel
             ->where('user_id', $userId)
-            ->whereIn('status_akhir', ['pendaftaran', 'proses', 'magang']) // status belum ditolak
+            ->whereIn('status_akhir', ['pendaftaran', 'proses', 'magang','lulus']) // status belum ditolak
             ->first();
 
         // Cek apakah user sedang daftar penelitian (status belum ditolak)
@@ -268,7 +268,7 @@ class MagangController extends BaseController
         $pendaftaran = $this->magangModel
             ->where('user_id', $userId)
             ->join('unit_kerja', 'unit_kerja.unit_id = magang.unit_id')
-            ->whereIn('status_akhir', ['pendaftaran', 'proses', 'magang'])
+            ->whereIn('status_akhir', ['pendaftaran', 'proses', 'magang', 'lulus'])
             ->orderBy('tanggal_daftar', 'desc')
             ->first();
 
@@ -456,7 +456,7 @@ class MagangController extends BaseController
         $pendaftaran = $this->magangModel
             ->where('user_id', $userId)
             ->join('unit_kerja', 'unit_kerja.unit_id = magang.unit_id')
-            ->whereIn('status_akhir', ['pendaftaran', 'proses', 'magang'])
+            ->whereIn('status_akhir', ['pendaftaran', 'proses', 'magang', 'lulus'])
             ->orderBy('tanggal_daftar', 'desc')
             ->first();
     
@@ -770,6 +770,11 @@ class MagangController extends BaseController
             ? format_tanggal_indonesia($magang['tanggal_approve']) 
             : '-';
 
+        $stempelPath = FCPATH . 'assets/img/stempel.png';
+        if (file_exists($stempelPath)) {
+            // X, Y, Width
+            $pdf->Image($stempelPath, 17, 210, 45, 0, 'PNG', '', '', false, 300);
+        }
         // Posisi mulai (pojok kiri bawah, misal 190mm dari atas)
         $pdf->SetFont('times', '', 16);
         $pdf->SetXY(30, 200);
@@ -861,6 +866,9 @@ class MagangController extends BaseController
         $pdf->SetXY(123, $startY + (8 * $stepY) + 12.5);
         $pdf->Cell(60, 10, $kategori, 0, 0, 'L');
 
+        if (file_exists($stempelPath)) {
+            $pdf->Image($stempelPath, 110, 215, 45, 0, 'PNG', '', '', false, 300);
+        }
         //TTD pojok kanan
         $pdf->SetFont('times', '', 16);
         $pdf->SetXY(120, 215);
@@ -869,6 +877,7 @@ class MagangController extends BaseController
         $pdf->SetX(130);
         $pdf->Cell(0, 8, "Training & KM", 0, 1, 'L');
 
+        
         // Tambahkan tanda tangan (PNG/JPG transparan lebih bagus)
         $ttdPath = FCPATH . 'assets/img/ttd.png'; // ganti dengan path tanda tanganmu
         if (file_exists($ttdPath)) {

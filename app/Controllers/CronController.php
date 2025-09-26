@@ -8,54 +8,111 @@ use App\Models\MagangModel;
 
 class CronController extends BaseController
 {
+    // public function remindUnit($token = null)
+    // {
+    //     // Amankan dengan token
+    //     if ($token !== 'semen123') {
+    //         return $this->response->setStatusCode(403)->setJSON(['error' => 'Unauthorized']);
+    //     }
+
+    //     $db = \Config\Database::connect();
+    //     $today = date('Y-m-d');
+
+    //     // Ambil pendaftar dengan tanggal masuk 2 hari lagi
+    //     $targetDate = date('Y-m-d', strtotime('+2 days'));
+
+    //     $pendaftar = $db->table('magang')
+    //         ->select('magang.*, users.fullname, instansi.nama_instansi, unit_kerja.email_pimpinan as email_unit, unit_kerja.unit_kerja')
+    //         ->join('users', 'magang.user_id = users.id', 'left')
+    //         ->join('instansi', 'instansi.instansi_id = users.instansi_id', 'left')
+    //         ->join('unit_kerja', 'unit_kerja.unit_id = magang.unit_id', 'left')
+    //         ->where('magang.tanggal_masuk', $targetDate)
+    //         ->where('magang.status_akhir', 'magang')
+    //         ->get()->getResult();
+
+    //     $email = \Config\Services::email();
+    //     $count = 0;
+
+    //     foreach ($pendaftar as $data) {
+    //         if (!$data->email_unit) continue;
+
+    //         $email->clear();
+    //         $email->setTo($data->email_unit);
+    //         $email->setSubject('Pengingat Penerimaan Peserta Magang');
+    //         $email->setMailType('html');
+
+    //         $email->setMessage(view('emails/reminder_magang', [
+    //             'nama' => $data->fullname,
+    //             'unit' => $data->unit_kerja,
+    //             'instansi' => $data->nama_instansi,
+    //             'tanggal_masuk' => date('d F Y', strtotime($data->tanggal_masuk)),
+    //         ]));
+
+    //         if ($email->send()) $count++;
+    //     }
+
+    //     return $this->response->setJSON([
+    //         'status' => 'success',
+    //         'message' => "$count email pengingat dikirim."
+    //     ]);
+    // }
+
     public function remindUnit($token = null)
-    {
-        // Amankan dengan token
-        if ($token !== 'semen123') {
-            return $this->response->setStatusCode(403)->setJSON(['error' => 'Unauthorized']);
-        }
-
-        $db = \Config\Database::connect();
-        $today = date('Y-m-d');
-
-        // Ambil pendaftar dengan tanggal masuk 2 hari lagi
-        $targetDate = date('Y-m-d', strtotime('+2 days'));
-
-        $pendaftar = $db->table('magang')
-            ->select('magang.*, users.fullname, instansi.nama_instansi, unit_kerja.email_pimpinan as email_unit, unit_kerja.unit_kerja')
-            ->join('users', 'magang.user_id = users.id', 'left')
-            ->join('instansi', 'instansi.instansi_id = users.instansi_id', 'left')
-            ->join('unit_kerja', 'unit_kerja.unit_id = magang.unit_id', 'left')
-            ->where('magang.tanggal_masuk', $targetDate)
-            ->where('magang.status_akhir', 'magang')
-            ->get()->getResult();
-
-        $email = \Config\Services::email();
-        $count = 0;
-
-        foreach ($pendaftar as $data) {
-            if (!$data->email_unit) continue;
-
-            $email->clear();
-            $email->setTo($data->email_unit);
-            $email->setSubject('Pengingat Penerimaan Peserta Magang');
-            $email->setMailType('html');
-
-            $email->setMessage(view('emails/reminder_magang', [
-                'nama' => $data->fullname,
-                'unit' => $data->unit_kerja,
-                'instansi' => $data->nama_instansi,
-                'tanggal_masuk' => date('d F Y', strtotime($data->tanggal_masuk)),
-            ]));
-
-            if ($email->send()) $count++;
-        }
-
-        return $this->response->setJSON([
-            'status' => 'success',
-            'message' => "$count email pengingat dikirim."
-        ]);
+{
+    // Amankan dengan token
+    if ($token !== 'semen123') {
+        return $this->response->setStatusCode(403)->setJSON(['error' => 'Unauthorized']);
     }
+
+    $db = \Config\Database::connect();
+    $targetDate = date('Y-m-d', strtotime('+2 days'));
+
+    // Ambil data mahasiswa yang akan masuk
+    $pendaftar = $db->table('magang')
+        ->select('magang.*, users.fullname, instansi.nama_instansi, unit_kerja.email_pimpinan as email_unit, unit_kerja.unit_kerja')
+        ->join('users', 'magang.user_id = users.id', 'left')
+        ->join('instansi', 'instansi.instansi_id = users.instansi_id', 'left')
+        ->join('unit_kerja', 'unit_kerja.unit_id = magang.unit_id', 'left')
+        ->where('magang.tanggal_masuk', $targetDate)
+        ->where('magang.status_akhir', 'magang')
+        ->get()->getResult();
+
+
+    // Kelompokkan per unit
+    $grouped = [];
+    foreach ($pendaftar as $p) {
+        if (!$p->email_unit) continue;
+        $grouped[$p->email_unit]['unit'] = $p->unit_kerja;
+        $grouped[$p->email_unit]['list'][] = [
+            'nama'     => $p->fullname,
+            'instansi' => $p->nama_instansi,
+            'tanggal'  => $p->tanggal_masuk
+        ];
+    }
+
+    $email = \Config\Services::email();
+    $count = 0;
+
+    foreach ($grouped as $email_unit => $dataUnit) {
+        $email->clear();
+        $email->setTo($email_unit);
+        $email->setSubject('Pengingat Penerimaan Peserta Magang');
+        $email->setMailType('html');
+
+        $email->setMessage(view('emails/reminder_magang', [
+            'unit'  => $dataUnit['unit'],
+            'list'  => $dataUnit['list'],
+        ]));
+
+        if ($email->send()) $count++;
+    }
+
+    return $this->response->setJSON([
+        'status' => 'success',
+        'message' => "$count email pengingat dikirim (per unit)."
+    ]);
+}
+
 
     public function autoTolakTidakKonfirmasi($token = null)
     {
@@ -259,6 +316,62 @@ class CronController extends BaseController
             'pesan' => $messages
         ]);
     }
+
+    public function autoKirimEmailAkhirMagang($token = null)
+    {
+        // Amankan dengan token
+        if ($token !== 'semen123') {
+            return $this->response->setStatusCode(403)->setJSON(['error' => 'Unauthorized']);
+        }
+
+        $db = \Config\Database::connect();
+        $builder = $db->table('magang');
+
+        $today = date('Y-m-d');
+
+        // Cari peserta magang yang berakhir hari ini
+        $dataList = $builder
+            ->select('magang.*, users.email, users.fullname, users.username, unit_kerja.unit_kerja')
+            ->join('users', 'users.id = magang.user_id', 'left')
+            ->join('unit_kerja', 'unit_kerja.unit_id = magang.unit_id', 'left')
+            ->where('magang.tanggal_selesai', $today)
+            ->where('magang.status_akhir', 'magang') // masih status aktif magang
+            ->get()
+            ->getResult();
+
+        $successCount = 0;
+        $failCount = 0;
+        $messages = [];
+
+        foreach ($dataList as $data) {
+            $email = \Config\Services::email();
+            $email->setTo($data->email);
+
+            $email->setSubject('Hari Terakhir Magang Anda di PT Semen Padang');
+            $email->setMailType('html');
+            $email->setMessage(view('emails/akhir_magang', [
+                'nama'   => $data->fullname ?? $data->username,
+                'unit'   => $data->unit_kerja ?? 'Unit terkait',
+                'tanggal_selesai' => $today,
+            ]));
+
+            if ($email->send()) {
+                $successCount++;
+            } else {
+                $failCount++;
+                $messages[] = "Gagal kirim email ke {$data->email}";
+                log_message('error', "Gagal kirim email akhir magang ID {$data->magang_id}: " . print_r($email->printDebugger(), true));
+            }
+        }
+
+        return $this->response->setJSON([
+            'status'   => 'ok',
+            'berhasil' => $successCount,
+            'gagal'    => $failCount,
+            'pesan'    => $messages
+        ]);
+    }
+
 
 
 

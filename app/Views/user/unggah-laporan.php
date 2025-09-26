@@ -33,7 +33,7 @@ Swal.fire({
     <p class="text-muted">Unggah laporan magang kamu di sini.</p>
     <hr>
     <?php if (!empty($pendaftaran)): ?>
-        <?php if($pendaftaran['status_akhir'] === 'magang'): ?>
+        <?php if ($pendaftaran['status_akhir'] === 'magang' || $pendaftaran['status_akhir'] === 'lulus'): ?>
         <div class="tab-content" id="lamaranTabContent">
             <div class="tab-pane fade show active" id="pelaksanaan" role="tabpanel">
 

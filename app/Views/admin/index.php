@@ -107,6 +107,10 @@
                     <td><?= esc($data['nisn_nim']) ?></td>
                 </tr>
                 <tr>
+                    <th>No HP</th>
+                    <td><?= esc($data['no_hp']) ?></td>
+                </tr>
+                <tr>
                     <th>Email</th>
                     <td><?= esc($data['email']) ?></td>
                 </tr>

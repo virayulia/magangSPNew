@@ -332,7 +332,7 @@ Swal.fire({
 
                     <!-- Bukti BPJS TK -->
                     <div class="border rounded p-3 mb-3 shadow-sm">
-                        <h6 class="fw-semibold mb-2">Bukti Pembayaran/Masa Berlaku BPJS Ketenagakerjaan</h6>
+                        <h6 class="fw-semibold mb-2">Masa Berlaku BPJS Ketenagakerjaan (Screenshot dari Aplikasi Jamsostek Mobile)</h6>
                         <?php if(!empty($pendaftaran['tanggal_selesai'])): ?>
                             <small class="text-danger">*pastikan masa berlaku BPJS Ketenagakerjaan aktif sampai <?= format_tanggal_indonesia($pendaftaran['tanggal_selesai']);?>.</small>
                         <?php else: ?>

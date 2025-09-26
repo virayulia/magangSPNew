@@ -34,7 +34,6 @@ Swal.fire({
     <p class="text-muted">Unduh sertifikat magang kamu di sini.</p>
     <hr>
 
-    <?php if (!empty($penilaian)): ?>
             <div class="card">
                 <div class="card-body">
                     <h5 class="card-title">📋 Sertifikat Magang</h5>
@@ -256,11 +255,7 @@ Swal.fire({
                     <?php endif; ?>
                 </div>
             </div>
-    <?php else: ?>
-        <div class="alert alert-info text-center">
-            Belum ada Sertifikat Magang.
-        </div>
-    <?php endif; ?>
+
 </div>
 
 <script>

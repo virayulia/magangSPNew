@@ -523,6 +523,10 @@
                     <td><?= esc($item['nisn_nim']) ?></td>
                 </tr>
                 <tr>
+                    <th>No HP</th>
+                    <td><?= esc($item['no_hp']) ?></td>
+                </tr>
+                <tr>
                     <th>Email</th>
                     <td><?= esc($item['email']) ?></td>
                 </tr>

@@ -28,7 +28,8 @@ Harap menyesuaikan dengan jadwal/unit terbaru ini. Informasi lengkap dapat dilih
 <p>Terima kasih atas perhatian dan kerja samanya.</p>
 
 <br>
-<p>Hormat kami,</p>
-<p><strong>Training & Knowledge Management<br>PT Semen Padang</strong></p>
+    <p>Hormat kami,</p>
+    <p><strong>Training & Knowledge Management<br>PT Semen Padang</strong></p>
+    <p>Siska Ayu Soraya<br><strong>Kepala</strong></p>
 </body>
 </html>

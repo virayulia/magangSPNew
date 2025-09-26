@@ -416,25 +416,86 @@ class MagangController extends BaseController
         return view('pembimbing/approve-magang', ['peserta' => $peserta,'unitPembimbing' => $unitPembimbing, ]);
     }
 
+    // public function setApproveMagang()
+    // {
+    //     $magangIds = $this->request->getPost('magang_ids');
+    //     $userId    = user_id();
+
+    //     if (!empty($magangIds)) {
+    //         $this->magangModel->whereIn('magang_id', $magangIds)
+    //             ->set([
+    //                 'ka_unit_approve' => 1,
+    //                 'tanggal_approve' => date('Y-m-d H:i:s'),
+    //                 'status_akhir'    => 'lulus'
+    //             ])
+    //             ->update();
+
+    //         return redirect()->back()->with('success', count($magangIds).' peserta berhasil di-approve.');
+    //     }
+
+    //     return redirect()->back()->with('error', 'Tidak ada peserta yang dipilih untuk approve.');
+    // }
+
     public function setApproveMagang()
     {
         $magangIds = $this->request->getPost('magang_ids');
         $userId    = user_id();
 
-        if (!empty($magangIds)) {
-            $this->magangModel->whereIn('magang_id', $magangIds)
-                ->set([
-                    'ka_unit_approve' => 1,
-                    'tanggal_approve' => date('Y-m-d H:i:s'),
-                    'status_akhir'    => 'lulus'
-                ])
-                ->update();
-
-            return redirect()->back()->with('success', count($magangIds).' peserta berhasil di-approve.');
+        if (empty($magangIds)) {
+            return redirect()->back()->with('error', 'Tidak ada peserta yang dipilih untuk approve.');
         }
 
-        return redirect()->back()->with('error', 'Tidak ada peserta yang dipilih untuk approve.');
+        $db      = \Config\Database::connect();
+        $email   = \Config\Services::email();
+        $tanggal = date('Y-m-d H:i:s');
+
+        // Ambil data peserta
+        $pesertaList = $db->table('magang')
+            ->select('magang.*, users.*, unit_kerja.unit_kerja, jurusan.nama_jurusan, instansi.nama_instansi')
+            ->join('users', 'users.id = magang.user_id', 'left')
+            ->join('jurusan', 'users.jurusan_id = jurusan.jurusan_id', 'left')
+            ->join('instansi', 'users.instansi_id = instansi.instansi_id', 'left')
+            ->join('unit_kerja', 'unit_kerja.unit_id = magang.unit_id', 'left')
+            ->whereIn('magang.magang_id', $magangIds)
+            ->get()
+            ->getResult();
+
+        foreach ($pesertaList as $data) {
+            // Update data approve
+            $updateData = [
+                'ka_unit_approve' => 1,
+                'tanggal_approve' => $tanggal,
+                'status_akhir'    => 'lulus',
+            ];
+            $this->magangModel->update($data->magang_id, $updateData);
+
+            // Kirim email
+            $toEmail = $data->email;
+            if (!empty($toEmail)) {
+                $email->clear(true);
+                $email->setTo($toEmail);
+
+                $email->setSubject('Sertifikat Magang Anda Sudah Tersedia');
+                $email->setMailType('html');
+
+                $email->setMessage(view('emails/approve_sertifikat', [
+                    'nama'            => $data->fullname ?? $data->username,
+                    'unit'            => $data->unit_kerja ?? 'Unit terkait',
+                    'jurusan'         => $data->nama_jurusan,
+                    'instansi'        => $data->nama_instansi,
+                    'tanggal_masuk'   => $data->tanggal_masuk,
+                    'tanggal_selesai' => $data->tanggal_selesai,
+                ]));
+
+                if (!$email->send()) {
+                    log_message('error', "Gagal kirim email sertifikat ID {$data->magang_id}: " . print_r($email->printDebugger(), true));
+                }
+            }
+        }
+
+        return redirect()->back()->with('success', count($magangIds).' peserta berhasil di-approve dan email sudah dikirim.');
     }
+
 
     public function alumniMagang()
     {

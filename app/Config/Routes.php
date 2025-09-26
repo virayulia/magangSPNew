@@ -34,6 +34,7 @@ $routes->get('cron/remind-unit/(:segment)', 'CronController::remindUnit/$1');
 $routes->get('cron/autoTolakTidakKonfirmasi/(:segment)', 'CronController::autoTolakTidakKonfirmasi/$1');
 // $routes->get('cron/autoTolakTidakValidasiBerkas/(:segment)', 'CronController::autoTolakTidakValidasiBerkas/$1');
 $routes->get('cron/reminderLengkapiBerkas/(:segment)', 'CronController::reminderLengkapiBerkas/$1');
+$routes->get('cron/autoKirimEmailAkhirMagang/(:segment)', 'CronController::autoKirimEmailAkhirMagang/$1');
 
 
 
