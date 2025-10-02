@@ -171,6 +171,7 @@ Swal.fire({
                                                 <!-- Step 1: Feedback Diklat -->
                                                 <div id="step1" class="feedback-step">
                                                     <h6 class="fw-bold mb-3">Feedback untuk Pusdiklat (Penyelenggara Program Magang)</h6>
+                                                    <span class="text-danger">*Harap mengisi dengan keadaan sebenarnya</span>
                                                     
                                                     <div class="mb-3">
                                                         <label>1. Apakah website magang SP membantu dan mudah digunakan?</label>
@@ -201,6 +202,8 @@ Swal.fire({
                                                 <!-- Step 2: Feedback Unit Kerja -->
                                                 <div id="step2" class="feedback-step d-none">
                                                     <h6 class="fw-bold mb-3">Feedback untuk Unit Kerja (Tempat Penempatan Magang)</h6>
+                                                    <span class="text-danger">*Harap mengisi dengan keadaan sebenarnya</span>
+
                                                     
                                                     <div class="mb-3">
                                                         <label>1. Apakah pendampingan supervisor/pembimbing sesuai kebutuhan Anda?</label>

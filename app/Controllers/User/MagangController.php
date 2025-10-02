@@ -769,7 +769,7 @@ class MagangController extends BaseController
         $tanggalApprove = !empty($magang['tanggal_approve']) 
             ? format_tanggal_indonesia($magang['tanggal_approve']) 
             : '-';
-
+        // Tambah Stempel
         $stempelPath = FCPATH . 'assets/img/stempel.png';
         if (file_exists($stempelPath)) {
             // X, Y, Width
@@ -782,7 +782,7 @@ class MagangController extends BaseController
 
         $pdf->SetFont('times', 'B', 16);
         $pdf->SetX(30);
-        $pdf->Cell(0, 8, "Training & KM", 0, 1, 'L');
+        $pdf->Cell(0, 8, "Learning & People Development", 0, 1, 'L');
 
         // Tambahkan tanda tangan (PNG/JPG transparan lebih bagus)
         $ttdPath = FCPATH . 'assets/img/ttd.png'; // ganti dengan path tanda tanganmu
@@ -862,10 +862,11 @@ class MagangController extends BaseController
         $pdf->SetXY(123, $startY + (8 * $stepY));
         $pdf->Cell(40, 10, terbilang($rataRata), 0, 0, 'L');
 
-        // tampilkan kategori full, bukan A/B/C
+        // tampilkan kategori full
         $pdf->SetXY(123, $startY + (8 * $stepY) + 12.5);
         $pdf->Cell(60, 10, $kategori, 0, 0, 'L');
 
+        //tambah stempel
         if (file_exists($stempelPath)) {
             $pdf->Image($stempelPath, 110, 215, 45, 0, 'PNG', '', '', false, 300);
         }
@@ -875,7 +876,7 @@ class MagangController extends BaseController
         $pdf->Cell(0, 8, "Padang, " . $tanggalApprove, 0, 1, 'L');
         $pdf->SetFont('times', 'B', 16);
         $pdf->SetX(130);
-        $pdf->Cell(0, 8, "Training & KM", 0, 1, 'L');
+        $pdf->Cell(0, 8, "Learning & People Development", 0, 1, 'L');
 
         
         // Tambahkan tanda tangan (PNG/JPG transparan lebih bagus)

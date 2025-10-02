@@ -43,6 +43,11 @@
             <span> Peserta Magang</span></a>
     </li>
     <li class="nav-item">
+        <a class="nav-link" href="<?= base_url('admin/manage-feedback'); ?>">
+            <i class="fas fa-fw fa-table"></i>
+            <span> Feedback</span></a>
+    </li>
+    <li class="nav-item">
         <a class="nav-link" href="<?= base_url('admin/manage-alumni'); ?>">
             <i class="fas fa-fw fa-table"></i>
             <span> Alumni Magang</span></a>

@@ -59,7 +59,7 @@
                 </div>
             </form>
 
-            <table class="table table-bordered" width="100%" cellspacing="0" id="dataTable">
+            <table class="table table-bordered table-striped" width="100%" cellspacing="0" id="dataTable">
                 <thead class="table-dark">
                     <tr>
                         <th>No</th>

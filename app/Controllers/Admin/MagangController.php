@@ -4,6 +4,8 @@ namespace App\Controllers\Admin;
 
 use App\Controllers\BaseController;
 use CodeIgniter\HTTP\ResponseInterface;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use App\Models\KuotaunitModel;
 use App\Models\MagangModel;
 use App\Models\UnitKerjaModel;
@@ -909,7 +911,8 @@ class MagangController extends BaseController
                 feedback.feedback_id,
                 penilaian.nilai_disiplin, penilaian.nilai_kerajinan,penilaian.nilai_tingkahlaku, penilaian.nilai_kerjasama,
                 penilaian.nilai_kreativitas,penilaian.nilai_kemampuankerja,penilaian.nilai_tanggungjawab,penilaian.nilai_penyerapan,
-                penilaian.tgl_penilaian, penilaian.approve_kaunit,penilaian.tgl_disetujui,penilaian.approve_by,penilaian.catatan, penilaian.catatan_approval
+                penilaian.tgl_penilaian, penilaian.approve_kaunit,penilaian.tgl_disetujui,penilaian.approve_by,penilaian.catatan, penilaian.catatan_approval,
+                pembimbing.fullname AS nama_pembimbing
             ')
             ->select("
                 CASE 
@@ -931,6 +934,7 @@ class MagangController extends BaseController
             ->join('feedback', 'feedback.magang_id = magang.magang_id', 'left')
             ->join($subRfid, 'ra.magang_id = magang.magang_id', 'left')
             ->join('rfid', 'rfid.id_rfid = ra.rfid_id', 'left')
+            ->join('users pembimbing', 'pembimbing.id = magang.pembimbing_id', 'left') // 🔹 tambahan untuk ambil nama pembimbing
             ->where('magang.status_akhir', 'magang');
 
         if (!empty($bulanMasuk)) {
@@ -1479,7 +1483,12 @@ class MagangController extends BaseController
         $tanggalApprove = !empty($magang['tanggal_approve']) 
             ? format_tanggal_indonesia($magang['tanggal_approve']) 
             : '-';
-
+        // Tambah Stempel
+        $stempelPath = FCPATH . 'assets/img/stempel.png';
+        if (file_exists($stempelPath)) {
+            // X, Y, Width
+            $pdf->Image($stempelPath, 17, 210, 45, 0, 'PNG', '', '', false, 300);
+        }
         // Posisi mulai (pojok kiri bawah, misal 190mm dari atas)
         $pdf->SetFont('times', '', 16);
         $pdf->SetXY(30, 200);
@@ -1487,7 +1496,7 @@ class MagangController extends BaseController
 
         $pdf->SetFont('times', 'B', 16);
         $pdf->SetX(30);
-        $pdf->Cell(0, 8, "Training & KM", 0, 1, 'L');
+        $pdf->Cell(0, 8, "Learning & People Development", 0, 1, 'L');
 
         // Tambahkan tanda tangan (PNG/JPG transparan lebih bagus)
         $ttdPath = FCPATH . 'assets/img/ttd.png'; // ganti dengan path tanda tanganmu
@@ -1567,9 +1576,14 @@ class MagangController extends BaseController
         $pdf->SetXY(123, $startY + (8 * $stepY));
         $pdf->Cell(40, 10, terbilang($rataRata), 0, 0, 'L');
 
-        // tampilkan kategori full, bukan A/B/C
+        // tampilkan kategori full
         $pdf->SetXY(123, $startY + (8 * $stepY) + 12.5);
         $pdf->Cell(60, 10, $kategori, 0, 0, 'L');
+
+        //tambah stempel
+        if (file_exists($stempelPath)) {
+            $pdf->Image($stempelPath, 110, 215, 45, 0, 'PNG', '', '', false, 300);
+        }
 
         //TTD pojok kanan
         $pdf->SetFont('times', '', 16);
@@ -1577,7 +1591,7 @@ class MagangController extends BaseController
         $pdf->Cell(0, 8, "Padang, " . $tanggalApprove, 0, 1, 'L');
         $pdf->SetFont('times', 'B', 16);
         $pdf->SetX(130);
-        $pdf->Cell(0, 8, "Training & KM", 0, 1, 'L');
+        $pdf->Cell(0, 8, "Learning & People Development", 0, 1, 'L');
 
         // Tambahkan tanda tangan (PNG/JPG transparan lebih bagus)
         $ttdPath = FCPATH . 'assets/img/ttd.png'; // ganti dengan path tanda tanganmu
@@ -1607,6 +1621,70 @@ class MagangController extends BaseController
             $pdf->Output($fileName, 'I');
             exit;
         }
+    }
+
+    public function exportPeserta()
+    {
+        // ✅ ambil filter 
+        $bulanMasuk = $this->request->getGet('bulan_masuk');
+        $bulanKeluar = $this->request->getGet('bulan_keluar');
+        $tahun = $this->request->getGet('tahun');
+
+        // ✅ ambil data 
+        $builder = $this->magangModel->select('users.fullname, users.nisn_nim, jurusan.nama_jurusan, instansi.nama_instansi, 
+                                            unit_kerja.unit_kerja, magang.tanggal_masuk, magang.tanggal_selesai')
+                                        ->join('users', 'users.id = magang.user_id')
+                                        ->join('instansi', 'instansi.instansi_id = users.instansi_id', 'left')
+                                        ->join('jurusan', 'jurusan.jurusan_id = users.jurusan_id','left')
+                                        ->join('unit_kerja', 'magang.unit_id = unit_kerja.unit_id');
+
+        if ($bulanMasuk) {
+        $builder->where('MONTH(tanggal_masuk)', $bulanMasuk);
+        }
+        if ($bulanKeluar) {
+            $builder->where('MONTH(tanggal_keluar)', $bulanKeluar);
+        }
+        if ($tahun) {
+            $builder->where('YEAR(tanggal_masuk)', $tahun);
+        }
+        $data = $builder->get()->getResultArray();
+
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+
+        // ✅ Header kolom
+        $sheet->setCellValue('A1', 'Nama');
+        $sheet->setCellValue('B1', 'NIM');
+        $sheet->setCellValue('C1', 'Jurusan');
+        $sheet->setCellValue('D1', 'Perguruan Tinggi');
+        $sheet->setCellValue('E1', 'Unit Kerja');
+        $sheet->setCellValue('F1', 'Tanggal Masuk');
+        $sheet->setCellValue('G1', 'Tanggal Selesai');
+
+        // ✅ Isi data
+        $row = 2;
+        foreach ($data as $d) {
+            $sheet->setCellValue('A' . $row, $d['fullname']);
+            $sheet->setCellValue('B' . $row, $d['nisn_nim']);
+            $sheet->setCellValue('C' . $row, $d['nama_jurusan']);
+            $sheet->setCellValue('D' . $row, $d['nama_instansi']);
+            $sheet->setCellValue('E' . $row, $d['unit_kerja']);
+            $sheet->setCellValue('F' . $row, date('d-m-Y', strtotime($d['tanggal_masuk'])));
+            $sheet->setCellValue('G' . $row, date('d-m-Y', strtotime($d['tanggal_selesai'])));
+            $row++;
+        }
+
+        // ✅ Download file
+        $filename = 'data_peserta_magang_' . date('Ymd_His') . '.xlsx';
+        $writer = new Xlsx($spreadsheet);
+
+        // header untuk download
+        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        header("Content-Disposition: attachment; filename=\"$filename\"");
+        header('Cache-Control: max-age=0');
+
+        $writer->save('php://output');
+        exit;
     }
 
 

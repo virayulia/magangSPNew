@@ -30,7 +30,6 @@ sampai dengan <strong><?= format_tanggal_indonesia($tanggal_selesai) ?></strong>
         di <strong>Unit Operasional SDM (Pusdiklat)</strong> PT Semen Padang.</li>
     <li>Mematuhi semua ketentuan dan disiplin di PT Semen Padang, serta protokol kesehatan yang berlaku.</li>
     <li>Menyerahkan laporan kerja praktek maksimal 15 hari setelah magang selesai ke Pusdiklat.</li>
-    <li><strong>Rompi, Helm biru, dan Sepatu Safety disediakan sendiri oleh peserta.</strong></li>
     <li><strong>Mengupload kartu asurasni kecelakaan kerja dan buktinya paling lambat 3 hari sebelum pelaksanaan magang.</strong></li>
     <li><strong>Bukti asli asuransi kecelakaan kerja dibawa pada hari pertama.</strong></li>
 </ol>

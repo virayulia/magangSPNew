@@ -68,8 +68,14 @@
                 </div>
             </form>
 
+            <a href="<?= base_url('admin/export-peserta?bulan_masuk='.service('request')->getGet('bulan_masuk').'&bulan_keluar='.service('request')->getGet('bulan_keluar').'&tahun='.service('request')->getGet('tahun')) ?>" 
+                class="btn btn-success mb-3">
+                <i class="bi bi-file-earmark-excel"></i> Export Excel
+            </a>
 
-            <table class="table table-bordered" width="100%" cellspacing="0" id="dataTable">
+
+
+            <table class="table table-bordered table-striped" width="100%" cellspacing="0" id="dataTable" >
                 <thead class="table-dark">
                     <tr>
                         <th>No</th>
@@ -82,6 +88,7 @@
                         <th>Validasi Berkas</th>
                         <th>Setuju Pernyataan</th>
                         <th>Nilai Tes</th>
+                        <th>Pembimbing</th>
                         <th>Laporan</th>
                         <th>Absensi</th>
                         <th>Nilai Magang</th>
@@ -134,6 +141,7 @@
                                     </span>
                                 <?php endif; ?>
                             </td>
+                            <td><?= esc($item['nama_pembimbing']) ?></td>                          
                             <td>
                                 <?php if (!empty($item['laporan'])): ?>
                                     <a href="<?= base_url('uploads/laporan/' . $item['laporan']) ?>" target="_blank" class="btn btn-primary btn-sm">

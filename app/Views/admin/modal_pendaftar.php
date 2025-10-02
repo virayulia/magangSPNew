@@ -9,7 +9,7 @@
 
     <form id="formTerimaPendaftar">
         <div class="table-responsive">
-           <table class="table table-bordered table-sm w-100" id="tablePendaftar">
+           <table class="table table-bordered table-striped table-sm w-100" id="tablePendaftar">
                 <thead>
                     <tr>
                         <th colspan="11" style="text-align: left;">

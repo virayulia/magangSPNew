@@ -8,7 +8,7 @@
     <p>Yth. Kepala <?= esc($unit); ?>,</p>
 
     <p>
-        Ini adalah pengingat bahwa peserta magang akan masuk pada tanggal 
+        Ini adalah pemberitahuan bahwa peserta magang akan masuk pada tanggal 
         <strong><?= esc(format_tanggal_indonesia($list[0]['tanggal'])); ?></strong>.
     </p>
 
@@ -18,6 +18,7 @@
             <tr>
                 <th>No</th>
                 <th>Nama Lengkap</th>
+                <th>Jurusan</th>
                 <th>Perguruan Tinggi/Sekolah</th>
             </tr>
         </thead>
@@ -26,6 +27,7 @@
             <tr>
                 <td style="text-align:center;"><?= $i+1; ?></td>
                 <td><?= esc($mhs['nama']); ?></td>
+                <td><?= esc($mhs['jurusan']); ?></td>
                 <td><?= esc($mhs['instansi']); ?></td>
             </tr>
             <?php endforeach; ?>

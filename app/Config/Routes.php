@@ -155,7 +155,15 @@ $routes->group('admin', ['namespace' => 'App\Controllers\Admin','filter' => 'adm
     $routes->post('tolakAbsensi', 'MagangController::tolakAbsensi');
 
     $routes->post('finalisasi/(:num)', 'MagangController::finalisasi/$1');
-    
+
+    $routes->get('export-peserta', 'MagangController::exportPeserta');
+
+    // Kelola Feedback
+    $routes->get('manage-feedback', 'FeedbackController::index');
+    // $routes->post('feedback/save', 'InstansiController::save');
+    // $routes->post('instansi/update/(:num)', 'InstansiController::update/$1');
+    // $routes->post('instansi/delete/(:num)', 'InstansiController::delete/$1');
+
     //Alumni
     $routes->get('manage-alumni', 'MagangController::alumniMagang');
     $routes->get('cetak-sertifikat/(:num)', 'MagangController::cetakSertifikat/$1');
@@ -179,7 +187,7 @@ $routes->group('admin', ['namespace' => 'App\Controllers\Admin','filter' => 'adm
 // ==========================
 // Group untuk Pembimbing
 // ==========================
-$routes->group('pembimbing', ['namespace' => 'App\Controllers\Pembimbing'], function($routes) {
+$routes->group('pembimbing', ['namespace' => 'App\Controllers\Pembimbing', 'filter' => 'pembimbing'], function($routes) {
     $routes->get('penilaian', 'MagangController::penilaian');
     $routes->post('assignPembimbing/(:num)', 'MagangController::assignPembimbing/$1');
     $routes->post('updatePembimbing/(:num)', 'MagangController::updatePembimbing/$1');

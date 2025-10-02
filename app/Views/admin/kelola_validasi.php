@@ -38,7 +38,7 @@
             </div>
 
             <div class="table-responsive">
-                <table class="table table-bordered" id="dataTable">
+                <table class="table table-bordered table-striped" id="dataTable">
                     <thead class="table-dark">
                         <tr>
                             <th><input type="checkbox" id="selectAll"></th>
