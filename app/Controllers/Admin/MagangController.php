@@ -1587,26 +1587,26 @@ class MagangController extends BaseController
 
         //TTD pojok kanan
         $pdf->SetFont('times', '', 16);
-        $pdf->SetXY(120, 215);
+        $pdf->SetXY(105, 215);
         $pdf->Cell(0, 8, "Padang, " . $tanggalApprove, 0, 1, 'L');
         $pdf->SetFont('times', 'B', 16);
-        $pdf->SetX(130);
+        $pdf->SetX(105);
         $pdf->Cell(0, 8, "Learning & People Development", 0, 1, 'L');
 
         // Tambahkan tanda tangan (PNG/JPG transparan lebih bagus)
         $ttdPath = FCPATH . 'assets/img/ttd.png'; // ganti dengan path tanda tanganmu
         if (file_exists($ttdPath)) {
-            $pdf->Image($ttdPath, 130, 228, 45, 0, '', '', '', false, 300);
+            $pdf->Image($ttdPath, 105, 228, 45, 0, '', '', '', false, 300);
 
         }
 
         // Nama pejabat
         $pdf->SetFont('times', 'B', 16);
-        $pdf->SetXY(130, 245);
+        $pdf->SetXY(105, 245);
         $pdf->Cell(0, 8, "Siska Ayu Soraya", 0, 1, 'L');
 
         $pdf->SetFont('times', '', 14);
-        $pdf->SetX(130);
+        $pdf->SetX(105);
         $pdf->Cell(0, 8, "Kepala", 0, 1, 'L');
 
         // ================= Output =================
