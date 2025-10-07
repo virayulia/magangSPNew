@@ -55,6 +55,6 @@
             </table>
         </div>
         <button type="button" class="btn btn-primary mt-2" onclick="terimaBeberapa()">Terima yang Dipilih</button>
-        <button type="button" class="btn btn-danger mt-2 ml-2" onclick="tolakBeberapa()">Tolak yang Dipilih</button>
+        <button type="button" class="btn btn-danger mt-2 ml-2" onclick="bukaModalTolak()">Tolak yang Dipilih</button>
     </form>
 <?php endif; ?>

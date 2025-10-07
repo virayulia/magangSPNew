@@ -63,6 +63,31 @@ class MagangController extends BaseController
         return view('admin/index', ['pendaftaran' => $pendaftaran, 'unitList' => $unitList]);
     }
 
+    public function indexGagal()
+    {
+        $pendaftaran = $this->magangModel->select('magang.*,unit_kerja.unit_kerja, users.*,jurusan.nama_jurusan, 
+                        instansi.nama_instansi, 
+                        province_ktp.province AS provinsi_ktp,
+                        province_dom.province AS provinsi_domisili, 
+                        city_ktp.regency AS kota_ktp, 
+                        city_ktp.type AS tipe_kota_ktp,
+                        city_dom.regency AS kota_domisili,
+                        city_dom.type AS tipe_kota_domisili')
+                                        ->join('users', 'users.id = magang.user_id')
+                                        ->join('instansi', 'instansi.instansi_id = users.instansi_id', 'left')
+                                        ->join('jurusan', 'jurusan.jurusan_id = users.jurusan_id','left')
+                                        ->join('provinces AS province_ktp', 'province_ktp.id = users.province_id', 'left')
+                                        ->join('provinces AS province_dom', 'province_dom.id = users.provinceDom_id', 'left')
+                                        ->join('regencies AS city_ktp', 'city_ktp.id = users.city_id', 'left')
+                                        ->join('regencies AS city_dom', 'city_dom.id = users.cityDom_id', 'left')
+                                        ->join('unit_kerja', 'magang.unit_id = unit_kerja.unit_id')
+                                        ->whereIn('magang.status_akhir', ['gagal', 'batal'])
+                                        ->orderBy('magang.tanggal_daftar', 'asc')
+                                        ->findAll();
+        $unitList = $this->unitKerjaModel->findAll();
+        return view('admin/indexGagal', ['pendaftaran' => $pendaftaran, 'unitList' => $unitList]);
+    }
+
     public function detail($id)
     {
         $pendaftaran = $this->magangModel
@@ -416,76 +441,143 @@ class MagangController extends BaseController
     }
 
     public function tolakBanyak()
-    {
-        $ids = $this->request->getPost('pendaftar_ids');
+{
+    $ids = $this->request->getPost('pendaftar_ids');
+    $catatan = $this->request->getPost('catatan'); 
 
-        if (!$ids || !is_array($ids)) {
-            return $this->response->setJSON(['status' => 'error', 'message' => 'Tidak ada pendaftar yang dipilih.']);
-        }
-
-        $db = \Config\Database::connect();
-        $builder = $db->table('magang');
-
-        $successCount = 0;
-        $failCount = 0;
-        $messages = [];
-
-        foreach ($ids as $id) {
-            log_message('debug', 'Memproses tolak ID: ' . $id);
-
-            $data = $builder
-                ->select('magang.*, users.email, users.email_instansi, users.fullname, users.username, unit_kerja.unit_kerja')
-                ->join('users', 'users.id = magang.user_id', 'left')
-                ->join('unit_kerja', 'unit_kerja.unit_id = magang.unit_id', 'left')
-                ->where('magang.magang_id', $id)
-                ->get()
-                ->getRow();
-
-            if (!$data) {
-                log_message('error', "Data magang dengan ID $id tidak ditemukan.");
-                $failCount++;
-                $messages[] = "ID $id: tidak ditemukan.";
-                continue;
-            }
-
-            $updated = $builder->where('magang_id', $id)->update([
-                'status_seleksi'   => 'Ditolak',
-                'tanggal_seleksi' => date('Y-m-d H:i:s'),
-                'status_akhir' => 'gagal'
-            ]);
-
-            if ($updated) {
-                log_message('debug', "ID $id: Berhasil ditolak.");
-                $successCount++;
-
-                // ===== Kirim Email Penolakan =====
-                $email = \Config\Services::email();
-                $email->setTo($data->email);
-
-                $email->setSubject('Hasil Seleksi Pendaftaran Magang di PT Semen Padang');
-                $email->setMailType('html');
-                $email->setMessage(view('emails/penolakan_magang', [
-                    'nama' => $data->fullname ?? 'Saudara',
-                    'unit' => $data->unit_kerja ?? 'Unit terkait',
-                ]));
-
-                if (!$email->send()) {
-                    log_message('error', "Gagal kirim email ke ID $id: " . print_r($email->printDebugger(), true));
-                }
-
-            } else {
-                log_message('error', "ID $id: Gagal update data.");
-                $failCount++;
-                $messages[] = "ID $id: gagal ditolak.";
-            }
-        }
-
-        return $this->response->setJSON([
-            'status' => 'success',
-            'message' => "$successCount berhasil ditolak. $failCount gagal.",
-            'details' => $messages
-        ]);
+    if (!$ids || !is_array($ids)) {
+        return $this->response->setJSON(['status' => 'error', 'message' => 'Tidak ada pendaftar yang dipilih.']);
     }
+
+    $db = \Config\Database::connect();
+    $builder = $db->table('magang');
+
+    $successCount = 0;
+    $failCount = 0;
+    $messages = [];
+
+    foreach ($ids as $id) {
+        $data = $builder
+            ->select('magang.*, users.email, users.fullname, unit_kerja.unit_kerja')
+            ->join('users', 'users.id = magang.user_id', 'left')
+            ->join('unit_kerja', 'unit_kerja.unit_id = magang.unit_id', 'left')
+            ->where('magang.magang_id', $id)
+            ->get()
+            ->getRow();
+
+        if (!$data) {
+            $failCount++;
+            $messages[] = "ID $id tidak ditemukan.";
+            continue;
+        }
+
+        $updated = $builder->where('magang_id', $id)->update([
+            'status_seleksi'   => 'Ditolak',
+            'tanggal_seleksi' => date('Y-m-d H:i:s'),
+            'status_akhir' => 'gagal',
+            'alasan_batal' => $catatan // tambahkan kolom ini di tabel magang
+        ]);
+
+        if ($updated) {
+            $successCount++;
+
+            // kirim email
+            $email = \Config\Services::email();
+            $email->setTo($data->email);
+            $email->setSubject('Hasil Seleksi Pendaftaran Magang di PT Semen Padang');
+            $email->setMailType('html');
+            $email->setMessage(view('emails/penolakan_magang', [
+                'nama' => $data->fullname ?? 'Saudara',
+                'unit' => $data->unit_kerja ?? 'Unit terkait',
+                'alasan_batal' => $catatan,
+            ]));
+            $email->send();
+
+        } else {
+            $failCount++;
+            $messages[] = "ID $id gagal ditolak.";
+        }
+    }
+
+    return $this->response->setJSON([
+        'status' => 'success',
+        'message' => "$successCount berhasil ditolak. $failCount gagal.",
+        'details' => $messages
+    ]);
+}
+
+
+    // public function tolakBanyak()
+    // {
+    //     $ids = $this->request->getPost('pendaftar_ids');
+
+    //     if (!$ids || !is_array($ids)) {
+    //         return $this->response->setJSON(['status' => 'error', 'message' => 'Tidak ada pendaftar yang dipilih.']);
+    //     }
+
+    //     $db = \Config\Database::connect();
+    //     $builder = $db->table('magang');
+
+    //     $successCount = 0;
+    //     $failCount = 0;
+    //     $messages = [];
+
+    //     foreach ($ids as $id) {
+    //         log_message('debug', 'Memproses tolak ID: ' . $id);
+
+    //         $data = $builder
+    //             ->select('magang.*, users.email, users.email_instansi, users.fullname, users.username, unit_kerja.unit_kerja')
+    //             ->join('users', 'users.id = magang.user_id', 'left')
+    //             ->join('unit_kerja', 'unit_kerja.unit_id = magang.unit_id', 'left')
+    //             ->where('magang.magang_id', $id)
+    //             ->get()
+    //             ->getRow();
+
+    //         if (!$data) {
+    //             log_message('error', "Data magang dengan ID $id tidak ditemukan.");
+    //             $failCount++;
+    //             $messages[] = "ID $id: tidak ditemukan.";
+    //             continue;
+    //         }
+
+    //         $updated = $builder->where('magang_id', $id)->update([
+    //             'status_seleksi'   => 'Ditolak',
+    //             'tanggal_seleksi' => date('Y-m-d H:i:s'),
+    //             'status_akhir' => 'gagal'
+    //         ]);
+
+    //         if ($updated) {
+    //             log_message('debug', "ID $id: Berhasil ditolak.");
+    //             $successCount++;
+
+    //             // ===== Kirim Email Penolakan =====
+    //             $email = \Config\Services::email();
+    //             $email->setTo($data->email);
+
+    //             $email->setSubject('Hasil Seleksi Pendaftaran Magang di PT Semen Padang');
+    //             $email->setMailType('html');
+    //             $email->setMessage(view('emails/penolakan_magang', [
+    //                 'nama' => $data->fullname ?? 'Saudara',
+    //                 'unit' => $data->unit_kerja ?? 'Unit terkait',
+    //             ]));
+
+    //             if (!$email->send()) {
+    //                 log_message('error', "Gagal kirim email ke ID $id: " . print_r($email->printDebugger(), true));
+    //             }
+
+    //         } else {
+    //             log_message('error', "ID $id: Gagal update data.");
+    //             $failCount++;
+    //             $messages[] = "ID $id: gagal ditolak.";
+    //         }
+    //     }
+
+    //     return $this->response->setJSON([
+    //         'status' => 'success',
+    //         'message' => "$successCount berhasil ditolak. $failCount gagal.",
+    //         'details' => $messages
+    //     ]);
+    // }
 
     public function validasi()
     {

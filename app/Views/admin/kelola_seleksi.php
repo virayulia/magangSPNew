@@ -75,6 +75,25 @@
   </div>
 </div>
 
+<!-- Modal Catatan Penolakan -->
+<div class="modal fade" id="modalCatatanTolak" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header bg-danger text-white">
+        <h5 class="modal-title">Catatan Penolakan</h5>
+        <button type="button" class="close text-white" data-dismiss="modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <textarea id="catatanTolak" class="form-control" rows="4" placeholder="Tulis alasan penolakan di sini..."></textarea>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Batal</button>
+        <button type="button" class="btn btn-danger" onclick="tolakBeberapa()">Konfirmasi Tolak</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
 function loadPendaftar(unitId, pendidikan, unitKerja) {
     // Ubah judul modal
@@ -246,10 +265,10 @@ function terimaBeberapa() {
     });
 }
 
-// Fungsi tolak banyak
-function tolakBeberapa() {
-    setModeKuota('tolak'); // aktifkan mode tolak
+let alasanTolak = ''; // variabel global sementara
 
+function bukaModalTolak() {
+    // Periksa apakah ada yang dipilih dulu
     const form = document.getElementById('formTerimaPendaftar');
     if (!form) return alert('Form tidak ditemukan!');
 
@@ -261,6 +280,30 @@ function tolakBeberapa() {
         return;
     }
 
+    // Jika ada yang dipilih, buka modal catatan
+    $('#modalCatatanTolak').modal('show');
+}
+
+function tolakBeberapa() {
+    setModeKuota('tolak');
+
+    const form = document.getElementById('formTerimaPendaftar');
+    const formData = new FormData(form);
+    const selected = formData.getAll('pendaftar_ids[]');
+
+    if (selected.length === 0) {
+        alert('Silakan pilih minimal satu pendaftar.');
+        return;
+    }
+
+    const catatan = document.getElementById('catatanTolak').value.trim();
+    if (!catatan) {
+        alert('Silakan isi alasan penolakan.');
+        return;
+    }
+
+    formData.append('catatan', catatan);
+
     if (!confirm(`Yakin ingin menolak ${selected.length} pendaftar?`)) return;
 
     fetch('manage-seleksi/tolak-banyak', {
@@ -270,10 +313,40 @@ function tolakBeberapa() {
     .then(res => res.json())
     .then(res => {
         alert(res.message);
+        $('#modalCatatanTolak').modal('hide');
         $('#modalPendaftar').modal('hide');
         location.reload();
     });
 }
+
+// Fungsi tolak banyak
+// function tolakBeberapa() {
+//     setModeKuota('tolak'); // aktifkan mode tolak
+
+//     const form = document.getElementById('formTerimaPendaftar');
+//     if (!form) return alert('Form tidak ditemukan!');
+
+//     const formData = new FormData(form);
+//     const selected = formData.getAll('pendaftar_ids[]');
+
+//     if (selected.length === 0) {
+//         alert('Silakan pilih minimal satu pendaftar.');
+//         return;
+//     }
+
+//     if (!confirm(`Yakin ingin menolak ${selected.length} pendaftar?`)) return;
+
+//     fetch('manage-seleksi/tolak-banyak', {
+//         method: 'POST',
+//         body: formData
+//     })
+//     .then(res => res.json())
+//     .then(res => {
+//         alert(res.message);
+//         $('#modalPendaftar').modal('hide');
+//         location.reload();
+//     });
+// }
 
 </script>
 

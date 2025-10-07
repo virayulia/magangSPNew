@@ -23,6 +23,11 @@
             <span>Seleksi Pendaftar</span></a>
     </li>
     <li class="nav-item">
+        <a class="nav-link" href="<?= base_url('admin/manage-pendaftaran-gagal'); ?>">
+            <i class="fas fa-fw fa-table"></i>
+            <span>Pendaftaran Ditolak</span></a>
+    </li>
+    <li class="nav-item">
         <a class="nav-link" href="<?= base_url('admin/manage-validasi-konfirmasi'); ?>">
             <i class="fas fa-fw fa-table"></i>
             <span>Approval Konfirmasi</span></a>

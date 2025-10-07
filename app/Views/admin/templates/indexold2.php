@@ -9,23 +9,24 @@
     <title>Magang PT Semen Padang</title>
     <link rel="icon" type="image/png" href="<?= base_url('assets/img/SP_logo.png') ?>" />
 
-    <!-- Font & Template CSS -->
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
+    <!-- Font dan template CSS -->
+    <link href="<?= base_url();?>/vendor/fontawesome-free/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css?family=Nunito:200,300,400,700" rel="stylesheet">
-    <link href="<?= base_url('css/sb-admin-2.min.css') ?>" rel="stylesheet">
+    <link href="<?= base_url();?>/css/sb-admin-2.min.css" rel="stylesheet">
 
     <!-- DataTables CSS -->
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap4.min.css">
 
-    <!-- SweetAlert -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
-    <!-- Select2 CSS -->
+     <!-- Select2 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <!-- Select2 Bootstrap 4 theme -->
     <link href="https://cdn.jsdelivr.net/npm/@ttskch/select2-bootstrap4-theme@1.5.2/dist/select2-bootstrap4.min.css" rel="stylesheet" />
 
-    <!-- Bootstrap Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+
+
+
 </head>
 
 <body id="page-top">
@@ -49,7 +50,9 @@
 
             <footer class="sticky-footer bg-white">
                 <div class="container my-auto text-center">
-                    <span>Copyright &copy; <?= date('Y') ?> Semen Padang</span>
+                    <span>Copyright &copy; 
+                        <?= date('Y') ?> Semen Padang
+                    </span>
                 </div>
             </footer>
         </div>
@@ -69,59 +72,43 @@
                 <div class="modal-body">Select "Logout" below if you are ready to end your current session.</div>
                 <div class="modal-footer">
                     <button class="btn btn-secondary" type="button" data-dismiss="modal">Cancel</button>
-                    <a class="btn btn-primary" href="<?= base_url('logout'); ?>">Logout</a>
+                    <a class="btn btn-primary" href="<?= base_url('logout');?>">Logout</a>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- ===== Core JS (pakai CDN + fallback ke local) ===== -->
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script>
-        if (typeof jQuery == 'undefined') {
-            document.write('<script src="<?= base_url('vendor/jquery/jquery.min.js') ?>"><\/script>');
-        }
-    </script>
+    <!-- Bootstrap core JavaScript-->
+    <script src="<?= base_url();?>/vendor/jquery/jquery.min.js"></script>
+    <script src="<?= base_url();?>/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
-        if (typeof $.fn.modal === 'undefined') {
-            document.write('<script src="<?= base_url('vendor/bootstrap/js/bootstrap.bundle.min.js') ?>"><\/script>');
-        }
-    </script>
+    <!-- Core plugin JavaScript-->
+    <script src="<?= base_url();?>/vendor/jquery-easing/jquery.easing.min.js"></script>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-easing/1.4.1/jquery.easing.min.js"></script>
-    <script>
-        if (typeof $.easing == 'undefined') {
-            document.write('<script src="<?= base_url('vendor/jquery-easing/jquery.easing.min.js') ?>"><\/script>');
-        }
-    </script>
-
-    <!-- SB Admin 2 -->
-    <script src="<?= base_url('js/sb-admin-2.min.js') ?>"></script>
+    <!-- Custom scripts-->
+    <script src="<?= base_url();?>/js/sb-admin-2.min.js"></script>
 
     <!-- DataTables JS -->
     <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
     <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap4.min.js"></script>
 
-    <!-- Select2 JS -->
+    <!-- Select2 JS  -->
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <script>
         $.fn.modal.Constructor.prototype._enforceFocus = function() {};
     </script>
 
-    <!-- Inisialisasi Select2 & DataTable -->
+    <!-- Inisialisasi DataTables -->
     <script>
-        $(document).ready(function() {
-            $('.select2').select2({
+        $(document).ready(function () {
+             $('.select2').select2({
                 theme: 'bootstrap4',
                 width: '100%',
-                placeholder: function() {
+                placeholder: function(){
                     $(this).data('placeholder');
                 },
                 allowClear: true
             });
-
             $('#dataTable').DataTable({
                 language: {
                     search: "Cari:",
@@ -140,5 +127,6 @@
             });
         });
     </script>
+
 </body>
 </html>

@@ -145,6 +145,10 @@ $routes->group('admin', ['namespace' => 'App\Controllers\Admin','filter' => 'adm
     $routes->post('manage-kelengkapan-berkas/valid/(:num)', 'MagangController::valid/$1');
     $routes->post('manage-kelengkapan-berkas/tidakValid/(:num)', 'MagangController::tidakValid/$1');
 
+    //Kelola Pendaftaran Ditolak/Gagal
+    $routes->get('manage-pendaftaran-gagal', 'MagangController::indexGagal');
+
+
     // Kelola Peserta Magang
     $routes->get('manage-magang', 'MagangController::pesertaMagang');
     $routes->post('updateMagang/(:num)', 'MagangController::updateMagang/$1');
