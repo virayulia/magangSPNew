@@ -20,6 +20,7 @@
         <li class="nav-item"><a class="nav-link" href="/">Beranda</a></li>
         <li class="nav-item"><a class="nav-link" href="/magang">Ketersediaan</a></li>
         <li class="nav-item"><a class="nav-link" href="/tentang-kami">Tentang Kami</a></li>
+        <li class="nav-item"><a class="nav-link" href="/status-lamaran">Progres Magang</a></li>
         <?php if (logged_in()) : ?>
             <!-- Tampil hanya saat layar besar (lg ke atas) -->
             <li class="nav-item dropdown d-none d-lg-block">

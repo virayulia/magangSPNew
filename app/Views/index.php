@@ -90,14 +90,25 @@ Swal.fire({
     });
   });
 </script>
+
+
 <!-- Masthead -->
 <header class="masthead">
   <div class="container px-4 px-lg-5 h-100">
+    <?php if (logged_in() && !$userHasMagang): ?>
+        <div class="alert alert-warning fw-semibold mb-3" role="alert" style="font-size: 1rem;">
+            ⚠️ Kamu belum melakukan pendaftaran magang. 
+            Silakan pilih unit kerja dan daftar di menu <a href="/magang">'Ketersediaan'</a> .
+        </div>
+    <?php endif; ?>
+
     <div class="row gx-4 gx-lg-5 h-100 align-items-start justify-content-start text-start" style="padding-top: 15rem;">
       <div class="col-lg-12" style="margin-left: -13px;" data-aos="fade-down" data-aos-delay="200">
+        
         <h1 class="text-white font-weight-bold">
           Magang <br>PT Semen Padang
         </h1>
+
         <a class="btn btn-danger btn-xl mt-2" href="/register" data-aos="zoom-in" data-aos-delay="600">
           Daftar Sekarang
         </a>
@@ -111,6 +122,7 @@ Swal.fire({
     </div>
   </div>
 </header>
+
 
 <!-- Program -->
 <!-- <section class="page-section bg-primary" id="program">

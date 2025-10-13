@@ -7,7 +7,7 @@ use CodeIgniter\Router\RouteCollection;
  */
 
 
-$routes->get('/', 'Home::index', ['filter' => 'roleRedirect']);
+$routes->get('/', 'HomeController::index', ['filter' => 'roleRedirect']);
 $routes->get('/magang', 'HomeController::lowongan');
 $routes->get('/tentang-kami', 'HomeController::tentang_kami');
 $routes->get('get-images', 'HomeController::getImages');
@@ -106,6 +106,8 @@ $routes->group('admin', ['namespace' => 'App\Controllers\Admin','filter' => 'adm
     $routes->post('rfid/save', 'RfidController::save');
     $routes->post('rfid/update/(:num)', 'RfidController::update/$1');
     $routes->post('rfid/delete/(:num)', 'RfidController::delete/$1');
+    $routes->get('export-rfid', 'RfidController::export');
+
 
     //Kelola Jurusan Unit
     $routes->get('jurusan-unit', 'JurusanUnitController::index');

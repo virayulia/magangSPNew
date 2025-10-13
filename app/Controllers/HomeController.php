@@ -28,7 +28,7 @@ class HomeController extends BaseController
         $email = Services::email();
 
         $email->setFrom('magang.sp@sig.id', 'Admin SIG');
-        $email->setTo('virayukia1234@gmail.com'); // Ganti dengan alamat tujuanmu
+        $email->setTo('virayukia1234@gmail.com'); 
 
         $email->setSubject('Tes Email dari CodeIgniter');
         $email->setMessage('Ini adalah email percobaan yang dikirim dari aplikasi CodeIgniter 4 menggunakan SMTP Office365 + App Password.');
@@ -77,6 +77,7 @@ class HomeController extends BaseController
         $filterByUserJurusan = false;
         $userJurusan = null;
         $userKategoriPendidikan = null;
+        $userHasMagang = false;
 
         if (logged_in()) {
             $user = $db->table('users')->where('id', user_id())->get()->getRow();
@@ -87,6 +88,17 @@ class HomeController extends BaseController
                     'D3', 'D4/S1', 'S2' => ['Perguruan Tinggi'],
                     default => null
                 };
+            }
+
+            $userId = user_id();
+            $cekPendaftaran = $db->table('magang')
+                ->where('user_id', $userId)
+                ->whereIn('status_akhir', ['pendaftaran', 'proses', 'magang', 'lulus'])
+                ->get()
+                ->getRow();
+
+            if ($cekPendaftaran) {
+                $userHasMagang = true;
             }
         }
 
@@ -131,8 +143,10 @@ class HomeController extends BaseController
             'jurusanDipilih'         => $jurusanDipilih,
             'filterByUserJurusan'    => $filterByUserJurusan,
             'userKategoriPendidikan' => $userKategoriPendidikan,
+            'userHasMagang'          => $userHasMagang,
         ]);
     }
+
     //menampilkan halaman lowongan+filter tingkat pendidikan dan jurusan saat login
     public function lowongan()
     {
@@ -240,12 +254,11 @@ class HomeController extends BaseController
 
         $user = $db->table('users')->where('id', $userId)->get()->getRow();
 
-        // Cek kelengkapan field, sesuaikan dengan field pada tabel kamu
         if (!$user) return false;
 
         $requiredFields = ['fullname', 'nisn_nim', 'email','jenis_kelamin','alamat','no_hp', 'province_id','city_id',
         'tingkat_pendidikan', 'instansi_id','jurusan_id','semester', 
-        'surat_permohonan', 'tanggal_surat','no_surat','nama_pimpinan','jabatan','email_instansi']; // Tambahkan sesuai kebutuhan
+        'surat_permohonan', 'tanggal_surat','no_surat','nama_pimpinan','jabatan','email_instansi']; 
        if ($user->tingkat_pendidikan !== 'SMK') {
             $requiredFields = array_merge($requiredFields, ['proposal', 'cv','nilai_ipk']);
         }

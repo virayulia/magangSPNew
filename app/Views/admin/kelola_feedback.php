@@ -36,8 +36,8 @@
                             <th rowspan="2">No</th>
                             <th rowspan="2">Nama</th>
                             <th rowspan="2">Tanggal</th>
-                            <th colspan="3" class="text-center">Feedback Untuk Diklat</th>
-                            <th colspan="4" class="text-center">Feedback Untuk Unit Kerja</th>
+                            <th colspan="4" class="text-center">Feedback Untuk Diklat</th>
+                            <th colspan="6" class="text-center">Feedback Untuk Unit Kerja</th>
                             <th rowspan="2">Total</th>
 
                         </tr>
@@ -45,18 +45,26 @@
                             <th class="text-center">Website</th>
                             <th class="text-center">Admin</th>
                             <th class="text-center">Saran</th>
+                            <th class="text-center">Total Diklat</th>
+                            <th class="text-center">Unit Kerja</th>
                             <th class="text-center">Supervisor</th>
                             <th class="text-center">Pengalaman</th>
                             <th class="text-center">Suasana</th>
                             <th class="text-center">Kesan</th>
+                            <th class="text-center">Total Unit</th>
                         </tr>
                     </thead>
                     <tbody>
                         <?php if (!empty($feedback) && is_array($feedback)) : ?>
                             <?php $no = 1; foreach ($feedback as $data) : ?>
                                 <?php
+                                $totalDiklat = (int)$data['diklat_website'] 
+                                    + (int)$data['diklat_admin'];
+                                $totalUnit = (int)$data['unit_supervisor'] 
+                                    + (int)$data['unit_pengalaman'] 
+                                    + (int)$data['unit_suasana'];
                                 $total = (int)$data['diklat_website'] 
-                                    + (int)$data['diklat_admin'] 
+                                    + (int)$data['diklat_admin']
                                     + (int)$data['unit_supervisor'] 
                                     + (int)$data['unit_pengalaman'] 
                                     + (int)$data['unit_suasana'];
@@ -68,12 +76,15 @@
                                     <td><?= esc($data['diklat_website']); ?></td>
                                     <td><?= esc($data['diklat_admin']); ?></td>
                                     <td><?= esc($data['diklat_saran']); ?></td>
+                                    <td><strong><?= $totalDiklat; ?></strong></td>
+                                    <td><?= esc($data['unit_kerja']); ?></td>
                                     <td><?= esc($data['unit_supervisor']); ?></td>
                                     <td><?= esc($data['unit_pengalaman']); ?></td>
                                     <td><?= esc($data['unit_suasana']); ?></td>
                                     <td><?= esc($data['unit_kesan']); ?></td>
+                                    <td><strong><?= $totalUnit; ?></strong></td>
                                     <td><strong><?= $total; ?></strong></td>
-                                        </tr>
+                                </tr>
                             <?php endforeach; ?>
                         <?php endif; ?>
                     </tbody>

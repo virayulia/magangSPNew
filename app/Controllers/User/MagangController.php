@@ -264,7 +264,7 @@ class MagangController extends BaseController
             ->where('users.id', $userId)
             ->first();
 
-        // Ambil data pendaftaran user (pastikan sesuai nama tabel kamu)
+        // Ambil data pendaftaran user
         $pendaftaran = $this->magangModel
             ->where('user_id', $userId)
             ->join('unit_kerja', 'unit_kerja.unit_id = magang.unit_id')
@@ -272,12 +272,15 @@ class MagangController extends BaseController
             ->orderBy('tanggal_daftar', 'desc')
             ->first();
 
-    
-        $riwayatSafety = $this->jawabanModel
-            ->join('magang', 'magang.magang_id = jawaban_safety.magang_id')
-            ->where('magang.magang_id', $pendaftaran['magang_id'])
-            ->orderBy('tanggal_ujian', 'desc')
-            ->findAll();
+        //Ambil riwayat safety
+        $riwayatSafety = [];
+        if ($pendaftaran) {
+            $riwayatSafety = $this->jawabanModel
+                ->join('magang', 'magang.magang_id = jawaban_safety.magang_id')
+                ->where('magang.magang_id', $pendaftaran['magang_id'])
+                ->orderBy('tanggal_ujian', 'desc')
+                ->findAll();
+        }
         
         // Ambil periode aktif
         $db = \Config\Database::connect();

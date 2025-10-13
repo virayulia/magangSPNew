@@ -273,8 +273,7 @@ class MagangController extends BaseController
             ->get()
             ->getResult();
 
-        // Ambil semua kuota unit, tetapi jangan filter hanya sisa_kuota > 0
-        // Karena unit yang kuotanya habis tapi masih ada pendaftar juga harus muncul
+        // Ambil semua kuota unit
         $allKuota = $this->magangModel->getSisaKuota();
 
         // Ambil unit_id yang masih punya pendaftar 'pendaftaran'
@@ -322,7 +321,7 @@ class MagangController extends BaseController
         $builder->orderBy('magang.tanggal_daftar', 'asc');
         $pendaftar = $builder->get()->getResult();
 
-        // Hitung sisa kuota (tetap ambil dari getSisaKuota)
+        // Hitung sisa kuota
         $allKuota = $this->magangModel->getSisaKuota();
         $sisa = 0;
         foreach ($allKuota as $k) {
@@ -412,7 +411,7 @@ class MagangController extends BaseController
             $emailInstansi = $user->email_instansi ?? null;
 
             // Kirim Email
-            $email->clear(); // Reset sebelum mengirim email baru
+            $email->clear(); 
             $email->setTo($emailPeserta);
 
             $email->setSubject('Penerimaan Magang di PT Semen Padang');
@@ -475,7 +474,7 @@ class MagangController extends BaseController
             'status_seleksi'   => 'Ditolak',
             'tanggal_seleksi' => date('Y-m-d H:i:s'),
             'status_akhir' => 'gagal',
-            'alasan_batal' => $catatan // tambahkan kolom ini di tabel magang
+            'alasan_batal' => $catatan 
         ]);
 
         if ($updated) {
@@ -633,7 +632,7 @@ class MagangController extends BaseController
             $ccEmail = $data->email_instansi;
 
             if (!empty($toEmail)) {
-                $email->clear(true); // reset email sebelum kirim berikutnya
+                $email->clear(true); 
                 $email->setTo($toEmail);
 
                 if (!empty($ccEmail) && filter_var($ccEmail, FILTER_VALIDATE_EMAIL)) {
@@ -700,7 +699,6 @@ class MagangController extends BaseController
         ->orderBy('tanggal_validasi_berkas');
 
         if (!empty($id)) {
-            // kalau ada id, filter sesuai id
             $builder->where('magang.magang_id', $id);
         }
 
@@ -842,7 +840,6 @@ class MagangController extends BaseController
         $tahun = $request->getGet('tahun');
 
         if (!$bulan || !$tahun) {
-            // Default: bulan dan tahun ini
             $bulan = date('m');
             $tahun = date('Y');
         }
@@ -1026,7 +1023,7 @@ class MagangController extends BaseController
             ->join('feedback', 'feedback.magang_id = magang.magang_id', 'left')
             ->join($subRfid, 'ra.magang_id = magang.magang_id', 'left')
             ->join('rfid', 'rfid.id_rfid = ra.rfid_id', 'left')
-            ->join('users pembimbing', 'pembimbing.id = magang.pembimbing_id', 'left') // 🔹 tambahan untuk ambil nama pembimbing
+            ->join('users pembimbing', 'pembimbing.id = magang.pembimbing_id', 'left') 
             ->where('magang.status_akhir', 'magang');
 
         if (!empty($bulanMasuk)) {
@@ -1073,7 +1070,7 @@ class MagangController extends BaseController
                 'magang_id'      => $magangId,
                 'rfid_id'        => $rfidId,
                 'tanggal_pinjam' => date('Y-m-d H:i:s'),
-                'status'         => 'aktif', // aktif, dikembalikan, hilang
+                'status'         => 'aktif', 
                 'denda_bayar'    => 0
             ]);
 
@@ -1089,7 +1086,7 @@ class MagangController extends BaseController
     public function returnRFID()
     {
         $assignmentId = $this->request->getPost('assignment_id');
-        $status       = $this->request->getPost('status'); // returned / lost
+        $status       = $this->request->getPost('status'); 
         $newRfidId    = $this->request->getPost('new_rfid_id');
 
         $assignment = $this->rfidAssignmentModel->find($assignmentId);
@@ -1355,7 +1352,7 @@ class MagangController extends BaseController
         $db = \Config\Database::connect();
         $db->transStart();
 
-        // Update status akhir jadi lulus
+        
        $this->magangModel->update($magangId, [
             'finalisasi' => date('Y-m-d H:i:s'), 
         ]);
@@ -1479,7 +1476,7 @@ class MagangController extends BaseController
             + $penilaian['nilai_tanggungjawab']
             + $penilaian['nilai_penyerapan'];
 
-        $rataRata = round($totalNilai / 8, 0); // bulatkan ke integer
+        $rataRata = round($totalNilai / 8, 0); 
 
         // Tentukan kategori
         if ($rataRata >= 90) $kategori = 'Baik Sekali';
@@ -1578,10 +1575,9 @@ class MagangController extends BaseController
         // Tambah Stempel
         $stempelPath = FCPATH . 'assets/img/stempel.png';
         if (file_exists($stempelPath)) {
-            // X, Y, Width
             $pdf->Image($stempelPath, 17, 210, 45, 0, 'PNG', '', '', false, 300);
         }
-        // Posisi mulai (pojok kiri bawah, misal 190mm dari atas)
+        // Posisi mulai 
         $pdf->SetFont('times', '', 16);
         $pdf->SetXY(30, 200);
         $pdf->Cell(0, 8, "Padang, " . $tanggalApprove, 0, 1, 'L');
@@ -1590,8 +1586,8 @@ class MagangController extends BaseController
         $pdf->SetX(30);
         $pdf->Cell(0, 8, "Learning & People Development", 0, 1, 'L');
 
-        // Tambahkan tanda tangan (PNG/JPG transparan lebih bagus)
-        $ttdPath = FCPATH . 'assets/img/ttd.png'; // ganti dengan path tanda tanganmu
+        // Tambahkan tanda tangan 
+        $ttdPath = FCPATH . 'assets/img/ttd.png'; 
         if (file_exists($ttdPath)) {
             $pdf->Image($ttdPath, 30, 215, 45, 0, '', '', '', false, 300);
 
@@ -1631,7 +1627,7 @@ class MagangController extends BaseController
         // Fungsi terbilang khusus 0 - 100
         function terbilang($angka) {
             $angka = intval($angka);
-            if ($angka > 100) return "Seratus"; // mentok 100
+            if ($angka > 100) return "Seratus"; 
 
             $baca = ["", "Satu", "Dua", "Tiga", "Empat", "Lima",
                     "Enam", "Tujuh", "Delapan", "Sembilan", "Sepuluh", "Sebelas"];
@@ -1685,8 +1681,8 @@ class MagangController extends BaseController
         $pdf->SetX(105);
         $pdf->Cell(0, 8, "Learning & People Development", 0, 1, 'L');
 
-        // Tambahkan tanda tangan (PNG/JPG transparan lebih bagus)
-        $ttdPath = FCPATH . 'assets/img/ttd.png'; // ganti dengan path tanda tanganmu
+        // Tambahkan tanda tangan 
+        $ttdPath = FCPATH . 'assets/img/ttd.png'; 
         if (file_exists($ttdPath)) {
             $pdf->Image($ttdPath, 105, 228, 45, 0, '', '', '', false, 300);
 
@@ -1717,12 +1713,12 @@ class MagangController extends BaseController
 
     public function exportPeserta()
     {
-        // ✅ ambil filter 
+        // ambil filter 
         $bulanMasuk = $this->request->getGet('bulan_masuk');
         $bulanKeluar = $this->request->getGet('bulan_keluar');
         $tahun = $this->request->getGet('tahun');
 
-        // ✅ ambil data 
+        // ambil data 
         $builder = $this->magangModel->select('users.fullname, users.nisn_nim, jurusan.nama_jurusan, instansi.nama_instansi, 
                                             unit_kerja.unit_kerja, magang.tanggal_masuk, magang.tanggal_selesai')
                                         ->join('users', 'users.id = magang.user_id')
@@ -1744,7 +1740,7 @@ class MagangController extends BaseController
         $spreadsheet = new Spreadsheet();
         $sheet = $spreadsheet->getActiveSheet();
 
-        // ✅ Header kolom
+        // Header kolom
         $sheet->setCellValue('A1', 'Nama');
         $sheet->setCellValue('B1', 'NIM');
         $sheet->setCellValue('C1', 'Jurusan');
@@ -1753,7 +1749,7 @@ class MagangController extends BaseController
         $sheet->setCellValue('F1', 'Tanggal Masuk');
         $sheet->setCellValue('G1', 'Tanggal Selesai');
 
-        // ✅ Isi data
+        // Isi data
         $row = 2;
         foreach ($data as $d) {
             $sheet->setCellValue('A' . $row, $d['fullname']);
@@ -1766,7 +1762,7 @@ class MagangController extends BaseController
             $row++;
         }
 
-        // ✅ Download file
+        // Download file
         $filename = 'data_peserta_magang_' . date('Ymd_His') . '.xlsx';
         $writer = new Xlsx($spreadsheet);
 
@@ -1778,8 +1774,5 @@ class MagangController extends BaseController
         $writer->save('php://output');
         exit;
     }
-
-
-
 
 }

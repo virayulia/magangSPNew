@@ -134,7 +134,7 @@ Swal.fire({
 
     <?php if (empty($pendaftaran)) : ?>
         <div class="alert alert-info text-center">
-            Belum ada Pendaftaran Magang.
+            Belum ada Pendaftaran Magang. Daftar <a href="<?= base_url('/magang')?>">disini</a> .
         </div>
     <?php else : ?>
     <!-- Progress Bar Pendaftaran -->

@@ -253,7 +253,7 @@ Swal.fire({
         <?php endif; ?>
     <?php else: ?>
         <div class="alert alert-info text-center">
-            Belum ada Pelaksanaan Magang.
+            Belum Ada Pelaksanaan Magang.
         </div>
     <?php endif; ?>
 </div>

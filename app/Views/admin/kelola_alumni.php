@@ -22,7 +22,7 @@
     </div>
 <?php endif; ?>
 
-<h1 class="h3 mb-2 text-gray-800">Daftar Peserta Magang</h1>
+<h1 class="h3 mb-2 text-gray-800">Daftar Alumni Magang</h1>
 <!-- Card Tabel -->
 <div class="card shadow mb-4">
     <div class="card-body">
@@ -68,6 +68,7 @@
                         <th>Unit Kerja</th>
                         <th>Tanggal Mulai</th>
                         <th>Tanggal Selesai</th>
+                        <th>Tanggal Approve</th>
                         <th>Aksi</th>
                     </tr>
                 </thead>
@@ -80,6 +81,7 @@
                             <td><?= esc($item['unit_kerja']) ?></td>
                             <td><?= format_tanggal_indonesia($item['tanggal_masuk']) ?></td>
                             <td><?= format_tanggal_indonesia($item['tanggal_selesai']) ?></td>                                       
+                            <td><?= format_tanggal_indonesia($item['tanggal_approve']) ?></td>                                       
                             <td>                               
                                 <button class="btn btn-sm btn-primary" data-toggle="modal" data-target="#detailModal<?= $item['magang_id'] ?>">Detail</button>
                                 <a href="<?= base_url('admin/cetak-sertifikat/' . $item['magang_id']) ?>" 
@@ -104,7 +106,7 @@
     <div class="modal-dialog modal-xl" role="document">
         <div class="modal-content">
         <div class="modal-header">
-            <h5 class="modal-title" id="detailModalLabel<?= $item['magang_id'] ?>">Detail Peserta - <?= esc($item['fullname']) ?></h5>
+            <h5 class="modal-title" id="detailModalLabel<?= $item['magang_id'] ?>">Detail Alumni - <?= esc($item['fullname']) ?></h5>
             <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span>&times;</span></button>
         </div>
         <div class="modal-body">

@@ -66,13 +66,6 @@ Swal.fire({
 <!-- Job Filter Section -->
 <section class="page-section bg-white py-5">
 <div class="container">
-  <?php
-  $bulanPenempatan = date('F Y', strtotime('+2 months'));
-  ?>
-  <div class="alert alert-info d-flex align-items-center shadow-sm mt-4" role="alert">
-      <i class="bi bi-info-circle-fill me-2"></i>
-      Ketersediaan yang ditampilkan berlaku untuk penempatan pada bulan <?= format_bulan_indonesia($bulanPenempatan); ?>.
-  </div>
   <?php if (logged_in()): ?>
   <div class="alert alert-info d-flex align-items-center shadow-sm mt-4" role="alert">
       <i class="bi bi-info-circle-fill me-2"></i>
@@ -110,6 +103,30 @@ Swal.fire({
     </div>
   </div>
 </form>
+
+<?php
+$bulanPenempatan = date('Y-m-01', strtotime('+2 months'));
+
+$hariKe = date('N', strtotime($bulanPenempatan));
+
+if ($hariKe == 6) {
+    $tanggalMulai = date('Y-m-d', strtotime($bulanPenempatan . ' +2 days'));
+} elseif ($hariKe == 7) {
+    $tanggalMulai = date('Y-m-d', strtotime($bulanPenempatan . ' +1 day'));
+} else {
+    $tanggalMulai = $bulanPenempatan;
+}
+?>
+
+<div class="alert alert-danger d-flex align-items-center shadow-sm mt-4" role="alert">
+    <i class="bi bi-info-circle-fill me-2"></i>
+    <div>
+    Ketersediaan yang ditampilkan berlaku untuk penempatan pada tanggal <strong class="ms-1"><?= date('j', strtotime($tanggalMulai)); ?> <?= format_bulan_indonesia($tanggalMulai); ?></strong>.
+    <br>Harap lakukan pendaftaran <strong>2 bulan sebelum</strong> magang.
+    </div>
+    
+</div>
+
 <?php if ($periode): ?>
     <div class="row">
     <?php if (count($data_unit) > 0): ?>

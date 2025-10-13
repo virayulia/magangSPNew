@@ -37,8 +37,8 @@ Swal.fire({
             <div class="card">
                 <div class="card-body">
                     <h5 class="card-title">📋 Sertifikat Magang</h5>
-                    <?php if (date('Y-m-d') >= $pendaftaran['tanggal_selesai']): ?>
-                        <?php if ($pendaftaran): ?>
+                    <?php if ($pendaftaran): ?>
+                        <?php if (date('Y-m-d') >= $pendaftaran['tanggal_selesai']): ?>
                             <?php if (!$feedback): ?>
                                 <div class="alert alert-warning">
                                     Sebelum mengunduh sertifikat, silakan isi feedback terlebih dahulu.
@@ -158,110 +158,119 @@ Swal.fire({
                                 <!-- Modal Feedback -->
                                 <div class="modal fade" id="feedbackModal" tabindex="-1" aria-hidden="true">
                                     <div class="modal-dialog modal-lg">
-                                        <div class="modal-content">
-                                        <form action="<?= base_url('sertifikat/saveFeedback') ?>" method="post">
-                                            <div class="modal-header">
-                                                <h5 class="modal-title">Feedback Magang</h5>
-                                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                                            </div>
+                                        <div class="modal-content border-0 shadow">
+                                            <form action="<?= base_url('sertifikat/saveFeedback') ?>" method="post" id="formFeedback">
+                                                <div class="modal-header bg-primary text-white">
+                                                    <h5 class="modal-title fw-bold"><i class="bi bi-chat-dots"></i> Feedback Magang</h5>
+                                                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                                                </div>
 
-                                            <div class="modal-body">
-                                                <input type="hidden" name="magang_id" value="<?= $pendaftaran['magang_id'] ?>">
+                                                <div class="modal-body">
+                                                    <input type="hidden" name="magang_id" value="<?= $pendaftaran['magang_id'] ?>">
 
-                                                <!-- Step 1: Feedback Diklat -->
-                                                <div id="step1" class="feedback-step">
-                                                    <h6 class="fw-bold mb-3">Feedback untuk Pusdiklat (Penyelenggara Program Magang)</h6>
-                                                    <span class="text-danger">*Harap mengisi dengan keadaan sebenarnya</span>
-                                                    
-                                                    <div class="mb-3">
-                                                        <label>1. Apakah website magang SP membantu dan mudah digunakan?</label>
-                                                        <div class="star-rating">
-                                                            <input type="hidden" name="diklat_website" id="diklatWebsiteInput" value="<?= $feedback->diklat_website ?? 0 ?>">
-                                                            <?php for ($i=1; $i<=5; $i++): ?>
-                                                                <i class="bi <?= ($feedback->diklat_website ?? 0) >= $i ? 'bi-star-fill text-warning' : 'bi-star text-secondary' ?> fs-3 me-1 star" data-value="<?= $i ?>" data-target="#diklatWebsiteInput"></i>
-                                                            <?php endfor; ?>
+                                                    <!-- STEP 1: Feedback Diklat -->
+                                                    <div id="step1" class="feedback-step">
+                                                        <h6 class="fw-bold mb-3 text-primary">Feedback untuk Pusdiklat (Penyelenggara Program Magang)</h6>
+                                                        <small class="text-danger d-block mb-3">*Harap mengisi dengan keadaan sebenarnya</small>
+
+                                                        <!-- Website -->
+                                                        <div class="mb-3">
+                                                            <label class="form-label fw-semibold">1. Apakah website magang SP membantu dan mudah digunakan?</label>
+                                                            <div class="star-rating">
+                                                                <input type="hidden" name="diklat_website" id="diklatWebsiteInput" value="<?= $feedback->diklat_website ?? 0 ?>">
+                                                                <?php for ($i=1; $i<=5; $i++): ?>
+                                                                    <i class="bi <?= ($feedback->diklat_website ?? 0) >= $i ? 'bi-star-fill text-warning' : 'bi-star text-secondary' ?> fs-3 me-1 star" data-value="<?= $i ?>" data-target="#diklatWebsiteInput"></i>
+                                                                <?php endfor; ?>
+                                                            </div>
+                                                        </div>
+
+                                                        <!-- Admin -->
+                                                        <div class="mb-3">
+                                                            <label class="form-label fw-semibold">2. Bagaimana pelayanan admin Pusdiklat dalam mendukung program magang?</label>
+                                                            <div class="star-rating">
+                                                                <input type="hidden" name="diklat_admin" id="diklatAdminInput" value="<?= $feedback->diklat_admin ?? 0 ?>">
+                                                                <?php for ($i=1; $i<=5; $i++): ?>
+                                                                    <i class="bi <?= ($feedback->diklat_admin ?? 0) >= $i ? 'bi-star-fill text-warning' : 'bi-star text-secondary' ?> fs-3 me-1 star" data-value="<?= $i ?>" data-target="#diklatAdminInput"></i>
+                                                                <?php endfor; ?>
+                                                            </div>
+                                                        </div>
+
+                                                        <!-- Saran -->
+                                                        <div class="mb-3">
+                                                            <label class="form-label fw-semibold">3. Saran untuk pengembangan website atau pelayanan Pusdiklat:</label>
+                                                            <textarea name="diklat_saran" class="form-control" rows="3" maxlength="300" required placeholder="Tuliskan saran Anda (maks. 300 karakter)"><?= $feedback->diklat_saran ?? '' ?></textarea>
+                                                            <div class="form-text text-end"><span id="countSaran">0</span>/300</div>
                                                         </div>
                                                     </div>
 
-                                                    <div class="mb-3">
-                                                        <label>2. Bagaimana pelayanan admin Pusdiklat dalam mendukung program magang?</label>
-                                                        <div class="star-rating">
-                                                            <input type="hidden" name="diklat_admin" id="diklatAdminInput" value="<?= $feedback->diklat_admin ?? 0 ?>">
-                                                            <?php for ($i=1; $i<=5; $i++): ?>
-                                                                <i class="bi <?= ($feedback->diklat_admin ?? 0) >= $i ? 'bi-star-fill text-warning' : 'bi-star text-secondary' ?> fs-3 me-1 star" data-value="<?= $i ?>" data-target="#diklatAdminInput"></i>
-                                                            <?php endfor; ?>
-                                                        </div>
-                                                    </div>
+                                                    <!-- STEP 2: Feedback Unit Kerja -->
+                                                    <div id="step2" class="feedback-step d-none">
+                                                        <h6 class="fw-bold mb-3 text-success">Feedback untuk Unit Kerja (Tempat Penempatan Magang)</h6>
+                                                        <small class="text-danger d-block mb-3">*Harap mengisi dengan keadaan sebenarnya</small>
 
-                                                    <div class="mb-3">
-                                                        <label>3. Saran untuk pengembangan website atau pelayanan Pusdiklat:</label>
-                                                        <textarea name="diklat_saran" class="form-control" rows="3"><?= $feedback->diklat_saran ?? '' ?></textarea>
+                                                        <!-- Supervisor -->
+                                                        <div class="mb-3">
+                                                            <label class="form-label fw-semibold">1. Apakah pendampingan supervisor/pembimbing sesuai kebutuhan Anda?</label>
+                                                            <div class="star-rating">
+                                                                <input type="hidden" name="unit_supervisor" id="unitSupervisorInput" value="<?= $feedback->unit_supervisor ?? 0 ?>">
+                                                                <?php for ($i=1; $i<=5; $i++): ?>
+                                                                    <i class="bi <?= ($feedback->unit_supervisor ?? 0) >= $i ? 'bi-star-fill text-warning' : 'bi-star text-secondary' ?> fs-3 me-1 star" data-value="<?= $i ?>" data-target="#unitSupervisorInput"></i>
+                                                                <?php endfor; ?>
+                                                            </div>
+                                                        </div>
+
+                                                        <!-- Pengalaman -->
+                                                        <div class="mb-3">
+                                                            <label class="form-label fw-semibold">2. Apakah pengalaman yang didapatkan sesuai dengan harapan Anda?</label>
+                                                            <div class="star-rating">
+                                                                <input type="hidden" name="unit_pengalaman" id="unitPengalamanInput" value="<?= $feedback->unit_pengalaman ?? 0 ?>">
+                                                                <?php for ($i=1; $i<=5; $i++): ?>
+                                                                    <i class="bi <?= ($feedback->unit_pengalaman ?? 0) >= $i ? 'bi-star-fill text-warning' : 'bi-star text-secondary' ?> fs-3 me-1 star" data-value="<?= $i ?>" data-target="#unitPengalamanInput"></i>
+                                                                <?php endfor; ?>
+                                                            </div>
+                                                        </div>
+
+                                                        <!-- Suasana -->
+                                                        <div class="mb-3">
+                                                            <label class="form-label fw-semibold">3. Apakah suasana kerja di unit mendukung pelaksanaan magang?</label>
+                                                            <div class="star-rating">
+                                                                <input type="hidden" name="unit_suasana" id="unitSuasanaInput" value="<?= $feedback->unit_suasana ?? 0 ?>">
+                                                                <?php for ($i=1; $i<=5; $i++): ?>
+                                                                    <i class="bi <?= ($feedback->unit_suasana ?? 0) >= $i ? 'bi-star-fill text-warning' : 'bi-star text-secondary' ?> fs-3 me-1 star" data-value="<?= $i ?>" data-target="#unitSuasanaInput"></i>
+                                                                <?php endfor; ?>
+                                                            </div>
+                                                        </div>
+
+                                                        <!-- Kesan -->
+                                                        <div class="mb-3">
+                                                            <label class="form-label fw-semibold">4. Kesan dan pesan Anda selama magang di unit kerja:</label>
+                                                            <textarea name="unit_kesan" class="form-control" rows="3" maxlength="300" required placeholder="Tuliskan kesan & pesan Anda (maks. 300 karakter)"><?= $feedback->unit_kesan ?? '' ?></textarea>
+                                                            <div class="form-text text-end"><span id="countKesan">0</span>/300</div>
+                                                        </div>
                                                     </div>
                                                 </div>
 
-                                                <!-- Step 2: Feedback Unit Kerja -->
-                                                <div id="step2" class="feedback-step d-none">
-                                                    <h6 class="fw-bold mb-3">Feedback untuk Unit Kerja (Tempat Penempatan Magang)</h6>
-                                                    <span class="text-danger">*Harap mengisi dengan keadaan sebenarnya</span>
-
-                                                    
-                                                    <div class="mb-3">
-                                                        <label>1. Apakah pendampingan supervisor/pembimbing sesuai kebutuhan Anda?</label>
-                                                        <div class="star-rating">
-                                                            <input type="hidden" name="unit_supervisor" id="unitSupervisorInput" value="<?= $feedback->unit_supervisor ?? 0 ?>">
-                                                            <?php for ($i=1; $i<=5; $i++): ?>
-                                                                <i class="bi <?= ($feedback->unit_supervisor ?? 0) >= $i ? 'bi-star-fill text-warning' : 'bi-star text-secondary' ?> fs-3 me-1 star" data-value="<?= $i ?>" data-target="#unitSupervisorInput"></i>
-                                                            <?php endfor; ?>
-                                                        </div>
-                                                    </div>
-
-                                                    <div class="mb-3">
-                                                        <label>2. Apakah pengalaman yang didapatkan sesuai dengan harapan Anda?</label>
-                                                        <div class="star-rating">
-                                                            <input type="hidden" name="unit_pengalaman" id="unitPengalamanInput" value="<?= $feedback->unit_pengalaman ?? 0 ?>">
-                                                            <?php for ($i=1; $i<=5; $i++): ?>
-                                                                <i class="bi <?= ($feedback->unit_pengalaman ?? 0) >= $i ? 'bi-star-fill text-warning' : 'bi-star text-secondary' ?> fs-3 me-1 star" data-value="<?= $i ?>" data-target="#unitPengalamanInput"></i>
-                                                            <?php endfor; ?>
-                                                        </div>
-                                                    </div>
-
-                                                    <div class="mb-3">
-                                                        <label>3. Apakah suasana kerja di unit mendukung pelaksanaan magang?</label>
-                                                        <div class="star-rating">
-                                                            <input type="hidden" name="unit_suasana" id="unitSuasanaInput" value="<?= $feedback->unit_suasana ?? 0 ?>">
-                                                            <?php for ($i=1; $i<=5; $i++): ?>
-                                                                <i class="bi <?= ($feedback->unit_suasana ?? 0) >= $i ? 'bi-star-fill text-warning' : 'bi-star text-secondary' ?> fs-3 me-1 star" data-value="<?= $i ?>" data-target="#unitSuasanaInput"></i>
-                                                            <?php endfor; ?>
-                                                        </div>
-                                                    </div>
-
-                                                    <div class="mb-3">
-                                                        <label>4. Kesan dan pesan Anda selama magang di unit kerja:</label>
-                                                        <textarea name="unit_kesan" class="form-control" rows="3"><?= $feedback->unit_kesan ?? '' ?></textarea>
-                                                    </div>
+                                                <div class="modal-footer">
+                                                    <button type="button" id="prevStep" class="btn btn-secondary d-none"><i class="bi bi-arrow-left"></i> Sebelumnya</button>
+                                                    <button type="button" id="nextStep" class="btn btn-primary"><i class="bi bi-arrow-right"></i> Lanjut</button>
+                                                    <button type="submit" id="submitFeedback" class="btn btn-success d-none"><i class="bi bi-send"></i> Simpan Feedback</button>
                                                 </div>
-                                            </div>
-
-                                            <div class="modal-footer">
-                                                <button type="button" id="prevStep" class="btn btn-secondary d-none">Sebelumnya</button>
-                                                <button type="button" id="nextStep" class="btn btn-primary">Lanjut</button>
-                                                <button type="submit" id="submitFeedback" class="btn btn-success d-none">Simpan Feedback</button>
-                                            </div>
-                                        </form>
+                                            </form>
                                         </div>
                                     </div>
                                 </div>
                         <?php endif; ?>
                     <?php else: ?>
-                        <br>
-                        <p class="text-muted">Belum ada sertifikat magang.</p>
+                        <div class="alert alert-info text-center">
+                            Belum Ada Sertifikat Magang.
+                        </div>
                     <?php endif; ?>
                 </div>
             </div>
 
 </div>
 
-<script>
+<!-- <script>
 document.addEventListener("DOMContentLoaded", function(){
     const step1 = document.getElementById("step1");
     const step2 = document.getElementById("step2");
@@ -304,7 +313,89 @@ document.addEventListener("DOMContentLoaded", function(){
         });
     });
 });
+</script> -->
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+    // === Star rating interaktif ===
+    document.querySelectorAll('.star').forEach(star => {
+        star.addEventListener('click', function() {
+            const target = document.querySelector(this.dataset.target);
+            const value = this.dataset.value;
+            target.value = value;
+
+            const parent = this.parentElement;
+            parent.querySelectorAll('.star').forEach(s => {
+                s.classList.remove('bi-star-fill', 'text-warning');
+                s.classList.add('bi-star', 'text-secondary');
+            });
+
+            for (let i = 0; i < value; i++) {
+                parent.querySelectorAll('.star')[i].classList.remove('bi-star', 'text-secondary');
+                parent.querySelectorAll('.star')[i].classList.add('bi-star-fill', 'text-warning');
+            }
+        });
+    });
+
+    // === Hitung karakter textarea ===
+    const saran = document.querySelector('textarea[name="diklat_saran"]');
+    const kesan = document.querySelector('textarea[name="unit_kesan"]');
+    const countSaran = document.getElementById('countSaran');
+    const countKesan = document.getElementById('countKesan');
+
+    saran.addEventListener('input', () => countSaran.textContent = saran.value.length);
+    kesan.addEventListener('input', () => countKesan.textContent = kesan.value.length);
+
+    // === Navigasi antar step ===
+    const step1 = document.getElementById('step1');
+    const step2 = document.getElementById('step2');
+    const nextBtn = document.getElementById('nextStep');
+    const prevBtn = document.getElementById('prevStep');
+    const submitBtn = document.getElementById('submitFeedback');
+
+    nextBtn.addEventListener('click', function() {
+        // Validasi step 1 sebelum lanjut
+        const web = document.getElementById('diklatWebsiteInput').value;
+        const admin = document.getElementById('diklatAdminInput').value;
+        const saranText = saran.value.trim();
+
+        if (web == 0 || admin == 0 || saranText === '') {
+            alert('Harap isi semua feedback Pusdiklat terlebih dahulu!');
+            return;
+        }
+
+        step1.classList.add('d-none');
+        step2.classList.remove('d-none');
+        nextBtn.classList.add('d-none');
+        prevBtn.classList.remove('d-none');
+        submitBtn.classList.remove('d-none');
+    });
+
+    prevBtn.addEventListener('click', function() {
+        step2.classList.add('d-none');
+        step1.classList.remove('d-none');
+        nextBtn.classList.remove('d-none');
+        prevBtn.classList.add('d-none');
+        submitBtn.classList.add('d-none');
+    });
+
+    // === Validasi akhir sebelum submit ===
+    document.getElementById('formFeedback').addEventListener('submit', function(e) {
+        const supervisor = document.getElementById('unitSupervisorInput').value;
+        const pengalaman = document.getElementById('unitPengalamanInput').value;
+        const suasana = document.getElementById('unitSuasanaInput').value;
+        const kesanText = kesan.value.trim();
+
+        if (supervisor == 0 || pengalaman == 0 || suasana == 0 || kesanText === '') {
+            e.preventDefault();
+            alert('Harap isi semua feedback untuk Unit Kerja sebelum menyimpan!');
+        }
+    });
+
+});
 </script>
+
 
 
 <?= $this->endSection(); ?>

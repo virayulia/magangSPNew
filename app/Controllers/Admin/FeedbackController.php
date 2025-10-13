@@ -22,6 +22,7 @@ class FeedbackController extends BaseController
     {
         $feedback = $this->feedbackModel->join('magang', 'magang.magang_id = feedback.magang_id')
                                         ->join('users', 'users.id = magang.user_id')
+                                        ->join('unit_kerja','unit_kerja.unit_id = magang.unit_id')
                                         ->orderBy('feedback_id')->findAll();
 
         return view('admin/kelola_feedback', ['feedback' => $feedback]);

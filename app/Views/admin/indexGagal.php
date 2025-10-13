@@ -27,6 +27,7 @@
                             <th>Tanggal Masuk</th>
                             <th>Tanggal Selesai</th>
                             <th>Status</th>
+                            <th>Catatan</th>
                             <th>Aksi</th>
                         </tr>
                     </thead>
@@ -51,6 +52,7 @@
                                         }
                                         ?>
                                     </td>
+                                    <td><?= esc($data['alasan_batal']); ?></td>
                                     <td class="text-center">
                                         <!-- <a href="<?= base_url('admin/manage-pendaftaran/detail/' . $data['magang_id']); ?>" class="btn btn-info btn-sm">Detail</a> -->
                                         <button class="btn btn-sm btn-info" data-toggle="modal" data-target="#detailModal<?= $data['magang_id'] ?>">Detail</button>

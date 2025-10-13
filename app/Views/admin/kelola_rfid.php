@@ -70,6 +70,30 @@
                         </form>
                     </div>
                 </div>
+                
+                <div class="d-flex align-items-center mb-3">
+                    <form method="get" class="d-flex align-items-center mb-0" style="margin-right: 15px;">
+                        <select name="status" class="form-control" style="width: 200px; margin-right: 10px;">
+                            <option value="">-- Pilih Status --</option>
+                            <option value="available">Tersedia</option>
+                            <option value="assigned">Digunakan</option>
+                            <option value="lost">Hilang</option>
+                            <option value="inactive">Tidak Tersedia</option>
+                        </select>
+                        <button type="submit" class="btn btn-primary">Filter</button>
+                    </form>
+
+                    <a href="<?= base_url('admin/export-rfid?status=' . service('request')->getGet('status')) ?>" 
+                    class="btn btn-success">
+                        <i class="bi bi-file-earmark-excel"></i> Export Excel
+                    </a>
+                </div>
+
+
+
+                
+                
+                
 
                 <table class="table table-bordered table-striped" id="dataTable" width="100%" cellspacing="0">
                     <thead class="thead-dark">

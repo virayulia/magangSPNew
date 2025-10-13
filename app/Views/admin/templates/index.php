@@ -14,6 +14,9 @@
     <link href="https://fonts.googleapis.com/css?family=Nunito:200,300,400,700" rel="stylesheet">
     <link href="<?= base_url('css/sb-admin-2.min.css') ?>" rel="stylesheet">
 
+    <!-- Custom JS -->
+    <script src="<?= base_url('js/web.js') ?>"></script>
+
     <!-- DataTables CSS -->
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap4.min.css">
 
