@@ -941,7 +941,7 @@ class MagangController extends BaseController
     //     return view('admin/kelola_magang', ['data' => $data, 'unitList' => $unitList, 'rfidList' => $rfid]);
     // }
 
-    public function pesertaMagang()
+    public function pesertaMagang2()
     {
         $bulanMasuk  = $this->request->getGet('bulan_masuk');
         $bulanKeluar = $this->request->getGet('bulan_keluar');
@@ -1050,6 +1050,349 @@ class MagangController extends BaseController
             'unitList' => $unitList,
             'rfidList' => $rfid
         ]);
+    }
+
+    public function pesertaMagang()
+    {
+        $bulanMasuk  = $this->request->getGet('bulan_masuk');
+        $bulanKeluar = $this->request->getGet('bulan_keluar');
+        $tahun       = $this->request->getGet('tahun') ?: date('Y');
+
+        // --- Subquery untuk jawaban_safety (ambil percobaan terakhir) ---
+        $subSafety = "
+            (
+                SELECT js1.magang_id, js1.nilai, js1.created_at, js1.percobaan_ke
+                FROM jawaban_safety js1
+                JOIN (
+                    SELECT magang_id, MAX(created_at) AS max_created
+                    FROM jawaban_safety
+                    GROUP BY magang_id
+                ) js2 
+                ON js1.magang_id = js2.magang_id AND js1.created_at = js2.max_created
+            ) AS js
+        ";
+
+        // --- Subquery untuk rfid_assignment (ambil assignment terakhir) ---
+        $subRfid = "
+            (
+                SELECT r1.*
+                FROM rfid_assignment r1
+                JOIN (
+                    SELECT magang_id, MAX(assignment_id) AS max_created
+                    FROM rfid_assignment
+                    GROUP BY magang_id
+                ) r2 
+                ON r1.magang_id = r2.magang_id AND r1.assignment_id = r2.max_created
+            ) AS ra
+        ";
+
+        $builder = $this->magangModel->select('
+                magang.magang_id, magang.status_berkas_lengkap, magang.tanggal_setujui_pernyataan,
+                magang.laporan, magang.absensi, magang.tanggal_masuk, magang.tanggal_selesai, magang.finalisasi,
+                unit_kerja.unit_kerja,
+                users.id as user_id, users.fullname, users.nisn_nim,
+                js.nilai as nilai_maksimal,
+                rfid.rfid_no, rfid.id_rfid,
+                ra.assignment_id, ra.status as status_rfid, ra.tanggal_kembali, ra.tanggal_bayar,
+                feedback.feedback_id,
+                penilaian.nilai_disiplin, penilaian.nilai_kerajinan,penilaian.nilai_tingkahlaku, penilaian.nilai_kerjasama,
+                penilaian.nilai_kreativitas,penilaian.nilai_kemampuankerja,penilaian.nilai_tanggungjawab,penilaian.nilai_penyerapan,
+                penilaian.tgl_penilaian, penilaian.approve_kaunit,penilaian.tgl_disetujui,penilaian.approve_by,penilaian.catatan, penilaian.catatan_approval,
+                pembimbing.fullname AS nama_pembimbing
+            ')
+            ->select("
+                CASE 
+                    WHEN js.nilai IS NULL THEN 'Belum Tes'
+                    WHEN js.nilai >= 70 THEN 'Lulus'
+                    ELSE 'Belum Lulus'
+                END AS status_tes
+            ", false) 
+            ->join('users', 'users.id = magang.user_id')
+            ->join('unit_kerja', 'magang.unit_id = unit_kerja.unit_id')
+            ->join($subSafety, 'js.magang_id = magang.magang_id', 'left')
+            ->join('penilaian', 'penilaian.magang_id = magang.magang_id', 'left')
+            ->join('feedback', 'feedback.magang_id = magang.magang_id', 'left')
+            ->join($subRfid, 'ra.magang_id = magang.magang_id', 'left')
+            ->join('rfid', 'rfid.id_rfid = ra.rfid_id', 'left')
+            ->join('users pembimbing', 'pembimbing.id = magang.pembimbing_id', 'left') 
+            ->where('magang.status_akhir', 'magang');
+
+        if (!empty($bulanMasuk)) {
+            $builder->where('MONTH(magang.tanggal_masuk)', $bulanMasuk);
+        }
+
+        if (!empty($bulanKeluar)) {
+            $builder->where('MONTH(magang.tanggal_selesai)', $bulanKeluar);
+        }
+
+        if (!empty($tahun)) {
+            $builder->groupStart()
+                    ->where('YEAR(magang.tanggal_masuk)', $tahun)
+                    ->orWhere('YEAR(magang.tanggal_selesai)', $tahun)
+                    ->groupEnd();
+        }
+
+        $data = $builder->findAll();
+        $unitList = $this->unitKerjaModel->findAll();
+        $rfid = $this->rfidModel->findAll();
+        
+        return view('admin/kelola_magang', [
+            'data' => $data,
+            'unitList' => $unitList,
+            'rfidList' => $rfid
+        ]);
+    }
+
+    public function pesertaMagang3()
+    {
+        $unitList = $this->unitKerjaModel->findAll();
+        $rfid = $this->rfidModel->findAll();
+
+        return view('admin/kelola_magang', [
+            'unitList' => $unitList,
+            'rfidList' => $rfid
+        ]);
+    }
+
+    public function getPesertaAjax()
+    {
+        $request = service('request');
+        $draw   = $request->getPost('draw');
+        $start  = (int) $request->getPost('start');
+        $length = (int) $request->getPost('length');
+        $search = $request->getPost('search')['value'];
+
+        // --- Subquery Tes Safety ---
+        $subSafety = "
+            (
+                SELECT js1.magang_id, js1.nilai
+                FROM jawaban_safety js1
+                JOIN (
+                    SELECT magang_id, MAX(created_at) AS max_created
+                    FROM jawaban_safety
+                    GROUP BY magang_id
+                ) js2 
+                ON js1.magang_id = js2.magang_id AND js1.created_at = js2.max_created
+            ) AS js
+        ";
+
+        // --- Subquery RFID ---
+        $subRfid = "
+            (
+                SELECT r1.*
+                FROM rfid_assignment r1
+                JOIN (
+                    SELECT magang_id, MAX(assignment_id) AS max_created
+                    FROM rfid_assignment
+                    GROUP BY magang_id
+                ) r2 
+                ON r1.magang_id = r2.magang_id AND r1.assignment_id = r2.max_created
+            ) AS ra
+        ";
+
+        $builder = $this->magangModel
+            ->select("
+                magang.magang_id, magang.status_berkas_lengkap, magang.tanggal_setujui_pernyataan,
+                magang.laporan, magang.absensi,
+                penilaian.nilai_disiplin, penilaian.nilai_kerajinan, penilaian.nilai_tingkahlaku,
+                penilaian.nilai_kerjasama, penilaian.nilai_kreativitas, penilaian.nilai_kemampuankerja,
+                penilaian.nilai_tanggungjawab, penilaian.nilai_penyerapan, penilaian.tgl_disetujui, penilaian.catatan,
+                users.fullname, users.nisn_nim, unit_kerja.unit_kerja,
+                magang.tanggal_masuk, magang.tanggal_selesai,
+                rfid.rfid_no, js.nilai as nilai_tes,
+                pembimbing.fullname AS nama_pembimbing,
+                ra.status AS status_rfid,
+                feedback.feedback_id
+            ")
+            ->join('users', 'users.id = magang.user_id')
+            ->join('unit_kerja', 'magang.unit_id = unit_kerja.unit_id', 'left')
+            ->join($subSafety, 'js.magang_id = magang.magang_id', 'left')
+            ->join('penilaian', 'penilaian.magang_id = magang.magang_id', 'left')
+            ->join('feedback', 'feedback.magang_id = magang.magang_id', 'left')
+            ->join($subRfid, 'ra.magang_id = magang.magang_id', 'left')
+            ->join('rfid', 'rfid.id_rfid = ra.rfid_id', 'left')
+            ->join('users pembimbing', 'pembimbing.id = magang.pembimbing_id', 'left')
+            ->where('magang.status_akhir', 'magang');
+
+        if ($search) {
+            $builder->groupStart()
+                ->like('users.fullname', $search)
+                ->orLike('users.nisn_nim', $search)
+                ->orLike('unit_kerja.unit_kerja', $search)
+                ->groupEnd();
+        }
+
+        $totalRecords = $builder->countAllResults(false);
+        $builder->limit($length, $start);
+        $data = $builder->get()->getResult();
+
+        $result = [];
+        $no = $start + 1;
+
+        foreach ($data as $row) {
+
+            // 🔹 Validasi Berkas
+            $validasiBerkas = !empty($row->status_berkas_lengkap) && $row->status_berkas_lengkap === 'Y'
+                ? '<span class="badge bg-success text-light">Valid</span>'
+                : '<a href="' . base_url('admin/manage-kelengkapan-berkas/' . $row->magang_id) . '"><span class="badge bg-danger text-light">Tidak Valid</span></a>';
+
+            // 🔹 Setuju Pernyataan
+            $setujuPernyataan = !empty($row->tanggal_setujui_pernyataan)
+                ? '<span class="badge bg-success text-light">Disetujui</span>'
+                : '<span class="badge bg-danger text-light">Belum Setuju</span>';
+
+            // 🔹 Laporan
+            $laporan = !empty($row->laporan)
+                ? '<a href="' . base_url('uploads/laporan/' . $row->laporan) . '" target="_blank" class="btn btn-primary btn-sm"><i class="bi bi-eye"></i></a>
+                <button class="btn btn-danger btn-sm btn-tolak-laporan" data-id="' . $row->magang_id . '" data-nama="' . esc($row->fullname) . '">
+                    <i class="bi bi-x-circle"></i>
+                </button>'
+                : '<span class="badge bg-danger text-light">Belum Ada</span>';
+
+            // 🔹 Absensi
+            $absensi = !empty($row->absensi)
+                ? '<a href="' . base_url('uploads/absensi/' . $row->absensi) . '" target="_blank" class="btn btn-primary btn-sm"><i class="bi bi-eye"></i></a>
+                <button class="btn btn-danger btn-sm btn-tolak-absensi" data-id="' . $row->magang_id . '" data-nama="' . esc($row->fullname) . '">
+                    <i class="bi bi-x-circle"></i>
+                </button>'
+                : '<span class="badge bg-danger text-light">Belum Ada</span>';
+
+            // 🔹 Nilai Magang (rata-rata)
+            $nilai = [
+                $row->nilai_disiplin, $row->nilai_kerajinan, $row->nilai_tingkahlaku, $row->nilai_kerjasama,
+                $row->nilai_kreativitas, $row->nilai_kemampuankerja, $row->nilai_tanggungjawab, $row->nilai_penyerapan
+            ];
+            $rata = array_sum(array_filter($nilai)) > 0 ? round(array_sum($nilai) / count(array_filter($nilai)), 2) : '-';
+            $nilaiMagang = '<button class="btn btn-info btn-sm btn-detail-nilai" data-id="' . $row->magang_id . '"><strong>' . $rata . '</strong></button>';
+
+            $result[] = [
+                'no' => $no++,
+                'fullname' => esc($row->fullname),
+                'nisn_nim' => esc($row->nisn_nim),
+                'unit_kerja' => esc($row->unit_kerja),
+                'tanggal_masuk' => esc(format_tanggal_indonesia($row->tanggal_masuk)),
+                'tanggal_selesai' => esc(format_tanggal_indonesia($row->tanggal_selesai)),
+                'validasi_berkas' => $validasiBerkas,
+                'setuju_pernyataan' => $setujuPernyataan,
+                'laporan' => $laporan,
+                'absensi' => $absensi,
+                'nilai_magang' => $nilaiMagang,
+                'rfid_no' => esc($row->rfid_no)?? '-',
+                'nilai_tes' => $row->nilai_tes ?? '<span class="badge bg-danger text-light">Belum Tes</span>',
+                'nama_pembimbing' => esc($row->nama_pembimbing) ?? '-',
+                'status_rfid' => $row->status_rfid ?? '-',
+                'feedback' => $row->feedback_id ? '<span class="badge bg-danger text-light">Sudah</span>' : '<span class="badge bg-danger text-light">Belum</span>',
+                'aksi' => '<button class="btn btn-sm btn-info btn-detail-peserta" data-id="' . $row->magang_id . '">Detail</button>'
+            ];
+        }
+
+        return $this->response->setJSON([
+            'draw' => intval($draw),
+            'recordsTotal' => $totalRecords,
+            'recordsFiltered' => $totalRecords,
+            'data' => $result
+        ]);
+    }
+
+    public function getDetailMagang($id)
+    {
+        $data = $this->magangModel
+            ->select("
+                magang.*,
+                unit_kerja.unit_kerja,
+                users.id as user_id, users.fullname, users.email,users.user_image,users.nisn_nim, users.no_hp, users.jenis_kelamin, users.alamat,
+                users.province_id, users.city_id, users.domisili, users.provinceDom_id, users.cityDom_id,
+                users.tingkat_pendidikan, users.instansi_id, users.jurusan_id, users.semester, 
+                users.nilai_ipk, users.rfid_no, users.cv, users.proposal, users.surat_permohonan, users.tanggal_surat,
+                users.no_surat, users.nama_pimpinan, users.jabatan, users.email_instansi,users.bpjs_kes, users.bpjs_tk, 
+                users.buktibpjs_tk, users.ktp_kk, users.status,
+                jurusan.nama_jurusan,
+                instansi.nama_instansi,
+                province_ktp.province AS provinsi_ktp,
+                province_dom.province AS provinsi_domisili,
+                city_ktp.regency AS kota_ktp, 
+                city_ktp.type AS tipe_kota_ktp,
+                city_dom.regency AS kota_domisili,
+                city_dom.type AS tipe_kota_domisili,
+            ")
+            ->join('users', 'users.id = magang.user_id')
+            ->join('unit_kerja', 'magang.unit_id = unit_kerja.unit_id', 'left')
+            ->join('jurusan', 'users.jurusan_id = jurusan.jurusan_id', 'left')
+            ->join('provinces AS province_ktp', 'province_ktp.id = users.province_id', 'left')
+            ->join('provinces AS province_dom', 'province_dom.id = users.provinceDom_id', 'left')
+            ->join('regencies AS city_ktp', 'city_ktp.id = users.city_id', 'left')
+            ->join('regencies AS city_dom', 'city_dom.id = users.cityDom_id', 'left')
+            ->join('instansi', 'users.instansi_id = instansi.instansi_id', 'left')
+            ->where('magang.magang_id', $id)
+            ->first();
+
+
+        if (!$data) {
+            return $this->response->setJSON(['status' => 'error', 'message' => 'Data tidak ditemukan']);
+        }
+
+        return $this->response->setJSON([
+            'status' => 'success',
+            'data' => $data
+        ]);
+    }
+
+
+    public function getDetailNilai($magang_id)
+    {
+        $data = $this->magangModel
+            ->select('
+                users.fullname, users.nisn_nim,
+                penilaian.nilai_disiplin, penilaian.nilai_kerajinan, penilaian.nilai_tingkahlaku,
+                penilaian.nilai_kerjasama, penilaian.nilai_kreativitas, penilaian.nilai_kemampuankerja,
+                penilaian.nilai_tanggungjawab, penilaian.nilai_penyerapan, penilaian.catatan,
+                unit_kerja.unit_kerja
+            ')
+            ->join('users', 'users.id = magang.user_id')
+            ->join('penilaian', 'penilaian.magang_id = magang.magang_id', 'left')
+            ->join('unit_kerja', 'unit_kerja.unit_id = magang.unit_id', 'left')
+            ->where('magang.magang_id', $magang_id)
+            ->first();
+
+        if (!$data) {
+            return $this->response->setJSON(['status' => 'error', 'message' => 'Data tidak ditemukan']);
+        }
+
+        return $this->response->setJSON([
+            'status' => 'success',
+            'data' => $data
+        ]);
+    }
+
+    public function getEditData($id)
+    {
+        $data = $this->magangModel
+            ->select('magang.*, users.fullname')
+            ->join('users', 'users.id = magang.user_id')
+            ->where('magang.magang_id', $id)
+            ->first();
+
+        $unitList = $this->unitKerjaModel->findAll();
+
+        if ($data) {
+            return $this->response->setJSON([
+                'status' => 'success',
+                'data' => $data,
+                'unitList' => $unitList
+            ]);
+        } else {
+            return $this->response->setJSON([
+                'status' => 'error',
+                'message' => 'Data tidak ditemukan'
+            ]);
+        }
+    }
+
+    public function getAvailableRfid()
+    {
+        $rfidModel = new RfidModel();
+        $available = $rfidModel->where('status', 'available')->findAll();
+        return $this->response->setJSON($available);
     }
 
     public function setRFID()
@@ -1174,7 +1517,10 @@ class MagangController extends BaseController
             }
         }
 
-        return redirect()->back()->with('success', 'Data magang berhasil diperbarui & email pemberitahuan dikirim.');
+    return $this->response->setJSON([
+            'status'  => 'success',
+            'message' => 'Data magang berhasil diperbarui & email pemberitahuan dikirim.'
+        ]);        
     }
 
     public function batalkanMagang()
@@ -1235,16 +1581,16 @@ class MagangController extends BaseController
         return $this->response->setJSON(['status' => 'success']);
     }
 
-    public function tolakLaporan()
+    public function tolakLaporan($id)
     {
-        $magangId = $this->request->getPost('magang_id');
+        // $magangId = $this->request->getPost('magang_id');
         $catatan  = $this->request->getPost('catatan');
 
         $db = \Config\Database::connect();
         $data = $db->table('magang')
             ->select('magang.*, users.email, users.email_instansi, users.fullname, users.username')
             ->join('users', 'users.id = magang.user_id', 'left')
-            ->where('magang.magang_id', $magangId)
+            ->where('magang.magang_id', $id)
             ->get()
             ->getRow();
 
@@ -1261,7 +1607,7 @@ class MagangController extends BaseController
         }
 
         // update database
-        $this->magangModel->update($magangId, [
+        $this->magangModel->update($id, [
             'laporan' => null,
             'catatan_laporan' => $catatan
         ]);
@@ -1282,22 +1628,22 @@ class MagangController extends BaseController
         ]));
 
         if (!$email->send()) {
-            log_message('error', "Gagal kirim email tolak laporan ID $magangId: " . print_r($email->printDebugger(), true));
+            log_message('error', "Gagal kirim email tolak laporan ID $id: " . print_r($email->printDebugger(), true));
         }
 
         return redirect()->back()->with('success', 'Laporan berhasil ditolak dan email notifikasi dikirim.');
     }
 
-    public function tolakAbsensi()
+    public function tolakAbsensi($id)
     {
-        $magangId = $this->request->getPost('magang_id');
+        // $magangId = $this->request->getPost('magang_id');
         $catatan  = $this->request->getPost('catatan');
 
         $db = \Config\Database::connect();
         $data = $db->table('magang')
             ->select('magang.*, users.email, users.email_instansi, users.fullname, users.username')
             ->join('users', 'users.id = magang.user_id', 'left')
-            ->where('magang.magang_id', $magangId)
+            ->where('magang.magang_id', $id)
             ->get()
             ->getRow();
 
@@ -1314,7 +1660,7 @@ class MagangController extends BaseController
         }
 
         // update database
-        $this->magangModel->update($magangId, [
+        $this->magangModel->update($id, [
             'absensi' => null,
             'catatan_absensi' => $catatan
         ]);
@@ -1335,7 +1681,7 @@ class MagangController extends BaseController
         ]));
 
         if (!$email->send()) {
-            log_message('error', "Gagal kirim email tolak absensi ID $magangId: " . print_r($email->printDebugger(), true));
+            log_message('error', "Gagal kirim email tolak absensi ID $id: " . print_r($email->printDebugger(), true));
         }
 
         return redirect()->back()->with('success', 'Absensi berhasil ditolak dan email notifikasi dikirim.');
@@ -1719,18 +2065,20 @@ class MagangController extends BaseController
         $tahun = $this->request->getGet('tahun');
 
         // ambil data 
-        $builder = $this->magangModel->select('users.fullname, users.nisn_nim, jurusan.nama_jurusan, instansi.nama_instansi, 
-                                            unit_kerja.unit_kerja, magang.tanggal_masuk, magang.tanggal_selesai')
+        $builder = $this->magangModel->select('users.fullname, users.nisn_nim, users.tingkat_pendidikan, jurusan.nama_jurusan, instansi.nama_instansi, 
+                                            unit_kerja.unit_kerja, magang.tanggal_masuk, magang.tanggal_selesai, magang.durasi')
                                         ->join('users', 'users.id = magang.user_id')
                                         ->join('instansi', 'instansi.instansi_id = users.instansi_id', 'left')
                                         ->join('jurusan', 'jurusan.jurusan_id = users.jurusan_id','left')
-                                        ->join('unit_kerja', 'magang.unit_id = unit_kerja.unit_id');
+                                        ->join('unit_kerja', 'magang.unit_id = unit_kerja.unit_id')
+                                        ->where('magang.status_akhir', 'magang');
+
 
         if ($bulanMasuk) {
         $builder->where('MONTH(tanggal_masuk)', $bulanMasuk);
         }
         if ($bulanKeluar) {
-            $builder->where('MONTH(tanggal_keluar)', $bulanKeluar);
+            $builder->where('MONTH(tanggal_selesai)', $bulanKeluar);
         }
         if ($tahun) {
             $builder->where('YEAR(tanggal_masuk)', $tahun);
@@ -1742,28 +2090,104 @@ class MagangController extends BaseController
 
         // Header kolom
         $sheet->setCellValue('A1', 'Nama');
-        $sheet->setCellValue('B1', 'NIM');
-        $sheet->setCellValue('C1', 'Jurusan');
-        $sheet->setCellValue('D1', 'Perguruan Tinggi');
-        $sheet->setCellValue('E1', 'Unit Kerja');
-        $sheet->setCellValue('F1', 'Tanggal Masuk');
-        $sheet->setCellValue('G1', 'Tanggal Selesai');
+        $sheet->setCellValue('B1', 'NIM/NISN');
+        $sheet->setCellValue('C1', 'Tingkatan');
+        $sheet->setCellValue('D1', 'Jurusan');
+        $sheet->setCellValue('E1', 'Nama PT/SMK');
+        $sheet->setCellValue('F1', 'Unit Kerja');
+        $sheet->setCellValue('G1', 'Tanggal Masuk');
+        $sheet->setCellValue('H1', 'Tanggal Selesai');
+        $sheet->setCellValue('I1', 'Durasi');
 
         // Isi data
         $row = 2;
         foreach ($data as $d) {
             $sheet->setCellValue('A' . $row, $d['fullname']);
             $sheet->setCellValue('B' . $row, $d['nisn_nim']);
-            $sheet->setCellValue('C' . $row, $d['nama_jurusan']);
-            $sheet->setCellValue('D' . $row, $d['nama_instansi']);
-            $sheet->setCellValue('E' . $row, $d['unit_kerja']);
-            $sheet->setCellValue('F' . $row, date('d-m-Y', strtotime($d['tanggal_masuk'])));
-            $sheet->setCellValue('G' . $row, date('d-m-Y', strtotime($d['tanggal_selesai'])));
+            $sheet->setCellValue('C' . $row, $d['tingkat_pendidikan']);
+            $sheet->setCellValue('D' . $row, $d['nama_jurusan']);
+            $sheet->setCellValue('E' . $row, $d['nama_instansi']);
+            $sheet->setCellValue('F' . $row, $d['unit_kerja']);
+            $sheet->setCellValue('G' . $row, date('d-m-Y', strtotime($d['tanggal_masuk'])));
+            $sheet->setCellValue('H' . $row, date('d-m-Y', strtotime($d['tanggal_selesai'])));
+            $sheet->setCellValue('I' . $row, $d['durasi']);
+            $row++;
+        }
+
+
+        // Download file
+        $filename = 'data_peserta_magang_' . date('Ymd_His') . '.xlsx';
+        $writer = new Xlsx($spreadsheet);
+
+        // header untuk download
+        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        header("Content-Disposition: attachment; filename=\"$filename\"");
+        header('Cache-Control: max-age=0');
+
+        $writer->save('php://output');
+        exit;
+    }
+
+    public function exportAlumni()
+    {
+        // ambil filter 
+        $bulanMasuk = $this->request->getGet('bulan_masuk');
+        $bulanKeluar = $this->request->getGet('bulan_keluar');
+        $tahun = $this->request->getGet('tahun');
+
+        // ambil data 
+        $builder = $this->magangModel->select('users.fullname, users.nisn_nim, users.tingkat_pendidikan, jurusan.nama_jurusan, instansi.nama_instansi, 
+                                            unit_kerja.unit_kerja, magang.tanggal_masuk, magang.tanggal_selesai, magang.durasi')
+                                        ->join('users', 'users.id = magang.user_id')
+                                        ->join('instansi', 'instansi.instansi_id = users.instansi_id', 'left')
+                                        ->join('jurusan', 'jurusan.jurusan_id = users.jurusan_id','left')
+                                        ->join('unit_kerja', 'magang.unit_id = unit_kerja.unit_id')
+                                        ->where('magang.status_akhir', 'lulus');
+
+
+        if ($bulanMasuk) {
+        $builder->where('MONTH(tanggal_masuk)', $bulanMasuk);
+        }
+        if ($bulanKeluar) {
+            $builder->where('MONTH(tanggal_selesai)', $bulanKeluar);
+        }
+        if ($tahun) {
+            $builder->where('YEAR(tanggal_masuk)', $tahun);
+        }
+        $data = $builder->get()->getResultArray();
+
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+
+        // Header kolom
+        $sheet->setCellValue('A1', 'Nama');
+        $sheet->setCellValue('B1', 'NIM/NISN');
+        $sheet->setCellValue('C1', 'Tingkatan');
+        $sheet->setCellValue('D1', 'Jurusan');
+        $sheet->setCellValue('E1', 'Nama PT/SMK');
+        $sheet->setCellValue('F1', 'Unit Kerja');
+        $sheet->setCellValue('G1', 'Tanggal Masuk');
+        $sheet->setCellValue('H1', 'Tanggal Selesai');
+        $sheet->setCellValue('I1', 'Durasi');
+
+        // Isi data
+        $row = 2;
+        foreach ($data as $d) {
+            $sheet->setCellValue('A' . $row, $d['fullname']);
+            $sheet->setCellValue('B' . $row, $d['nisn_nim']);
+            $sheet->setCellValue('C' . $row, $d['tingkat_pendidikan']);
+            $sheet->setCellValue('D' . $row, $d['nama_jurusan']);
+            $sheet->setCellValue('E' . $row, $d['nama_instansi']);
+            $sheet->setCellValue('F' . $row, $d['unit_kerja']);
+            $sheet->setCellValue('G' . $row, date('d-m-Y', strtotime($d['tanggal_masuk'])));
+            $sheet->setCellValue('H' . $row, date('d-m-Y', strtotime($d['tanggal_selesai'])));
+            $sheet->setCellValue('I' . $row, $d['durasi']);
+
             $row++;
         }
 
         // Download file
-        $filename = 'data_peserta_magang_' . date('Ymd_His') . '.xlsx';
+        $filename = 'data_alumni_magang_' . date('Ymd_His') . '.xlsx';
         $writer = new Xlsx($spreadsheet);
 
         // header untuk download

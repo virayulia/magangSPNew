@@ -153,6 +153,16 @@ $routes->group('admin', ['namespace' => 'App\Controllers\Admin','filter' => 'adm
 
     // Kelola Peserta Magang
     $routes->get('manage-magang', 'MagangController::pesertaMagang');
+    $routes->post('manage-magang/getPesertaAjax', 'MagangController::getPesertaAjax');
+    $routes->post('manage-magang/tolakLaporan/(:num)', 'MagangController::tolakLaporan/$1');
+    $routes->post('manage-magang/tolakAbsensi/(:num)', 'MagangController::tolakAbsensi/$1');
+    $routes->get('manage-magang/detailNilai/(:num)', 'MagangController::getDetailNilai/$1');
+    $routes->get('manage-magang/detailPeserta/(:num)', 'MagangController::getDetailMagang/$1');
+    $routes->get('manage-magang/getEditData/(:num)', 'MagangController::getEditData/$1');
+    $routes->post('manage-magang/updateMagang/(:num)', 'MagangController::updateMagang/$1');
+    $routes->get('manage-magang/getAvailableRfid', 'MagangController::getAvailableRfid');
+
+
     $routes->post('updateMagang/(:num)', 'MagangController::updateMagang/$1');
     $routes->post('batalkanMagang', 'MagangController::batalkanMagang');
     $routes->post('setRFID', 'MagangController::setRFID');
@@ -163,6 +173,7 @@ $routes->group('admin', ['namespace' => 'App\Controllers\Admin','filter' => 'adm
     $routes->post('finalisasi/(:num)', 'MagangController::finalisasi/$1');
 
     $routes->get('export-peserta', 'MagangController::exportPeserta');
+    $routes->get('export-alumni', 'MagangController::exportAlumni');
 
     // Kelola Feedback
     $routes->get('manage-feedback', 'FeedbackController::index');

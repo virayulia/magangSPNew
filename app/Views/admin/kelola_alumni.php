@@ -59,6 +59,11 @@
                 </div>
             </form>
 
+            <a href="<?= base_url('admin/export-alumni?bulan_masuk='.service('request')->getGet('bulan_masuk').'&bulan_keluar='.service('request')->getGet('bulan_keluar').'&tahun='.service('request')->getGet('tahun')) ?>" 
+                class="btn btn-success mb-3">
+                <i class="bi bi-file-earmark-excel"></i> Export Excel
+            </a>
+
             <table class="table table-bordered table-striped" width="100%" cellspacing="0" id="dataTable">
                 <thead class="table-dark">
                     <tr>
