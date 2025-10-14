@@ -48,6 +48,7 @@
                 <th>No</th>
                 <th>Nama</th>
                 <th>NIM/NISN</th>
+                <th>Jurusan</th>
                 <th>Instansi</th>
                 <th>Pembimbing</th>
                 <th>Tgl Mulai</th>
@@ -68,6 +69,7 @@
                         <td><?= $i + 1 ?></td>
                         <td><?= esc($item['nama_peserta']) ?></td>
                         <td><?= esc($item['nisn_nim']) ?></td>
+                        <td><?= esc($item['nama_jurusan']) ?></td>
                         <td><?= esc($item['nama_instansi']) ?></td>
                         <td>
                             <?php if (empty($item['nama_pembimbing'])): ?>

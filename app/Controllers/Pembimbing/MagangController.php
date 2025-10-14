@@ -66,6 +66,7 @@ class MagangController extends BaseController
             ->select('magang.magang_id, magang.tanggal_masuk, magang.tanggal_selesai, magang.pembimbing_id,
                     peserta.fullname AS nama_peserta, peserta.nisn_nim, instansi.nama_instansi, 
                     magang.laporan, magang.absensi,
+                    jurusan.nama_jurusan,
                     penilaian.penilaian_id, penilaian.nilai_disiplin, penilaian.nilai_kerajinan, penilaian.nilai_tingkahlaku,
                     penilaian.nilai_kerjasama, penilaian.nilai_kreativitas, penilaian.nilai_kemampuankerja, 
                     penilaian.nilai_tanggungjawab, penilaian.nilai_penyerapan, penilaian.catatan, penilaian.tgl_penilaian,
@@ -73,6 +74,7 @@ class MagangController extends BaseController
                     pembimbing.fullname AS nama_pembimbing')
             ->join('users peserta', 'peserta.id = magang.user_id') 
             ->join('instansi', 'instansi.instansi_id = peserta.instansi_id')
+            ->join('jurusan', 'jurusan.jurusan_id = peserta.jurusan_id')
             ->join('penilaian', 'penilaian.magang_id = magang.magang_id', 'left')
             ->join('users pembimbing', 'pembimbing.id = magang.pembimbing_id', 'left') 
             ->where('magang.status_akhir', 'magang')
@@ -277,7 +279,7 @@ class MagangController extends BaseController
         // Ambil peserta magang dari semua unit tersebut yang sudah dinilai, tapi belum approve
         $builder = $db->table('magang')
             ->select('magang.magang_id, magang.tanggal_masuk, magang.tanggal_selesai, magang.pembimbing_id,
-                    magang.laporan, magang.absensi,
+                    magang.laporan, magang.absensi, jurusan.nama_jurusan,
                     peserta.fullname AS nama_peserta, peserta.nisn_nim, instansi.nama_instansi, 
                     penilaian.penilaian_id, penilaian.nilai_disiplin, penilaian.nilai_kerajinan, penilaian.nilai_tingkahlaku,
                     penilaian.nilai_kerjasama, penilaian.nilai_kreativitas, penilaian.nilai_kemampuankerja, 
@@ -286,6 +288,7 @@ class MagangController extends BaseController
                     pembimbing.fullname AS nama_pembimbing')
             ->join('users peserta', 'peserta.id = magang.user_id') 
             ->join('instansi', 'instansi.instansi_id = peserta.instansi_id')
+            ->join('jurusan', 'jurusan.jurusan_id = peserta.jurusan_id')
             ->join('penilaian', 'penilaian.magang_id = magang.magang_id', 'left')
             ->join('users pembimbing', 'pembimbing.id = magang.pembimbing_id', 'left') 
             ->where('magang.status_akhir', 'magang')

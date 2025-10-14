@@ -48,6 +48,7 @@
                 <th>No</th>
                 <th>Nama</th>
                 <th>NIM/NISN</th>
+                <th>Jurusan</th>
                 <th>Instansi</th>
                 <th>Tgl Mulai</th>
                 <th>Tgl Selesai</th>
@@ -66,6 +67,7 @@
                     <td><?= $i+1 ?></td>
                     <td><?= esc($item['nama_peserta']) ?></td>
                     <td><?= esc($item['nisn_nim']) ?></td>
+                    <td><?= esc($item['nama_jurusan']) ?></td>
                     <td><?= esc($item['nama_instansi']) ?></td>
                     <td><?= date('d M Y', strtotime($item['tanggal_masuk'])) ?></td>
                     <td><?= date('d M Y', strtotime($item['tanggal_selesai'])) ?></td>
