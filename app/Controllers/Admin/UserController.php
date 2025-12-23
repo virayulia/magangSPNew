@@ -14,6 +14,7 @@ use App\Models\UnitKerjaModelModel;
 use App\Entities\User;
 use App\Models\UnitKerjaModel;
 use App\Models\UnitUserModel;
+use CodeIgniter\Database\Exceptions\DatabaseException;
 
 class UserController extends BaseController
 {
@@ -37,57 +38,84 @@ class UserController extends BaseController
 
     public function index()
     {
-         $db = \Config\Database::connect();
+        $db = \Config\Database::connect();
 
-        // Ambil semua user JOIN ke auth_groups_users
-        $builder = $db->table('users')
-            ->select('users.*, agu.group_id, ag.name as role, instansi.nama_instansi, jurusan.nama_jurusan')
+        $users = $db->table('users')
+            ->select('
+                users.*,
+                agu.group_id,
+                ag.name as role,
+                instansi.nama_instansi,
+                jurusan.nama_jurusan
+            ')
             ->join('auth_groups_users agu', 'agu.user_id = users.id', 'left')
             ->join('auth_groups ag', 'ag.id = agu.group_id', 'left')
-            ->join('instansi', 'instansi.instansi_id = users.instansi_id')
-            ->join('jurusan', 'jurusan.jurusan_id = users.jurusan_id')
-            ->where('ag.name', 'user'); // filter hanya role user
-
-        $users = $builder->get()->getResult();
-
-        $jurusan = $this->jurusanModel->findAll();
-        foreach ($users as $user){
-            if($user->tingkat_pendidikan === 'SMK'){
-                $instansi = $this->instansiModel->where('tingkat', 'smk')->findAll();
-            } else {
-                $instansi = $this->instansiModel->where('tingkat !=', 'smk')->findAll();
-
-            }
-        }
-        
-        // Ambil data role juga untuk select option
-        $roles = $db->table('auth_groups')->get()->getResultArray();
+            ->join('instansi', 'instansi.instansi_id = users.instansi_id', 'left')
+            ->join('jurusan', 'jurusan.jurusan_id = users.jurusan_id', 'left')
+            ->where('ag.name', 'user')
+            ->get()
+            ->getResult();
 
         return view('admin/kelola_user', [
-            'title' => 'Kelola User',
-            'users' => $users,
-            'roles' => $roles,
-            'jurusan' => $jurusan,
-            'instansi' => $instansi,
+            'title'    => 'Kelola User',
+            'users'    => $users,
+            'roles'    => $db->table('auth_groups')->get()->getResultArray(),
+            'jurusan'  => $this->jurusanModel->findAll(),
+            'instansi' => $this->instansiModel->findAll(), // ambil semua
         ]);
     }
+
 
     public function update($id)
     {
-        $data = $this->request->getPost();
+        $validation = \Config\Services::validation();
 
-        $this->userModel->update($id, [
-            'email'         => $data['email'],
-            'fullname'      => $data['fullname'],
-            'no_hp'         => $data['no_hp'],
-            'semester'      => $data['semester'],
-            'nilai_ipk'     => $data['nilai_ipk'],
-            'instansi_id'   => $data['instansi_id'],
-            'jurusan_id'    => $data['jurusan_id'],
-        ]);
+        // Atur rules validasi
+        $rules = [
+            'email'         => "required|valid_email|is_unique[users.email,id,{$id}]",
+            'fullname'      => 'required',
+            'no_hp'         => 'permit_empty|numeric',
+            'semester'      => 'permit_empty|integer',
+            'nilai_ipk'     => 'permit_empty|decimal',
+            'instansi_id'   => 'required',
+            'jurusan_id'    => 'required',
+            'password'      => 'permit_empty|min_length[8]',
+        ];
 
-        return redirect()->back()->with('success', 'Data user berhasil diperbarui.');
+        if (!$this->validate($rules)) {
+            return redirect()->back()->withInput()->with('errors', $validation->getErrors());
+        }
+
+        // Ambil user entity
+        $user = $this->userModel->find($id);
+        if (!$user) {
+            return redirect()->back()->with('error', 'User tidak ditemukan.');
+        }
+
+        // Set atribut dari input
+        $user->email       = $this->request->getPost('email');
+        $user->fullname    = $this->request->getPost('fullname');
+        $user->no_hp       = $this->request->getPost('no_hp');
+        $user->semester    = $this->request->getPost('semester');
+        $user->nilai_ipk   = $this->request->getPost('nilai_ipk');
+        $user->instansi_id = $this->request->getPost('instansi_id');
+        $user->jurusan_id  = $this->request->getPost('jurusan_id');
+
+        // Jika ada password baru
+        if ($this->request->getPost('password')) {
+            $user->password = $this->request->getPost('password');
+        }
+
+        // Simpan entity
+        if (!$this->userModel->save($user)) {
+            return redirect()->back()->withInput()->with('errors', $this->userModel->errors());
+        }
+
+        session()->setFlashdata('success', 'Data user berhasil diperbarui.');
+        return redirect()->back();
     }
+
+
 
     public function activate($id)
     {
@@ -108,17 +136,27 @@ class UserController extends BaseController
     public function delete($id)
     {
         $db = \Config\Database::connect();
+        $db->transStart(); 
 
-        // Hapus relasi group-user dulu (auth_groups_users)
-        $db->table('auth_groups_users')->where('user_id', $id)->delete();
+        try {
+            $db->table('auth_groups_users')->where('user_id', $id)->delete();
 
-        // Hapus user
-        $db->table('users')->where('id', $id)->delete();
+            $db->table('users')->where('id', $id)->delete();
 
-        // Set flash message
-        session()->setFlashdata('success', 'User berhasil dihapus.');
+            $db->transComplete();
 
-        return redirect()->to(base_url('admin/manage-user'));
+            if ($db->transStatus() === false) {
+                session()->setFlashdata('error', 'Data user tidak bisa dihapus karena sedang digunakan di tabel lain.');
+            } else {
+                session()->setFlashdata('success', 'User berhasil dihapus.');
+            }
+
+        } catch (DatabaseException $e) {
+            $db->transRollback(); 
+            session()->setFlashdata('error', 'Data user tidak bisa dihapus karena sedang digunakan di tabel lain.');
+        }
+
+        return redirect()->back();
     }
 
     public function indexAdmin()
@@ -300,6 +338,7 @@ class UserController extends BaseController
             'password' => $this->request->getPost('password'),
             'eselon' => $this->request->getPost('eselon'),
             'active'   => 1,
+            'must_change_password' => 1,
         ];
 
         // Pakai entitas dari App\Entities
@@ -360,6 +399,7 @@ class UserController extends BaseController
                 'password' => $password,
                 'eselon'   => $eselon,
                 'active'   => 1,
+                'must_change_password' => 1,
             ];
 
             $user = new \App\Entities\User($userData);
@@ -403,6 +443,7 @@ class UserController extends BaseController
             'email'    => "required|valid_email|is_unique[users.email,id,{$id}]",
             'eselon'   => 'required',
             'unit_id'  => 'required',
+            'tanda_tangan' => 'permit_empty|uploaded[tanda_tangan]|max_size[tanda_tangan,2048]|ext_in[tanda_tangan,png,jpg,jpeg]'
         ];
 
         if ($this->request->getPost('password')) {
@@ -419,11 +460,30 @@ class UserController extends BaseController
             return redirect()->back()->with('error', 'User tidak ditemukan.');
         }
 
+        // Upload tanda tangan
+        $fileTtd = $this->request->getFile('tanda_tangan');
+        $namaTtdBaru = $user->tanda_tangan; // tetap pakai nama lama jika tidak diganti
+
+        if ($fileTtd && $fileTtd->isValid() && !$fileTtd->hasMoved()) {
+
+            // Hapus file lama jika ada
+            if (!empty($user->tanda_tangan) && file_exists(FCPATH . 'uploads/tanda-tangan/' . $user->tanda_tangan)) {
+                unlink(FCPATH . 'uploads/tanda-tangan/' . $user->tanda_tangan);
+            }
+
+            // Generate nama file baru
+            $namaTtdBaru = $id . '_' . time() . '.' . $fileTtd->getExtension();
+
+            // Upload
+            $fileTtd->move('uploads/tanda-tangan/', $namaTtdBaru);
+        }
+
         // Update data user
         $user->fullname = $this->request->getPost('fullname');
         $user->username = $this->request->getPost('username');
         $user->email    = $this->request->getPost('email');
         $user->eselon   = $this->request->getPost('eselon');
+        $user->tanda_tangan = $namaTtdBaru; // simpan nama file
         $user->active   = 1;
 
         if ($this->request->getPost('password')) {
@@ -443,8 +503,8 @@ class UserController extends BaseController
 
             // Simpan relasi unit baru
             $this->unitUserModel->insert([
-                'user_id'   => $id,
-                'unit_id'   => $unit_id,
+                'user_id'    => $id,
+                'unit_id'    => $unit_id,
                 'created_at' => date('Y-m-d H:i:s'),
             ]);
         }
@@ -453,20 +513,33 @@ class UserController extends BaseController
         return redirect()->to(base_url('admin/manage-user-pembimbing'));
     }
 
+
+    
     public function deletePembimbing($id)
     {
         $db = \Config\Database::connect();
 
-        // Hapus relasi user-group
-        $db->table('auth_groups_users')->where('user_id', $id)->delete();
+        $db->transStart(); 
 
-        // Hapus user
-        $db->table('users')->where('id', $id)->delete();
+        try {
+            $db->table('auth_groups_users')->where('user_id', $id)->delete();
 
-        // Flash message
-        session()->setFlashdata('success', 'Pembimbing berhasil dihapus.');
+            $db->table('users')->where('id', $id)->delete();
 
-        return redirect()->to(base_url('admin/manage-user-pembimbing'));
+            $db->transComplete();
+
+            if ($db->transStatus() === false) {
+                session()->setFlashdata('error', 'Data pembimbing tidak bisa dihapus karena sedang digunakan di unit lain.');
+            } else {
+                session()->setFlashdata('success', 'Pembimbing berhasil dihapus.');
+            }
+
+        } catch (DatabaseException $e) {
+            $db->transRollback(); 
+            session()->setFlashdata('error', 'Data pembimbing tidak bisa dihapus karena sedang digunakan di unit lain.');
+        }
+
+        return redirect()->back();
     }
 
 

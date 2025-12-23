@@ -90,11 +90,11 @@
                                 <td><?= $tanggal_buka; ?></td>
                                 <td><?= $tanggal_tutup; ?></td>
                                 <td class="text-center">
-                                    <button class="btn btn-warning btn-sm" data-toggle="modal" data-target="#editModal<?= $data['periode_id']; ?>">
-                                        Edit
+                                    <button class="btn btn-warning btn-sm" data-toggle="modal" data-target="#editModal<?= $data['periode_id']; ?>" title="Edit">
+                                        <i class="fas fa-edit"></i>
                                     </button>
-                                    <a href="<?= base_url('admin/periode/delete/'.$data['periode_id']) ?>" class="btn btn-sm btn-danger" onclick="return confirm('Yakin ingin menghapus user ini?')">
-                                        <i class="fas fa-trash"></i> Hapus
+                                    <a href="<?= base_url('admin/periode/delete/'.$data['periode_id']) ?>" class="btn btn-sm btn-danger" title="Hapus" onclick="return confirm('Yakin ingin menghapus user ini?')">
+                                        <i class="fas fa-trash"></i> 
                                     </a>
                                 </td>
                             </tr>

@@ -76,12 +76,12 @@
                                     <td><?= $no++; ?></td>
                                     <td><?= esc($data['nama_jurusan']); ?></td>
                                     <td class="text-center">
-                                        <button class="btn btn-warning btn-sm" data-toggle="modal" data-target="#editModal<?= $data['jurusan_id']; ?>">
-                                            Edit
+                                        <button class="btn btn-warning btn-sm" title="Edit" data-toggle="modal" data-target="#editModal<?= $data['jurusan_id']; ?>">
+                                            <i class="fa fa-edit"></i>
                                         </button>
-                                        <!-- <button class="btn btn-danger btn-sm" data-toggle="modal" data-target="#deleteModal<?= $data['jurusan_id']; ?>">
-                                            Delete
-                                        </button> -->
+                                        <button class="btn btn-danger btn-sm" title="Delete" data-toggle="modal" data-target="#deleteModal<?= $data['jurusan_id']; ?>">
+                                            <i class="fa fa-trash"></i>
+                                        </button>
                                     </td>
                                 </tr>
 

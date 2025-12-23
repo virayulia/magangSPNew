@@ -95,6 +95,29 @@ $uri = service('uri');
   }
 }
 
+
+.submenu {
+  list-style: none;
+  padding-left: 32px;
+  display: none;
+  margin-top: 4px;
+}
+
+.submenu.open {
+  display: block;
+}
+
+.submenu li a {
+  display: block;
+  padding: 6px 0;
+  font-size: 0.92rem;
+  color: #555;
+}
+
+.submenu li a.active {
+  font-weight: bold;
+}
+
 </style>
 
 <div class="container-fluid" style="padding-top: 75px;">
@@ -130,31 +153,48 @@ $uri = service('uri');
                 <p class="mb-1 text-muted small"><?= format_tanggal_singkat(esc($pendaftaran['tanggal_masuk'] ?? 'Data belum diisi')); ?> s/d <?= format_tanggal_singkat(esc($pendaftaran['tanggal_selesai'] ?? 'Data belum diisi')); ?></p>
                   <?php endif;?>
                 <?php
-                // Penentuan $step (sudah kamu buat, saya tempelkan ulang untuk kelengkapan)
-                  $step = 1;
-                  $today = date('Y-m-d');
+                $step = 1;
+                $today = date('Y-m-d');
 
-                   if (!empty($pendaftaran['status_validasi_berkas']) && $pendaftaran['status_validasi_berkas']=== 'Y')  {
-                      $step = 5;
-                  } elseif (!empty($pendaftaran['status_konfirmasi']) && !empty($pendaftaran['tanggal_konfirmasi'])) {
-                      $step = 4;
-                  } elseif (!empty($pendaftaran['status_seleksi']) && !empty($pendaftaran['tanggal_seleksi'])) {
-                      $step = 3;
-                  } elseif (!empty($pendaftaran['tanggal_daftar'])) {
-                      if ($periode && $periode->tanggal_tutup < $today) {
-                          $step = 2;
-                      } else {
+                  // PILIH mode step berdasarkan submenu
+                  if (!empty($pendaftaran['status_akhir']) && $pendaftaran['status_akhir'] === 'lulus') {
+                      $step = 6;
+
+                  } elseif ($submenuType === 'magang') {
+                      // STEP MAGANG
+                      if (!empty($pendaftaran['status_validasi_berkas']) && $pendaftaran['status_validasi_berkas'] === 'Y') {
+                          $step = 5;
+                      } elseif (!empty($pendaftaran['status_konfirmasi']) && !empty($pendaftaran['tanggal_konfirmasi'])) {
+                          $step = 4;
+                      } elseif (!empty($pendaftaran['status_seleksi']) && !empty($pendaftaran['tanggal_seleksi'])) {
+                          $step = 3;
+                      } elseif (!empty($pendaftaran['tanggal_daftar'])) {
+                          if ($periode && $periode->tanggal_tutup < $today) {
+                              $step = 2;
+                          } else {
+                              $step = 1;
+                          }
+                      }
+
+                  } elseif ($submenuType === 'penelitian') {
+                      // STEP PENELITIAN
+                      if (!empty($pendaftaran['status_validasi_konfirmasi']) && $pendaftaran['status_validasi_konfirmasi'] === 'Y') {
+                          $step = 5;
+                      } elseif (!empty($pendaftaran['status_konfirmasi']) && !empty($pendaftaran['tanggal_konfirmasi'])) {
+                          $step = 4;
+                      } elseif (!empty($pendaftaran['status_verifikasi']) && !empty($pendaftaran['tanggal_verifikasi'])) {
+                          $step = 3;
+                      } elseif (!empty($pendaftaran['tanggal_daftar'])) {
                           $step = 1;
                       }
                   }
-
-                  // Mapping nama status
                   $statusText = [
-                      1 => 'Pendaftaran',
-                      2 => 'Seleksi',
-                      3 => 'Konfirmasi Penerima',
-                      4 => 'Validasi Konfirmasi',
-                      5 => 'Pelaksanaan'
+                    1 => 'Pendaftaran',
+                    2 => 'Seleksi',
+                    3 => 'Konfirmasi Penerima',
+                    4 => 'Validasi Konfirmasi',
+                    5 => 'Pelaksanaan',
+                    6 => 'Lulus'
                   ];
                 ?>
                 <!-- Tampilkan Status -->
@@ -169,34 +209,100 @@ $uri = service('uri');
           <!-- Sidebar -->
           <div class="sidebar mt-4">
             <a href="<?= base_url('profile'); ?>" class="<?= ($uri->getSegment(1) === 'profile') ? 'active' : '' ?>">
-              
               <i class="bi bi-file-earmark-text me-2"></i>
               <span>Profil</span>
             </a>
-            <a href="<?= base_url('status-lamaran'); ?>" class="<?= ($uri->getSegment(1) === 'status-lamaran') ? 'active' : '' ?>">
-              <i class="bi bi-list-check me-2"></i>
-              <span>Pendaftaran Magang</span>
-            </a>
-            <a href="<?= base_url('pelaksanaan'); ?>" class="<?= ($uri->getSegment(1) === 'pelaksanaan') ? 'active' : '' ?>">
-              <i class="bi bi-calendar-check me-2"></i>
-              <span>Pelaksanaan Magang</span>
-            </a>
-            <a href="<?= base_url('unggah-laporan'); ?>" class="<?= ($uri->getSegment(1) === 'unggah-laporan') ? 'active' : '' ?>">
-              <i class="bi bi-file-earmark-arrow-up me-2"></i>
-              <span>Unggah Laporan Magang</span>
-            </a>
-            <a href="<?= base_url('sertifikat-magang'); ?>" class="<?= ($uri->getSegment(1) === 'sertifikat-magang') ? 'active' : '' ?>">
-              <i class="bi bi-award me-2"></i>
-              <span>Sertifikat Magang</span>
-            </a>
-            <!-- <a href="penelitian" class="<?= ($uri->getSegment(1) === 'penelitian') ? 'active' : '' ?>">
-              <i class="bi bi-list-check me-2"></i>
-              <span>Penelitian</span>
-            </a> -->
-            <!-- <a href="#" class="<?= ($uri->getSegment(1) === 'lapor') ? 'active' : '' ?>">
-              <i class="bi bi-chat-dots me-2"></i>
-              <span>Lapor! (Support)</span>
-            </a> -->
+
+<?php $activeSegment = $uri->getSegment(1); ?>
+
+<!-- ====== PROGRAM MAGANG ====== -->
+<?php if ($hasMagang && $hasPenelitian): ?>
+  <?php
+    $magangSegments = ['status-lamaran','pelaksanaan','unggah-laporan','sertifikat-magang'];
+    $isMagangOpen = in_array($activeSegment, $magangSegments);
+  ?>
+  <div class="sidebar-item">
+    <a href="javascript:void(0)" class="sidebar-link d-flex align-items-center <?= $isMagangOpen ? 'active' : '' ?>" 
+       onclick="toggleMenu('subMagang')">
+      <i class="bi bi-briefcase me-2"></i>
+      <span>Magang</span>
+    </a>
+    <ul id="subMagang" class="submenu <?= $isMagangOpen ? 'open' : '' ?>">
+      <li>
+        <a class="<?= $activeSegment === 'status-lamaran' ? 'active' : '' ?>" href="<?= base_url('status-lamaran'); ?>">
+          <i class="bi bi-check2-square me-2"></i> Pendaftaran
+        </a>
+      </li>
+      <li>
+        <a class="<?= $activeSegment === 'pelaksanaan' ? 'active' : '' ?>" href="<?= base_url('pelaksanaan'); ?>">
+          <i class="bi bi-calendar-event me-2"></i> Pelaksanaan
+        </a>
+      </li>
+      <li>
+        <a class="<?= $activeSegment === 'unggah-laporan' ? 'active' : '' ?>" href="<?= base_url('unggah-laporan'); ?>">
+          <i class="bi bi-upload me-2"></i> Unggah Laporan
+        </a>
+      </li>
+      <li>
+        <a class="<?= $activeSegment === 'sertifikat-magang' ? 'active' : '' ?>" href="<?= base_url('sertifikat-magang'); ?>">
+          <i class="bi bi-award me-2"></i> Sertifikat
+        </a>
+      </li>
+    </ul>
+  </div>
+
+    <?php
+    $penelitianSegments = ['status-penelitian','pelaksanaan-penelitian','unggah-form-penelitian','surat-keterangan'];
+    $isPenelitianOpen = in_array($activeSegment, $penelitianSegments);
+  ?>
+  <div class="sidebar-item">
+    <a href="javascript:void(0)" class="sidebar-link d-flex align-items-center <?= $isPenelitianOpen ? 'active' : '' ?>" 
+       onclick="toggleMenu('subPenelitian')">
+      <i class="bi bi-journal-bookmark me-2"></i>
+      <span>Penelitian</span>
+    </a>
+    <ul id="subPenelitian" class="submenu <?= $isPenelitianOpen ? 'open' : '' ?>">
+      <li>
+        <a class="<?= $activeSegment === 'status-penelitian' ? 'active' : '' ?>" href="<?= base_url('status-penelitian'); ?>">
+          <i class="bi bi-check2-square me-2"></i> Pendaftaran
+        </a>
+      </li>
+      <li>
+        <a class="<?= $activeSegment === 'pelaksanaan-penelitian' ? 'active' : '' ?>" href="<?= base_url('pelaksanaan-penelitian'); ?>">
+          <i class="bi bi-calendar-event me-2"></i> Pelaksanaan
+        </a>
+      </li>
+      <li>
+        <a class="<?= $activeSegment === 'unggah-form-penelitian' ? 'active' : '' ?>" href="<?= base_url('unggah-form-penelitian'); ?>">
+          <i class="bi bi-upload me-2"></i> Unggah Formulir
+        </a>
+      </li>
+      <li>
+        <a class="<?= $activeSegment === 'surat-keterangan' ? 'active' : '' ?>" href="<?= base_url('surat-keterangan'); ?>">
+          <i class="bi bi-award me-2"></i> Surat Keterangan
+        </a>
+      </li>
+    </ul>
+
+  </div>
+<?php elseif ($hasMagang): ?>
+   <!-- Hanya Magang -->
+  <a class="<?= $activeSegment === 'status-lamaran' ? 'active' : '' ?>" href="<?= base_url('status-lamaran'); ?>"><i class="bi bi-list-check me-2"></i> Pendaftaran Magang</a>
+  <a class="<?= $activeSegment === 'pelaksanaan' ? 'active' : '' ?>" href="<?= base_url('pelaksanaan'); ?>"><i class="bi bi-calendar-check me-2"></i> Pelaksanaan Magang</a>
+  <a class="<?= $activeSegment === 'unggah-laporan' ? 'active' : '' ?>" href="<?= base_url('unggah-laporan'); ?>"><i class="bi bi-file-earmark-arrow-up me-2"></i> Unggah Laporan</a>
+  <a class="<?= $activeSegment === 'sertifikat-magang' ? 'active' : '' ?>" href="<?= base_url('sertifikat-magang'); ?>"><i class="bi bi-award me-2"></i> Sertifikat Magang</a>
+
+<?php elseif ($hasPenelitian): ?>
+    <!-- Hanya Penelitian -->
+  <a class="<?= $activeSegment === 'status-penelitian' ? 'active' : '' ?>" href="<?= base_url('status-penelitian'); ?>"><i class="bi bi-list-check me-2"></i> Pendaftaran Penelitian</a>
+  <a class="<?= $activeSegment === 'pelaksanaan-penelitian' ? 'active' : '' ?>" href="<?= base_url('pelaksanaan-penelitian'); ?>"><i class="bi bi-calendar-check me-2"></i> Pelaksanaan Penelitian</a>
+  <a class="<?= $activeSegment === 'unggah-form-penelitian' ? 'active' : '' ?>" href="<?= base_url('unggah-form-penelitian'); ?>"><i class="bi bi-file-earmark-arrow-up me-2"></i> Unggah Formulir</a>
+  <a class="<?= $activeSegment === 'surat-keterangan' ? 'active' : '' ?>" href="<?= base_url('surat-keterangan'); ?>"><i class="bi bi-award me-2"></i> Surat Keterangan</a>
+
+<?php endif; ?>
+
+
+
             <a href="https://drive.google.com/drive/folders/1HH0h2rAiwuC22XZw83mWCH7-FTKDiuVj?usp=drive_link" class="<?= ($uri->getSegment(1) === 'manual-pengguna') ? 'active' : '' ?>">
               <i class="bi bi-book me-2"></i>
               <span>Manual Pengguna</span>
@@ -207,6 +313,7 @@ $uri = service('uri');
               <span>Keluar</span>
             </a>
           </div>
+
         </div>
 
         <!-- Main Content -->
@@ -218,5 +325,11 @@ $uri = service('uri');
     </div>
   </div>
 </div>
+<script>
+  function toggleMenu(id) {
+  const menu = document.getElementById(id);
+  menu.classList.toggle('open');
+}
+</script>
 
 <?= $this->endSection(); ?>

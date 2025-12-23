@@ -56,6 +56,12 @@
 
     <!-- SweetAlert2 -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+
+
+    
+
+    
     <style>
     .wa-float {
         position: fixed;
@@ -123,6 +129,31 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/SimpleLightbox/2.1.0/simpleLightbox.min.js"></script>
     <!-- Core theme JS-->
     <script src="<?= base_url();?>/js/scripts.js"></script>
+    
+    <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+
+    <script>
+$(document).ready(function() {
+  $('#keyword').select2({
+    theme: 'bootstrap-5',
+    tags: true,
+    tokenSeparators: [','],
+    placeholder: "Pilih atau tambah kata kunci",
+    allowClear: true,
+    dropdownParent: $('#modalPendaftaranPenelitian'),
+    createTag: function(params) {
+      var term = $.trim(params.term);
+      if (term === '') return null;
+      return {
+        id: term,     
+        text: term,   
+        newTag: true  
+      };
+    }
+  });
+});
+
+    </script>
     <!-- * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *-->
     <!-- * *                               SB Forms JS                               * *-->
     <!-- * * Activate your form at https://startbootstrap.com/solution/contact-forms * *-->

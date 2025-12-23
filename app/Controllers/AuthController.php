@@ -127,25 +127,26 @@ class AuthController extends Controller
                 ->withInput()
                 ->with('error', $this->auth->error() ?? lang('Auth.badAttempt'));
         }
-
-        // Is the user being forced to reset their password?
-        if ($this->auth->user()->force_pass_reset === true) {
-            $url = route_to('reset-password') . '?token=' . $this->auth->user()->reset_hash;
-
-            return redirect()
-                ->to($url)
-                ->withCookies();
-        }
+        
 
         // Ambil user yang login
         $user = $this->auth->user();
-        if (in_array('admin', $user->getRoles())) {
-            $redirectURL = site_url('/admin/manage-pendaftaran');
-        } else if (in_array('pembimbing', $user->getRoles())) {
-            $redirectURL = site_url('/pembimbing/penilaian');
+        
+        if (
+            $user->must_change_password == 1 &&
+            array_intersect(['admin', 'pembimbing'], $user->getRoles())
+        ) {
+            return redirect()->to(site_url('must-change-password'));
         }else{
-            $redirectURL = session('redirect_url') ?? site_url($this->config->landingRoute);
+            if (in_array('admin', $user->getRoles())) {
+                $redirectURL = site_url('/admin/dashboard');
+            } else if (in_array('pembimbing', $user->getRoles())) {
+                $redirectURL = site_url('/pembimbing/penilaian');
+            }else{
+                $redirectURL = session('redirect_url') ?? site_url($this->config->landingRoute);
+            }
         }
+        
         unset($_SESSION['redirect_url']);
 
         return redirect()

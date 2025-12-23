@@ -51,7 +51,7 @@
     <p>Terima kasih atas perhatian dan kerjasamanya.</p>
 
     <p>Hormat kami,</p>
-    <p><strong>Training & Knowledge Management<br>PT Semen Padang</strong></p>
-    <p>Siska Ayu Soraya<br><strong>Kepala</strong></p>
+    <p><strong><?= esc($signature['unit_kerja']) ?><br>PT Semen Padang</strong></p>
+    <p><?= esc($signature['fullname']) ?><br><strong>Kepala</strong></p>
 </body>
 </html>

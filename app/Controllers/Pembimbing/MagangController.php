@@ -27,17 +27,98 @@ class MagangController extends BaseController
         $this->rfidModel = new RfidModel();
     }
 
+    // public function penilaian()
+    // {   
+    //     $db = \Config\Database::connect();
+
+    //     // Ambil semua unit yang dipegang oleh pembimbing yang login
+    //     $userId = user_id();
+    //     // $unitPembimbing = $db->table('unit_user')
+    //     //     ->select('unit_id')
+    //     //     ->where('user_id', $userId)
+    //     //     ->get()
+    //     //     ->getResultArray();
+
+    //     $data['kuota_unit'] = $this->magangModel->getSisaKuota();
+    //     dd($data);
+
+
+    //     $unitPembimbing = $db->table('unit_user')
+    //         ->select('unit_kerja.unit_id, unit_kerja.unit_kerja')
+    //         ->join('unit_kerja', 'unit_kerja.unit_id = unit_user.unit_id')
+    //         ->where('unit_user.user_id', $userId)
+    //         ->get()
+    //         ->getResultArray();
+        
+
+    //     $unitIds = array_column($unitPembimbing, 'unit_id');
+
+    //     // Ambil eselon user login
+    //     $userLogin = $db->table('users')
+    //         ->select('id, fullname, eselon')
+    //         ->where('id', $userId)
+    //         ->get()
+    //         ->getRowArray();
+
+    //     // Jika tidak ada unit, tampilkan kosong
+    //     if (empty($unitIds)) {
+    //         return view('pembimbing/penilaian', ['peserta' => [], 'pembimbing' => []]);
+    //     }
+
+    //     // Ambil peserta magang dari semua unit tersebut
+    //     $builder = $db->table('magang')
+    //         ->select('magang.magang_id, magang.tanggal_masuk, magang.tanggal_selesai, magang.pembimbing_id,
+    //                 peserta.fullname AS nama_peserta, peserta.nisn_nim, instansi.nama_instansi, 
+    //                 magang.laporan, magang.absensi,
+    //                 jurusan.nama_jurusan,
+    //                 penilaian.penilaian_id, penilaian.nilai_disiplin, penilaian.nilai_kerajinan, penilaian.nilai_tingkahlaku,
+    //                 penilaian.nilai_kerjasama, penilaian.nilai_kreativitas, penilaian.nilai_kemampuankerja, 
+    //                 penilaian.nilai_tanggungjawab, penilaian.nilai_penyerapan, penilaian.catatan, penilaian.tgl_penilaian,
+    //                 penilaian.approve_kaunit, penilaian.tgl_disetujui, penilaian.approve_by,
+    //                 pembimbing.fullname AS nama_pembimbing')
+    //         ->join('users peserta', 'peserta.id = magang.user_id') 
+    //         ->join('instansi', 'instansi.instansi_id = peserta.instansi_id')
+    //         ->join('jurusan', 'jurusan.jurusan_id = peserta.jurusan_id')
+    //         ->join('penilaian', 'penilaian.magang_id = magang.magang_id', 'left')
+    //         ->join('users pembimbing', 'pembimbing.id = magang.pembimbing_id', 'left') 
+    //         ->where('magang.status_akhir', 'magang')
+    //         ->whereIn('magang.unit_id', $unitIds);
+
+    //      // 🔹 Filter tambahan kalau bukan eselon 2
+    //     if ($userLogin['eselon'] != 2) {
+    //         $builder->where('magang.pembimbing_id', $userId);
+    //     }
+
+    //     $peserta = $builder->get()->getResultArray();
+
+    //     // 🔹 Ambil data pembimbing (users yang terhubung ke unit yang sama)
+    //     $pembimbing = $db->table('users')
+    //         ->select('users.id, users.fullname, users.email, unit_user.unit_id')
+    //         ->join('unit_user', 'unit_user.user_id = users.id')
+    //         ->whereIn('unit_user.unit_id', $unitIds)
+    //         ->get()
+    //         ->getResultArray();
+        
+
+    //     return view('pembimbing/penilaian', [
+    //         'peserta' => $peserta,
+    //         'pembimbing' => $pembimbing,
+    //         'userLogin' => $userLogin,
+    //         'unitPembimbing' => $unitPembimbing
+
+    //     ]);
+
+    // }
+
     public function penilaian()
     {   
+        $filter = $this->request->getGet('filter');
+        $tingkat = $this->request->getGet('tingkat');
+        $bulanMasuk  = $this->request->getGet('tanggal_masuk'); 
+        $bulanKeluar = $this->request->getGet('tanggal_keluar');
+        $today = date('Y-m-d');
         $db = \Config\Database::connect();
-
-        // Ambil semua unit yang dipegang oleh pembimbing yang login
         $userId = user_id();
-        // $unitPembimbing = $db->table('unit_user')
-        //     ->select('unit_id')
-        //     ->where('user_id', $userId)
-        //     ->get()
-        //     ->getResultArray();
 
         $unitPembimbing = $db->table('unit_user')
             ->select('unit_kerja.unit_id, unit_kerja.unit_kerja')
@@ -45,33 +126,38 @@ class MagangController extends BaseController
             ->where('unit_user.user_id', $userId)
             ->get()
             ->getResultArray();
-        
 
         $unitIds = array_column($unitPembimbing, 'unit_id');
 
-        // Ambil eselon user login
         $userLogin = $db->table('users')
             ->select('id, fullname, eselon')
             ->where('id', $userId)
             ->get()
             ->getRowArray();
 
-        // Jika tidak ada unit, tampilkan kosong
         if (empty($unitIds)) {
-            return view('pembimbing/penilaian', ['peserta' => [], 'pembimbing' => []]);
+            return view('pembimbing/penilaian', [
+                'peserta' => [],
+                'pembimbing' => [],
+                'unitPembimbing' => [],
+            ]);
         }
 
-        // Ambil peserta magang dari semua unit tersebut
+        $mapTingkat = [
+            'SMK' => ['SMK'],
+            'Perguruan Tinggi' => ['D3', 'D4/S1', 'S2']
+        ];
+
         $builder = $db->table('magang')
-            ->select('magang.magang_id, magang.tanggal_masuk, magang.tanggal_selesai, magang.pembimbing_id,
-                    peserta.fullname AS nama_peserta, peserta.nisn_nim, instansi.nama_instansi, 
-                    magang.laporan, magang.absensi,
-                    jurusan.nama_jurusan,
-                    penilaian.penilaian_id, penilaian.nilai_disiplin, penilaian.nilai_kerajinan, penilaian.nilai_tingkahlaku,
-                    penilaian.nilai_kerjasama, penilaian.nilai_kreativitas, penilaian.nilai_kemampuankerja, 
-                    penilaian.nilai_tanggungjawab, penilaian.nilai_penyerapan, penilaian.catatan, penilaian.tgl_penilaian,
-                    penilaian.approve_kaunit, penilaian.tgl_disetujui, penilaian.approve_by,
-                    pembimbing.fullname AS nama_pembimbing')
+            ->select('magang.magang_id, magang.tanggal_masuk, magang.tanggal_selesai, magang.pembimbing_id, magang.status_akhir,
+                peserta.fullname AS nama_peserta, peserta.nisn_nim, instansi.nama_instansi, peserta.tingkat_pendidikan,
+                magang.laporan, magang.absensi,
+                jurusan.nama_jurusan,
+                penilaian.penilaian_id, penilaian.nilai_disiplin, penilaian.nilai_kerajinan, penilaian.nilai_tingkahlaku,
+                penilaian.nilai_kerjasama, penilaian.nilai_kreativitas, penilaian.nilai_kemampuankerja, 
+                penilaian.nilai_tanggungjawab, penilaian.nilai_penyerapan, penilaian.catatan, penilaian.tgl_penilaian,
+                penilaian.approve_kaunit, penilaian.tgl_disetujui, penilaian.approve_by,
+                pembimbing.fullname AS nama_pembimbing')
             ->join('users peserta', 'peserta.id = magang.user_id') 
             ->join('instansi', 'instansi.instansi_id = peserta.instansi_id')
             ->join('jurusan', 'jurusan.jurusan_id = peserta.jurusan_id')
@@ -80,14 +166,89 @@ class MagangController extends BaseController
             ->where('magang.status_akhir', 'magang')
             ->whereIn('magang.unit_id', $unitIds);
 
-         // 🔹 Filter tambahan kalau bukan eselon 2
+        if ($tingkat && isset($mapTingkat[$tingkat])) {
+            $builder->whereIn('peserta.tingkat_pendidikan', $mapTingkat[$tingkat]);
+        }
+
+        if ($bulanMasuk) {
+            $builder->where('magang.tanggal_masuk >=', $bulanMasuk . '-01');
+            $builder->where(
+                'magang.tanggal_masuk <',
+                date('Y-m-01', strtotime($bulanMasuk . ' +1 month'))
+            );
+        }
+        if ($bulanKeluar) {
+            $builder->where('magang.tanggal_selesai >=', $bulanKeluar . '-01');
+            $builder->where(
+                'magang.tanggal_selesai <',
+                date('Y-m-01', strtotime($bulanKeluar . ' +1 month'))
+            );
+        }
+
+        if ($filter == 'aktif')
+            $builder->where('magang.tanggal_masuk <=', $today)->where('magang.tanggal_selesai >=', $today);
+        if ($filter == 'akan_magang')
+            $builder->where('magang.tanggal_masuk >', $today);
+        if ($filter == 'belum_selesai')
+            $builder->where('magang.tanggal_selesai <', $today);
+        
+
         if ($userLogin['eselon'] != 2) {
             $builder->where('magang.pembimbing_id', $userId);
         }
 
         $peserta = $builder->get()->getResultArray();
 
-        // 🔹 Ambil data pembimbing (users yang terhubung ke unit yang sama)
+                $chartData = [
+                'SMK' => [
+                    'proses' => 0,
+                    'aktif' => 0,
+                    'akan_masuk' => 0,
+                    'belum_lulus' => 0
+                ],
+                'Perguruan Tinggi' => [
+                    'proses' => 0,
+                    'aktif' => 0,
+                    'akan_masuk' => 0,
+                    'belum_lulus' => 0
+                ]
+            ];
+
+        foreach ($peserta as $row) {
+
+            // Tentukan kelompok tingkat pendidikan
+            $tingkat = $row['tingkat_pendidikan'];
+
+            // Normalisasi (karena PT punya D3, D4/S1, S2)
+            if (in_array($tingkat, ['D3', 'D4/S1', 'S2'])) {
+                $tingkat = 'Perguruan Tinggi';
+            } elseif ($tingkat === 'SMK') {
+                $tingkat = 'SMK';
+            } else {
+                continue; // skip jika bukan dua kategori ini
+            }
+
+            // 1. PROSES — status_akhir = proses
+            if ($row['status_akhir'] === 'proses') {
+                $chartData[$tingkat]['proses']++;
+            }
+
+            // 2. AKTIF — sedang magang sekarang
+            if ($row['tanggal_masuk'] <= $today && $row['tanggal_selesai'] >= $today) {
+                $chartData[$tingkat]['aktif']++;
+            }
+
+            // 3. AKAN MASUK — tanggal masuk di masa mendatang
+            if ($row['tanggal_masuk'] > $today) {
+                $chartData[$tingkat]['akan_masuk']++;
+            }
+
+            // 4. BELUM LULUS — sudah lewat tapi status akhir masih magang
+            if ($row['tanggal_selesai'] < $today && $row['status_akhir'] === 'magang') {
+                $chartData[$tingkat]['belum_lulus']++;
+            }
+        }
+
         $pembimbing = $db->table('users')
             ->select('users.id, users.fullname, users.email, unit_user.unit_id')
             ->join('unit_user', 'unit_user.user_id = users.id')
@@ -95,14 +256,20 @@ class MagangController extends BaseController
             ->get()
             ->getResultArray();
 
+        $unitGet = $unitId ?? '';
+
+        // atau pastikan string kosong jika null
+        if ($unitGet === null) $unitGet = '';
+
+
         return view('pembimbing/penilaian', [
             'peserta' => $peserta,
             'pembimbing' => $pembimbing,
             'userLogin' => $userLogin,
-            'unitPembimbing' => $unitPembimbing
-
+            'unitPembimbing' => $unitPembimbing,
+            'chartData' => $chartData,
+            'unitGet'  => $unitGet
         ]);
-
     }
 
     public function assignPembimbing($magang_id)
@@ -396,18 +563,19 @@ class MagangController extends BaseController
                         ->join('regencies AS city_ktp', 'city_ktp.id = users.city_id', 'left')
                         ->join('regencies AS city_dom', 'city_dom.id = users.cityDom_id', 'left')
                         ->join('unit_kerja', 'magang.unit_id = unit_kerja.unit_id')
-                        ->join('jawaban_safety', 'magang.magang_id = jawaban_safety.magang_id', 'left')
+                        ->join('jawaban_safety', 'magang.magang_id = jawaban_safety.relasi_id AND jawaban_safety.tipe = "magang"', 'left')
                         ->join('penilaian', 'penilaian.magang_id = magang.magang_id', 'left')
                         ->join('feedback', 'feedback.magang_id = magang.magang_id', 'left')
-                         ->join('(
-                            SELECT r1.*
-                            FROM rfid_assignment r1
-                            JOIN (
-                                SELECT magang_id, MAX(tanggal_pinjam) as max_created
-                                FROM rfid_assignment
-                                GROUP BY magang_id
-                            ) r2 ON r1.magang_id = r2.magang_id AND r1.tanggal_pinjam = r2.max_created
-                        ) AS ra', 'ra.magang_id = magang.magang_id', 'left')
+                        ->join("(
+                                SELECT r1.*
+                                FROM rfid_assignment r1
+                                JOIN (
+                                    SELECT relasi_id, MAX(tanggal_pinjam) AS max_created
+                                    FROM rfid_assignment
+                                    WHERE tipe = 'magang'
+                                    GROUP BY relasi_id
+                                ) r2 ON r1.relasi_id = r2.relasi_id AND r1.tanggal_pinjam = r2.max_created
+                            ) AS ra", 'ra.relasi_id = magang.magang_id', 'left')
                         ->join('rfid', 'rfid.id_rfid = ra.rfid_id', 'left')
                         ->where('magang.status_akhir', 'magang')
                         ->where('magang.finalisasi !=', null)
@@ -477,7 +645,8 @@ class MagangController extends BaseController
             if (!empty($toEmail)) {
                 $email->clear(true);
                 $email->setTo($toEmail);
-
+                $unit_id = 44;
+                $signature = getSignature($unit_id);
                 $email->setSubject('Sertifikat Magang Anda Sudah Tersedia');
                 $email->setMailType('html');
 
@@ -488,6 +657,7 @@ class MagangController extends BaseController
                     'instansi'        => $data->nama_instansi,
                     'tanggal_masuk'   => $data->tanggal_masuk,
                     'tanggal_selesai' => $data->tanggal_selesai,
+                    'signature' => $signature
                 ]));
 
                 if (!$email->send()) {
@@ -557,18 +727,19 @@ class MagangController extends BaseController
                         ->join('regencies AS city_ktp', 'city_ktp.id = users.city_id', 'left')
                         ->join('regencies AS city_dom', 'city_dom.id = users.cityDom_id', 'left')
                         ->join('unit_kerja', 'magang.unit_id = unit_kerja.unit_id')
-                        ->join('jawaban_safety', 'magang.magang_id = jawaban_safety.magang_id', 'left')
+                        ->join('jawaban_safety', 'magang.magang_id = jawaban_safety.relasi_id AND jawaban_safety.tipe = "magang"', 'left')
                         ->join('penilaian', 'penilaian.magang_id = magang.magang_id', 'left')
                         ->join('feedback', 'feedback.magang_id = magang.magang_id', 'left')
-                         ->join('(
-                            SELECT r1.*
-                            FROM rfid_assignment r1
-                            JOIN (
-                                SELECT magang_id, MAX(tanggal_pinjam) as max_created
-                                FROM rfid_assignment
-                                GROUP BY magang_id
-                            ) r2 ON r1.magang_id = r2.magang_id AND r1.tanggal_pinjam = r2.max_created
-                        ) AS ra', 'ra.magang_id = magang.magang_id', 'left')
+                        ->join("(
+                                SELECT r1.*
+                                FROM rfid_assignment r1
+                                JOIN (
+                                    SELECT relasi_id, MAX(tanggal_pinjam) AS max_created
+                                    FROM rfid_assignment
+                                    WHERE tipe = 'magang'
+                                    GROUP BY relasi_id
+                                ) r2 ON r1.relasi_id = r2.relasi_id AND r1.tanggal_pinjam = r2.max_created
+                            ) AS ra", 'ra.relasi_id = magang.magang_id', 'left')
                         ->join('rfid', 'rfid.id_rfid = ra.rfid_id', 'left')
                         ->where('magang.status_akhir', 'lulus')
                         ->orderBy('magang.tanggal_approve')

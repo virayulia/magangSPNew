@@ -109,12 +109,17 @@
                                 <td>Tidak Aktif</td>
                             <?php endif; ?>
                             <td class="text-center">
-                                <button class="btn btn-warning btn-sm" data-toggle="modal" data-target="#editModal<?= $item['unit_id']; ?>">
-                                    Edit
-                                </button>
+                                <div class="aksi-wrapper">
+                                    <button class="btn btn-warning btn-sm" title="Edit" data-toggle="modal" data-target="#editModal<?= $item['unit_id']; ?>">
+                                        <i class="fa fa-edit"></i>
+                                    </button>
+                                    <button class="btn btn-danger btn-sm" title="delete" data-toggle="modal" data-target="#deleteModal<?= $item['unit_id']; ?>">
+                                        <i class="fa fa-trash"></i>
+                                    </button>
+                                </div>
                             </td>
                         </tr>
-                        <!-- Modal Edit Periode -->
+                        <!-- Modal Edit -->
                         <div class="modal fade" id="editModal<?= $item['unit_id']; ?>" tabindex="-1" role="dialog" aria-labelledby="editModalLabel<?= $item['unit_id']; ?>" aria-hidden="true">
                             <div class="modal-dialog" role="document">
                                 <form action="<?= base_url('admin/kelola-unit/update/' . $item['unit_id']); ?>" method="post">
@@ -163,6 +168,30 @@
                                     <button type="submit" class="btn btn-warning">Update</button>
                                     </div>
                                 </div>
+                                </form>
+                            </div>
+                        </div>
+                        <!-- Modal Delete  -->
+                        <div class="modal fade" id="deleteModal<?= $item['unit_id']; ?>" tabindex="-1" role="dialog" aria-labelledby="deleteModalLabel<?= $item['unit_id']; ?>" aria-hidden="true">
+                            <div class="modal-dialog" role="document">
+                                <form action="<?= base_url('admin/unit/delete/' . $item['unit_id']); ?>" method="post">
+                                    <div class="modal-content">
+                                        <div class="modal-header bg-danger text-white">
+                                            <h5 class="modal-title" id="deleteModalLabel<?= $item['unit_id']; ?>">Konfirmasi Hapus</h5>
+                                            <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                                                <span aria-hidden="true">&times;</span>
+                                            </button>
+                                        </div>
+                                        
+                                        <div class="modal-body">
+                                            Apakah Anda yakin ingin menghapus keyword <strong><?= esc($item['unit_kerja']); ?></strong>?
+                                        </div>
+
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Batal</button>
+                                            <button type="submit" class="btn btn-danger">Hapus</button>
+                                        </div>
+                                    </div>
                                 </form>
                             </div>
                         </div>

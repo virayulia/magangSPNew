@@ -170,43 +170,43 @@ Swal.fire({
                         <p>Harap mempelajari prosedur keselamatan kerja berikut. Tes dapat dikerjakan maksimal <strong>3 kali</strong> dengan nilai minimal <strong>70</strong>.</p>
 
 
-<div class="d-flex flex-wrap gap-3 mb-3">
-    <a href="https://docs.google.com/presentation/d/1kL9-zVEipfdnUarMJraO5CFldiIe6IZI/edit?usp=sharing&ouid=106778029981766455288&rtpof=true&sd=true" 
-       class="btn btn-outline-info" target="_blank">
-        📘 Penjelasan Safety Induction
-    </a>
+                        <div class="d-flex flex-wrap gap-3 mb-3">
+                            <a href="https://docs.google.com/presentation/d/1kL9-zVEipfdnUarMJraO5CFldiIe6IZI/edit?usp=sharing&ouid=106778029981766455288&rtpof=true&sd=true" 
+                            class="btn btn-outline-info" target="_blank">
+                                📘 Penjelasan Safety Induction
+                            </a>
 
-    <?php
-        $tanggal_masuk = $pendaftaran['tanggal_masuk'];
-        $masuk = new DateTime($tanggal_masuk);
+                            <?php
+                                $tanggal_masuk = $pendaftaran['tanggal_masuk'];
+                                $masuk = new DateTime($tanggal_masuk);
 
-        // Waktu minimal tes: jam 08:30 pada hari masuk
-        $waktu_mulai = clone $masuk;
-        $waktu_mulai->setTime(8, 30);
+                                // Waktu minimal tes: jam 08:30 pada hari masuk
+                                $waktu_mulai = clone $masuk;
+                                $waktu_mulai->setTime(8, 30);
 
-        // Batas akhir: 3 hari setelah tanggal masuk
-        $batas_akhir = clone $masuk;
-        $batas_akhir->modify('+3 days');
+                                // Batas akhir: 3 hari setelah tanggal masuk
+                                $batas_akhir = clone $masuk;
+                                $batas_akhir->modify('+3 days');
 
-        $hari_ini = new DateTime();
-    ?>
+                                $hari_ini = new DateTime();
+                            ?>
 
-    <?php if (
-        !empty($pendaftaran['tanggal_setujui_pernyataan']) && 
-        $hari_ini >= $waktu_mulai && 
-        $hari_ini <= $batas_akhir
-    ): ?>
-        <a href="<?= base_url('safety-tes') ?>" class="btn btn-outline-warning">
-            🚀 Ikuti Tes Safety Induction
-        </a>
-    <?php else: ?>
-        <button class="btn btn-secondary" disabled>Ikuti Tes Safety Induction</button>
-        <div class="alert alert-secondary mt-2">
-            ⚠️ Tes dapat diikuti pada <strong>hari pertama magang mulai 08:30</strong>, 
-            setelah Anda menyetujui <strong>Surat Pernyataan</strong>.
-        </div>
-    <?php endif; ?>
-</div>
+                            <?php if (
+                                !empty($pendaftaran['tanggal_setujui_pernyataan']) && 
+                                $hari_ini >= $waktu_mulai && 
+                                $hari_ini <= $batas_akhir
+                            ): ?>
+                                <a href="<?= base_url('safety-tes') ?>" class="btn btn-outline-warning">
+                                    🚀 Ikuti Tes Safety Induction
+                                </a>
+                            <?php else: ?>
+                                <button class="btn btn-secondary" disabled>Ikuti Tes Safety Induction</button>
+                                <div class="alert alert-secondary mt-2">
+                                    ⚠️ Tes dapat diikuti pada <strong>hari pertama magang mulai 08:30</strong>, 
+                                    setelah Anda menyetujui <strong>Surat Pernyataan</strong>.
+                                </div>
+                            <?php endif; ?>
+                        </div>
 
 
                         <!-- Riwayat Tes -->
@@ -243,6 +243,57 @@ Swal.fire({
                                 </div>
                             </div>
                         <?php endif; ?>
+                    </div>
+                </div>
+
+                <!-- Cetak Lembar Absensi -->
+                <div class="card shadow-sm mb-4">
+                    <div class="card-body">
+
+                        <h5 class="card-title">📄 Cetak Lembar Absensi</h5>
+
+                        <p class="text-muted mb-3">
+                            Silakan cetak dokumen berikut setelah seluruh berkas dinyatakan lengkap oleh Admin.
+                        </p>
+
+                        <?php 
+                        $berkasLengkap = !empty($pendaftaran['status_berkas_lengkap']) 
+                                        && $pendaftaran['status_berkas_lengkap'] === 'Y' 
+                                        && !empty($pendaftaran['tanggal_berkas_lengkap']);
+
+                        $berkasUser = !empty($user_data->bpjs_tk) && !empty($user_data->buktibpjs_tk);
+                        ?>
+
+                        <?php if ($berkasUser): ?>
+                            <?php if ($berkasLengkap): ?>
+
+                                <div class="d-flex flex-column gap-2 mt-3">
+                                    <a href="<?= base_url('magang/cetak-absensi/' . $pendaftaran['magang_id']) ?>" 
+                                    target="_blank" 
+                                    class="btn btn-danger d-flex align-items-center justify-content-center">
+                                        <i class="fas fa-print me-2"></i> Cetak Lembar Absensi
+                                    </a>
+                                </div>
+
+                            <?php else: ?>
+
+                                <div class="alert alert-secondary">⚠️ Menunggu validasi berkas oleh Admin.</div>
+
+                                <button class="btn btn-secondary w-100" disabled>
+                                    Cetak Lembar Absensi
+                                </button>
+
+                            <?php endif; ?>
+                        <?php else: ?>
+
+                            <div class="alert alert-secondary">⚠️ Lengkapi berkas terlebih dahulu.</div>
+
+                            <button class="btn btn-secondary w-100" disabled>
+                                Cetak Lembar Absensi
+                            </button>
+
+                        <?php endif; ?>
+
                     </div>
                 </div>
 

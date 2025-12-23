@@ -98,8 +98,8 @@
                             <td><?= $item->jumlah_diterima_atau_magang; ?></td>
                             <td><?= $item->sisa_kuota; ?></td>
                             <td class="text-center">
-                                <button class="btn btn-warning btn-sm" data-toggle="modal" data-target="#editModal<?= $item->kuota_unit_id; ?>">
-                                    Edit
+                                <button class="btn btn-warning btn-sm" title="Edit" data-toggle="modal" data-target="#editModal<?= $item->kuota_unit_id; ?>">
+                                    <i class="fas fa-edit"></i>
                                 </button>
 
                             </td>

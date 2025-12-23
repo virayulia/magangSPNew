@@ -73,9 +73,16 @@
     <?php if(empty($pendaftaran['tanggal_setujui_pernyataan'])): ?>
     <p><strong>Padang, <?= format_tanggal_indonesia(date('d M Y')) ?></strong></p>
     <p><em>Yang membuat pernyataan</em></p>
-    <form action="<?= base_url('magang/setujui-surat-pernyataan') ?>" method="post">
-        <button type="submit" class="btn btn-success btn-approve">✅ Setujui & Simpan</button>
-    </form>
+        <?php if($tipe === 'magang'):?>
+        <form action="<?= base_url('magang/setujui-surat-pernyataan') ?>" method="post">
+            <button type="submit" class="btn btn-success btn-approve">✅ Setujui & Simpan</button>
+        </form>
+        <?php elseif($tipe === 'penelitian'): ?>
+            <form action="<?= base_url('penelitian/setujui-surat-pernyataan') ?>" method="post">
+            <button type="submit" class="btn btn-success btn-approve">✅ Setujui & Simpan</button>
+        </form>
+        <?php endif; ?>
+
     <?php else:?>
     <div style="text-align: right;">
         <p>Padang, <?= date('d M Y', strtotime($pendaftaran['tanggal_setujui_pernyataan'])) ?></p>

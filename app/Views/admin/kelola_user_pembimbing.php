@@ -153,7 +153,17 @@
                             <td><?= esc($item->email) ?></td>
                             <td><?= esc($item->unit_kerja ?? '-') ?></td>
                             <td>
-                                <button class="btn btn-warning btn-sm" data-toggle="modal" data-target="#modalEditPembimbing<?= $item->id ?>">
+                                <button 
+                                    class="btn btn-warning btn-sm btn-edit-pembimbing"
+                                    data-id="<?= $item->id ?>"
+                                    data-fullname="<?= esc($item->fullname) ?>"
+                                    data-username="<?= esc($item->username) ?>"
+                                    data-email="<?= esc($item->email) ?>"
+                                    data-eselon="<?= $item->eselon ?>"
+                                    data-unit="<?= $item->unit_id ?>"
+                                    data-tanda_tangan="<?= $item->tanda_tangan ?>"
+                                    title="Edit"
+                                >
                                     <i class="fas fa-edit"></i>
                                 </button>
                                 <a href="<?= base_url('admin/manage-user-pembimbing/delete/'.$item->id) ?>" class="btn btn-danger btn-sm" onclick="return confirm('Yakin ingin menghapus?')">
@@ -163,9 +173,9 @@
                         </tr>
 
                         <!-- Modal Edit Pembimbing -->
-                        <div class="modal fade" id="modalEditPembimbing<?= $item->id ?>" tabindex="-1" role="dialog">
+                        <!-- <div class="modal fade" id="modalEditPembimbing<?= $item->id ?>" tabindex="-1" role="dialog">
                             <div class="modal-dialog" role="document">
-                                <form action="<?= base_url('admin/manage-user-pembimbing/update/' . $item->id) ?>" method="post">
+                                <form action="<?= base_url('admin/manage-user-pembimbing/update/' . $item->id) ?>" method="post" enctype="multipart/form-data">
                                     <?= csrf_field(); ?>
                                     <div class="modal-content">
                                         <div class="modal-header bg-warning text-white">
@@ -206,6 +216,11 @@
                                                     <?php endforeach; ?>
                                                 </select>
                                             </div>
+                                            <div class="form-group">
+                                                <label>Tanda Tangan (PNG/JPG)</label>
+                                                <input type="file" name="tanda_tangan" class="form-control" accept=".png,.jpg,.jpeg">
+                                                <small class="text-muted">Tidak wajib diisi.</small>
+                                            </div>
                                         </div>
 
                                         <div class="modal-footer">
@@ -215,7 +230,7 @@
                                     </div>
                                 </form>
                             </div>
-                        </div>
+                        </div> -->
 
 
                     <?php endforeach; ?>
@@ -225,7 +240,102 @@
     </div>
 </div>
 
-
 </div>
+<!-- Modal Edit Pembimbing-->
+<div class="modal fade" id="modalEditPembimbing" tabindex="-1">
+  <div class="modal-dialog" role="document">
+    <form id="formEditPembimbing" method="post" enctype="multipart/form-data">
+      <?= csrf_field(); ?>
+      <div class="modal-content">
+        <div class="modal-header bg-warning text-white">
+          <h5 class="modal-title">Edit Pembimbing</h5>
+          <button type="button" class="close text-white" data-dismiss="modal">
+            <span>&times;</span>
+          </button>
+        </div>
+
+        <div class="modal-body">
+          <input type="hidden" name="id" id="editId">
+
+          <div class="form-group">
+            <label>Nama Lengkap</label>
+            <input type="text" name="fullname" id="editFullname" class="form-control" required>
+          </div>
+
+          <div class="form-group">
+            <label>Username</label>
+            <input type="text" name="username" id="editUsername" class="form-control" required>
+          </div>
+
+          <div class="form-group">
+            <label>Email</label>
+            <input type="email" name="email" id="editEmail" class="form-control" required>
+          </div>
+
+          <div class="form-group">
+            <label>Jabatan</label>
+            <select name="eselon" id="editEselon" class="form-control" required>
+              <option value="" disabled>-- Pilih Jabatan --</option>
+              <option value="2">Eselon 2</option>
+              <option value="3">Eselon 3</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Unit Kerja</label>
+            <select name="unit_id" id="editUnit" class="form-control">
+              <?php foreach ($units as $unit): ?>
+              <option value="<?= $unit['unit_id'] ?>"><?= esc($unit['unit_kerja']) ?></option>
+              <?php endforeach; ?>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Tanda Tangan (PNG/JPG)</label>
+            <input type="file" name="tanda_tangan" class="form-control" accept=".png,.jpg,.jpeg">
+            <small class="text-muted">Tidak wajib diisi.</small>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Batal</button>
+          <button type="submit" class="btn btn-warning">Update</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+
+<?= $this->endSection() ?>
+<?= $this->section('scripts') ?>
+<script>
+$(document).on('click', '.btn-edit-pembimbing', function () {
+    const btn = $(this);
+
+    const id        = btn.data('id');
+    const fullname  = btn.data('fullname');
+    const username  = btn.data('username');
+    const email     = btn.data('email');
+    const eselon    = btn.data('eselon');
+    const unit      = btn.data('unit');
+
+    $('#editId').val(id);
+    $('#editFullname').val(fullname);
+    $('#editUsername').val(username);
+    $('#editEmail').val(email);
+    $('#editEselon').val(eselon);
+    $('#editUnit').val(unit);
+
+    // set action form
+    $('#formEditPembimbing').attr(
+        'action',
+        "<?= base_url('admin/manage-user-pembimbing/update') ?>/" + id
+    );
+
+    // tampilkan modal
+    $('#modalEditPembimbing').modal('show');
+});
+</script>
 
 <?= $this->endSection() ?>

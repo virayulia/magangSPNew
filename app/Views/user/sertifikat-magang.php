@@ -259,6 +259,10 @@ Swal.fire({
                                         </div>
                                     </div>
                                 </div>
+                        <?php else: ?>
+                            <div class="alert alert-info text-center">
+                                Sertifikat belum tersedia. Sertifikat dapat diunduh setelah Anda menyelesaikan seluruh kegiatan magang.
+                            </div>
                         <?php endif; ?>
                     <?php else: ?>
                         <div class="alert alert-info text-center">

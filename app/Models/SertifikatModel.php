@@ -12,7 +12,7 @@ class SertifikatModel extends Model
     protected $returnType       = 'array';
     protected $useSoftDeletes   = false;
     protected $protectFields    = true;
-    protected $allowedFields    = ['magang_id','nomor','tahun'];
+    protected $allowedFields    = ['magang_id','nomor','tahun', 'qr_token', 'file_sertifikat'];
 
     protected bool $allowEmptyInserts = false;
     protected bool $updateOnlyChanged = true;

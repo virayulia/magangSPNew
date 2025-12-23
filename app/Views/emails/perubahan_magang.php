@@ -15,7 +15,7 @@ Kami informasikan bahwa terdapat <strong>perubahan data pelaksanaan magang</stro
 
 <p>
 <strong>Nama</strong>: <?= htmlspecialchars($nama) ?><br>
-<strong>Instansi</strong>: <?= htmlspecialchars($instansi) ?><br>
+<strong>Sekolah/Perguruan Tinggi</strong>: <?= htmlspecialchars($instansi) ?><br>
 <strong>Unit Kerja</strong>: <?= htmlspecialchars($unit) ?><br>
 <strong>Tanggal Magang</strong>: <?= format_tanggal_indonesia($tanggal_masuk) ?> 
 s.d. <?= format_tanggal_indonesia($tanggal_selesai) ?>
@@ -29,7 +29,7 @@ Harap menyesuaikan dengan jadwal/unit terbaru ini. Informasi lengkap dapat dilih
 
 <br>
     <p>Hormat kami,</p>
-    <p><strong>Training & Knowledge Management<br>PT Semen Padang</strong></p>
-    <p>Siska Ayu Soraya<br><strong>Kepala</strong></p>
+    <p><strong><?= esc($signature['unit_kerja']) ?><br>PT Semen Padang</strong></p>
+    <p><?= esc($signature['fullname']) ?><br><strong>Kepala</strong></p>
 </body>
 </html>

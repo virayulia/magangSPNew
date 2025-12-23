@@ -61,4 +61,15 @@ class UnitKerjaController extends BaseController
    
         return redirect()->back()->with('success', 'Periode berhasil diperbarui.');
     }
+
+    public function delete($id)
+    {
+        $data = $this->unitKerjaModel->find($id);
+        if(!$data){
+            return redirect()->back()->with('error', 'Unit Kerja tidak ditemukan');
+        }
+
+        $this->unitKerjaModel->delete($id);
+        return redirect()->back()->with('success', 'Berhasil menghapus Unit Kerja');
+    }
 }

@@ -97,12 +97,12 @@
                                         <?= ($data['tingkat'] === 'smk') ? 'Sekolah Menengah Kejuruan (SMK)' : 'Perguruan Tinggi (PT)'; ?>
                                     </td>
                                     <td class="text-center">
-                                        <button class="btn btn-warning btn-sm" data-toggle="modal" data-target="#editModal<?= $data['instansi_id']; ?>">
-                                            Edit
+                                        <button class="btn btn-warning btn-sm" title="Edit" data-toggle="modal" data-target="#editModal<?= $data['instansi_id']; ?>">
+                                            <i class="fa fa-edit"></i>
                                         </button>
-                                        <!-- <button class="btn btn-danger btn-sm" data-toggle="modal" data-target="#deleteModal<?= $data['instansi_id']; ?>">
-                                            Delete
-                                        </button> -->
+                                        <button class="btn btn-danger btn-sm" title="Delete" data-toggle="modal" data-target="#deleteModal<?= $data['instansi_id']; ?>">
+                                            <i class="fa fa-trash"></i>
+                                        </button>
                                     </td>
                                 </tr>
 
@@ -144,7 +144,7 @@
                                 <!-- Modal Delete Instansi -->
                                 <div class="modal fade" id="deleteModal<?= $data['instansi_id']; ?>" tabindex="-1" role="dialog" aria-labelledby="deleteModalLabel<?= $data['instansi_id']; ?>" aria-hidden="true">
                                     <div class="modal-dialog" role="document">
-                                        <form action="<?= base_url('instansi/delete/' . $data['instansi_id']); ?>" method="post">
+                                        <form action="<?= base_url('admin/instansi/delete/' . $data['instansi_id']); ?>" method="post">
                                             <div class="modal-content">
                                                 <div class="modal-header bg-danger text-white">
                                                     <h5 class="modal-title" id="deleteModalLabel<?= $data['instansi_id']; ?>">Konfirmasi Hapus</h5>

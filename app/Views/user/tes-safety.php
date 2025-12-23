@@ -13,29 +13,53 @@
 </head>
 <body class="bg-light">
 
-<div class="container mt-5">
+<div class="container mt-5 pb-5">
     <h2 class="mb-4">🦺 Tes Safety Induction</h2>
 
-    <form id="formTesSafety" action="<?= base_url('safety/submit') ?>" method="post">
-        <?php foreach ($soal as $index => $s): ?>
-            <div class="mb-4">
-                <p><strong><?= ($index + 1) ?>.</strong> <?= esc($s['pertanyaan']) ?></p>
-                <?php foreach (['a', 'b', 'c', 'd'] as $opt): ?>
-                    <div class="form-check">
-                        <input class="form-check-input" type="radio" 
-                               name="jawaban[<?= $s['soal_id'] ?>]" 
-                               value="<?= $opt ?>" 
-                               id="soal<?= $s['soal_id'] ?>_<?= $opt ?>" required>
-                        <label class="form-check-label" for="soal<?= $s['soal_id'] ?>_<?= $opt ?>">
-                            <?= strtoupper($opt) ?>. <?= esc($s['opsi_' . $opt]) ?>
-                        </label>
-                    </div>
-                <?php endforeach ?>
-            </div>
-        <?php endforeach ?>
+    <?php if($tipe === 'magang'): ?>
+        <form id="formTesSafety" action="<?= base_url('safety/submit') ?>" method="post">
+            <?php foreach ($soal as $index => $s): ?>
+                <div class="mb-4">
+                    <p><strong><?= ($index + 1) ?>.</strong> <?= esc($s['pertanyaan']) ?></p>
+                    <?php foreach (['a', 'b', 'c', 'd'] as $opt): ?>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" 
+                                name="jawaban[<?= $s['soal_id'] ?>]" 
+                                value="<?= $opt ?>" 
+                                id="soal<?= $s['soal_id'] ?>_<?= $opt ?>" required>
+                            <label class="form-check-label" for="soal<?= $s['soal_id'] ?>_<?= $opt ?>">
+                                <?= strtoupper($opt) ?>. <?= esc($s['opsi_' . $opt]) ?>
+                            </label>
+                        </div>
+                    <?php endforeach ?>
+                </div>
+            <?php endforeach ?>
 
-        <button type="submit" class="btn btn-primary">Kirim Jawaban</button>
-    </form>
+            <button type="submit" class="btn btn-primary">Kirim Jawaban</button>
+        </form>
+    <?php elseif($tipe === 'penelitian'): ?>
+        <form id="formTesSafety" action="<?= base_url('safetyPenelitian/submit') ?>" method="post">
+            <?php foreach ($soal as $index => $s): ?>
+                <div class="mb-4">
+                    <p><strong><?= ($index + 1) ?>.</strong> <?= esc($s['pertanyaan']) ?></p>
+                    <?php foreach (['a', 'b', 'c', 'd'] as $opt): ?>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" 
+                                name="jawaban[<?= $s['soal_id'] ?>]" 
+                                value="<?= $opt ?>" 
+                                id="soal<?= $s['soal_id'] ?>_<?= $opt ?>" required>
+                            <label class="form-check-label" for="soal<?= $s['soal_id'] ?>_<?= $opt ?>">
+                                <?= strtoupper($opt) ?>. <?= esc($s['opsi_' . $opt]) ?>
+                            </label>
+                        </div>
+                    <?php endforeach ?>
+                </div>
+            <?php endforeach ?>
+
+            <button type="submit" class="btn btn-primary mt-3 mb-5">Kirim Jawaban</button>
+            
+        </form>
+    <?php endif; ?>
 </div>
 
 <script>

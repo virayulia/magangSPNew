@@ -107,11 +107,11 @@
                               <?php endif; ?>
                             </td>
                             <td>
-                              <button class="btn btn-warning btn-sm" data-toggle="modal" data-target="#modalEditAdmin<?= $user->id ?>">
-                                    <i class="fas fa-edit"></i> Edit
+                              <button class="btn btn-warning btn-sm" title="Edit" data-toggle="modal" data-target="#modalEditAdmin<?= $user->id ?>">
+                                    <i class="fas fa-edit"></i> 
                                 </button>
-                              <a href="<?= base_url('admin/manage-user-admin/delete/'.$user->id) ?>" class="btn btn-sm btn-danger" onclick="return confirm('Yakin ingin menghapus user ini?')">
-                                <i class="fas fa-trash"></i> Hapus
+                              <a href="<?= base_url('admin/manage-user-admin/delete/'.$user->id) ?>" title="Hapus" class="btn btn-sm btn-danger" onclick="return confirm('Yakin ingin menghapus user ini?')">
+                                <i class="fas fa-trash"></i> 
                               </a>
                             </td>
                         </tr>

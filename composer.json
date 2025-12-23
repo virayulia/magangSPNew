@@ -12,6 +12,7 @@
   "require": {
     "php": "^8.2",
     "codeigniter4/framework": "^4.6",
+    "endroid/qr-code": "^6.0",
     "myth/auth": "dev-develop",
     "phpoffice/phpspreadsheet": "^5.1",
     "tecnickcom/tcpdf": "^6.10"

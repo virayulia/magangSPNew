@@ -125,12 +125,12 @@
                                     </td>
 
                                     <td class="text-center">
-                                        <button class="btn btn-warning btn-sm" data-toggle="modal" data-target="#editModal<?= $data['id_rfid']; ?>">
-                                            Edit
+                                        <button class="btn btn-warning btn-sm" title="Edit" data-toggle="modal" data-target="#editModal<?= $data['id_rfid']; ?>">
+                                            <i class="fa fa-edit"></i>
                                         </button>
-                                        <!-- <button class="btn btn-danger btn-sm" data-toggle="modal" data-target="#deleteModal<?= $data['id_rfid']; ?>">
-                                            Delete
-                                        </button> -->
+                                        <button class="btn btn-danger btn-sm" title="Delete" data-toggle="modal" data-target="#deleteModal<?= $data['id_rfid']; ?>">
+                                            <i class="fa fa-trash"></i>
+                                        </button>
                                     </td>
                                 </tr>
 

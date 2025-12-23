@@ -7,6 +7,7 @@ use CodeIgniter\HTTP\ResponseInterface;
 use App\Models\UnitKerjaModel;
 use App\Models\MagangModel;
 use App\Models\JurusanModel;
+use App\Models\KeywordModel;
 use Config\Services;
 
 class HomeController extends BaseController
@@ -14,12 +15,14 @@ class HomeController extends BaseController
     protected $magangModel;
     protected $jurusanModel;
     protected $unitKerjaModel;
+    protected $keywordModel;
 
     public function __construct()
     {
         $this->magangModel = new MagangModel();
         $this->jurusanModel = new JurusanModel();
         $this->unitKerjaModel = new UnitKerjaModel();
+        $this->keywordModel = new KeywordModel();
 
     }
 
@@ -54,28 +57,28 @@ class HomeController extends BaseController
             ->get()
             ->getRow();
 
-        $unitDipilih       = $this->request->getGet('unit_kerja') ?? [];
-        $pendidikanDipilih = $this->request->getGet('pendidikan') ?? [];
-        $jurusanDipilih    = $this->request->getGet('jurusan') ?? [];
-        $page              = (int) ($this->request->getGet('page') ?? 1);
-        $perPage           = 9;
+        // $unitDipilih       = $this->request->getGet('unit_kerja') ?? [];
+        // $pendidikanDipilih = $this->request->getGet('pendidikan') ?? [];
+        // $jurusanDipilih    = $this->request->getGet('jurusan') ?? [];
+        // $page              = (int) ($this->request->getGet('page') ?? 1);
+        // $perPage           = 9;
 
-        $kuotaData = $this->magangModel->getSisaKuota();
+        // $kuotaData = $this->magangModel->getSisaKuota();
 
-        $allJurusanUnit = $db->table('jurusan_unit ju')
-            ->select('ju.kuota_unit_id, j.nama_jurusan')
-            ->join('jurusan j', 'ju.jurusan_id = j.jurusan_id')
-            ->get()
-            ->getResult();
+        // $allJurusanUnit = $db->table('jurusan_unit ju')
+        //     ->select('ju.kuota_unit_id, j.nama_jurusan')
+        //     ->join('jurusan j', 'ju.jurusan_id = j.jurusan_id')
+        //     ->get()
+        //     ->getResult();
 
-        $jurusanMap = [];
-        foreach ($allJurusanUnit as $row) {
-            $jurusanMap[$row->kuota_unit_id][] = $row->nama_jurusan;
-        }
+        // $jurusanMap = [];
+        // foreach ($allJurusanUnit as $row) {
+        //     $jurusanMap[$row->kuota_unit_id][] = $row->nama_jurusan;
+        // }
 
-        $filteredData = [];
-        $filterByUserJurusan = false;
-        $userJurusan = null;
+        // $filteredData = [];
+        // $filterByUserJurusan = false;
+        // $userJurusan = null;
         $userKategoriPendidikan = null;
         $userHasMagang = false;
 
@@ -102,48 +105,84 @@ class HomeController extends BaseController
             }
         }
 
-        if (!empty($kuotaData)) {
-            foreach ($kuotaData as $item) {
-                $match = true;
+        // if (!empty($kuotaData)) {
+        //     foreach ($kuotaData as $item) {
+        //         $match = true;
 
-                if (!empty($unitDipilih) && !in_array($item->unit_kerja, $unitDipilih)) $match = false;
-                if (!empty($pendidikanDipilih) && !in_array($item->tingkat_pendidikan, $pendidikanDipilih)) $match = false;
-                elseif ($userKategoriPendidikan && !in_array($item->tingkat_pendidikan, $userKategoriPendidikan)) $match = false;
+        //         if (!empty($unitDipilih) && !in_array($item->unit_kerja, $unitDipilih)) $match = false;
+        //         if (!empty($pendidikanDipilih) && !in_array($item->tingkat_pendidikan, $pendidikanDipilih)) $match = false;
+        //         elseif ($userKategoriPendidikan && !in_array($item->tingkat_pendidikan, $userKategoriPendidikan)) $match = false;
 
-                $jurusanList = $jurusanMap[$item->kuota_unit_id] ?? [];
-                if (!empty($jurusanDipilih) && empty(array_intersect($jurusanDipilih, $jurusanList))) $match = false;
-                elseif ($userJurusan) {
-                    $userJurusanNama = $this->jurusanModel->find($userJurusan)['nama_jurusan'] ?? '';
-                    if (!empty($jurusanList) && !in_array($userJurusanNama, $jurusanList)) $match = false;
-                    $filterByUserJurusan = true;
+        //         $jurusanList = $jurusanMap[$item->kuota_unit_id] ?? [];
+        //         if (!empty($jurusanDipilih) && empty(array_intersect($jurusanDipilih, $jurusanList))) $match = false;
+        //         elseif ($userJurusan) {
+        //             $userJurusanNama = $this->jurusanModel->find($userJurusan)['nama_jurusan'] ?? '';
+        //             if (!empty($jurusanList) && !in_array($userJurusanNama, $jurusanList)) $match = false;
+        //             $filterByUserJurusan = true;
+        //         }
+
+        //         if ($match && $item->sisa_kuota > 0) {
+        //             $item->jurusan = implode(', ', $jurusanList) ?: null;
+        //             $filteredData[] = $item;
+        //         }
+        //     }
+        // }
+
+        // $total = count($filteredData);
+        // $totalPages = ceil($total / $perPage);
+        // $offset = ($page - 1) * $perPage;
+        // $pagedData = array_slice($filteredData, $offset, $perPage);
+
+
+        $today = new \DateTime();
+        $dates = [];
+
+        for ($i = 1; $i <= 3; $i++) {
+            $month = (clone $today)->modify("+{$i} month");
+            $year = $month->format('Y');
+            $monthNum = $month->format('m');
+
+            // Dua tanggal: awal dan pertengahan
+            $awal = new \DateTime("$year-$monthNum-01");
+            $tengah = new \DateTime("$year-$monthNum-15");
+
+            foreach ([$awal, $tengah] as $tgl) {
+
+                // Jika jatuh Sabtu / Minggu → geser ke Senin
+                $hari = $tgl->format('N');
+                if ($hari == 6) {
+                    $tgl->modify('+2 days'); // Sabtu → Senin
+                } elseif ($hari == 7) {
+                    $tgl->modify('+1 day'); // Minggu → Senin
                 }
 
-                if ($match && $item->sisa_kuota > 0) {
-                    $item->jurusan = implode(', ', $jurusanList) ?: null;
-                    $filteredData[] = $item;
+                // Cek selisih minimal 7 hari
+                $diff = $today->diff($tgl)->days;
+                if ($tgl > $today && $diff >= 7) {
+                    $dates[] = $tgl->format('Y-m-d');
                 }
             }
         }
 
-        $total = count($filteredData);
-        $totalPages = ceil($total / $perPage);
-        $offset = ($page - 1) * $perPage;
-        $pagedData = array_slice($filteredData, $offset, $perPage);
-       
+
+        $keyword = $this->keywordModel->findAll();
+        
         return view('index', [
             'periode'                => $periode,
-            'data_unit'              => $pagedData,
-            'currentPage'            => $page,
-            'totalPages'             => $totalPages,
+            // 'data_unit'              => $pagedData,
+            // 'currentPage'            => $page,
+            // 'totalPages'             => $totalPages,
             'isProfilComplite'       => $this->isProfilComplite(),
             'list_unit_kerja'        => $this->unitKerjaModel->findAll(),
             'list_jurusan'           => $this->jurusanModel->findAll(),
-            'unitDipilih'            => $unitDipilih,
-            'pendidikanDipilih'      => $pendidikanDipilih,
-            'jurusanDipilih'         => $jurusanDipilih,
-            'filterByUserJurusan'    => $filterByUserJurusan,
+            // 'unitDipilih'            => $unitDipilih,
+            // 'pendidikanDipilih'      => $pendidikanDipilih,
+            // 'jurusanDipilih'         => $jurusanDipilih,
+            // 'filterByUserJurusan'    => $filterByUserJurusan,
             'userKategoriPendidikan' => $userKategoriPendidikan,
             'userHasMagang'          => $userHasMagang,
+            'pilihanTanggal'         => $dates,
+            'keyword'         => $keyword,
         ]);
     }
 

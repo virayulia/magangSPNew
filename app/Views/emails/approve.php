@@ -29,8 +29,9 @@ sampai dengan <strong><?= format_tanggal_indonesia($tanggal_selesai) ?></strong>
     <li>Hadir pada tanggal <strong><?= format_tanggal_indonesia($tanggal_masuk) ?> jam 08.00 WIB</strong> 
         di <strong>Unit Operasional SDM (Pusdiklat)</strong> PT Semen Padang.</li>
     <li>Mematuhi semua ketentuan dan disiplin di PT Semen Padang, serta protokol kesehatan yang berlaku.</li>
-    <li>Menyerahkan laporan kerja praktek maksimal 15 hari setelah magang selesai ke Pusdiklat.</li>
     <li><strong>Mengupload kartu asurasni kecelakaan kerja dan buktinya paling lambat 3 hari sebelum pelaksanaan magang.</strong></li>
+    <li>Mengisi Feedback pada Website Magang PT. Semen Padang setelah menyelesaikan Kerja Praktek/Magang.</li>
+    <li>Mengupload Laporan Kerja Praktek dn Absensi maksimal 15 hari setelah magang selesai ke Website Magang PT. Semen Padang.</li>
     <li><strong>Bukti asli asuransi kecelakaan kerja dibawa pada hari pertama.</strong></li>
 </ol>
 
@@ -50,8 +51,8 @@ Demikian kami sampaikan. Atas perhatian dan kerja sama Bapak/Ibu, kami ucapkan t
 
 <br>
 <p>Hormat kami,</p>
-<p><strong>Training & Knowledge Management<br>PT Semen Padang</strong></p>
-<p>Siska Ayu Soraya<br><strong>Kepala</strong></p>
+    <p><strong><?= esc($signature['unit_kerja']) ?><br>PT Semen Padang</strong></p>
+    <p><?= esc($signature['fullname']) ?><br><strong>Kepala</strong></p>
 
 </body>
 </html>

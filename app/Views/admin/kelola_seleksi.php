@@ -32,7 +32,8 @@
                         <th>No</th>
                         <th>Unit Kerja</th>
                         <th>Tingkat Pendidikan</th>
-                        <th>Kuota</th>
+                        <th>Sisa Kuota</th>
+                        <th>Total Kuota</th>
                         <th>Jumlah Pendaftar</th>
                         <th>Aksi</th>
                     </tr>
@@ -43,12 +44,13 @@
                             <td><?= $no++; ?></td>
                             <td><?= esc($kuota->unit_kerja); ?></td>
                             <td><?= esc($kuota->tingkat_pendidikan); ?></td>
-                            <td><?= $kuota->sisa_kuota; ?> / <?= $kuota->kuota; ?></td>
+                            <td><?= $kuota->sisa_kuota; ?> </td>
+                            <td><?= $kuota->kuota; ?></td>
                             <td><?= $kuota->jumlah_pendaftar ?? 0; ?></td>
                             <td>
-                                <button class="btn btn-sm btn-info"
+                                <button class="btn btn-sm btn-info" title="Lihat Pendaftar"
                                     onclick="loadPendaftar(<?= $kuota->unit_id; ?>, '<?= esc($kuota->tingkat_pendidikan); ?>', '<?= esc($kuota->unit_kerja); ?>')">
-                                    Lihat Pendaftar
+                                    <i class="fas fa-eye"></i>
                                 </button>
                             </td>
                         </tr>

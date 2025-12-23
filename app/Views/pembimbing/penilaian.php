@@ -10,6 +10,42 @@
 .rating .star.hover {
     color: gold;
 }
+.small-card .card-body {
+    padding-top: 6px !important;
+    padding-bottom: 6px !important;
+}
+
+.small-card .h5 {
+    margin-top: 2px;
+    margin-bottom: 2px;
+}
+
+.small-card .text-xs {
+    font-size: 0.68rem !important;
+    margin-bottom: 2px !important;
+}
+
+.mb-4 {
+    margin-bottom: 0.8rem !important; /* lebih kecil dari default 1.5rem */
+}
+
+.mt-4 {
+    margin-top: 1rem !important;
+}
+
+.hover-card {
+    transition: 0.15s ease;
+    cursor: pointer;
+}
+
+.hover-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.15);
+}
+.chart-small {
+    height: 230px !important;
+    margin: auto;
+}
 </style>
 
 <div class="container-fluid">
@@ -31,222 +67,400 @@
         </div>
     <?php endif; ?>
     <!-- <h1 class="h3 mb-4 text-gray-800">Penilaian</h1> -->
-    <h1 class="h3 mb-4 text-gray-800">
-                    Penilaian
-                    <?php if (!empty($unitPembimbing)): ?>
-                        - 
-                        <?= implode(', ', array_column($unitPembimbing, 'unit_kerja')) ?>
-                    <?php endif; ?>
-                </h1>
+    <h1 class="h3 mb-4 text-gray-800 ">
+        Peserta Magang
+        <?php if (!empty($unitPembimbing)): ?>
+            - 
+            <?= implode(', ', array_column($unitPembimbing, 'unit_kerja')) ?>
+        <?php endif; ?>
+    </h1>
+        <div class="card shadow"> 
+        <div class="card-body">
+            <form method="get" class="row g-2 mb-3">
+                <div class="col-md-3">
+                    <label class="form-label">Masuk</label>
+                    <input type="text"
+                        name="tanggal_masuk"
+                        class="form-control monthpicker"
+                        placeholder="Pilih Bulan & Tahun"
+                        value="<?= esc(@$_GET['tanggal_masuk']) ?>">
+                </div>
+
+                <div class="col-md-3">
+                    <label class="form-label">Keluar</label>
+                    <input type="text"
+                        name="tanggal_keluar"
+                        class="form-control monthpicker"
+                        placeholder="Pilih Bulan & Tahun"
+                        value="<?= esc(@$_GET['tanggal_keluar']) ?>">
+                </div>
+
+                <div class="col-md-3 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary w-100">
+                        Filter
+                    </button>
+                </div>
+
+            </form>
+
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        
+        <div class="col-md-6 mb-4">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 text-secondary fw-bold font-weight-bold text-center text-uppercase">SMK</h6>
+                </div>
+                <div class="card-body">
+                    <canvas id="chartSmk" class="chart-small"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 mb-4">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 text-secondary fw-bold font-weight-bold text-center text-uppercase">PERGURUAN TINGGI</h6>
+                </div>
+                <div class="card-body">
+                    <canvas id="chartPt"  class="chart-small"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- <div class="mb-2">
+        <?php if (!empty($kuotaPerUnit)): ?>
+
+            <?php 
+                
+                $grupKuota = [];
+                foreach ($kuotaPerUnit as $k) {
+                    $grupKuota[$k->tingkat_pendidikan][] = (array)$k;
+                }
+            ?>
+
+            <?php foreach ($grupKuota as $tingkat => $items): ?>
+                <h6 class="mb-2 mt-3 fw-bold text-grey text-center text-uppercase"><b><?= $tingkat ?></b></h6>
+
+                <?php foreach ($items as $k): ?>
+                    <div class="mb-4">
+                        <div class="row g-3">
+
+                            <div class="col-6 col-md-2">
+                                <div class="card border-left-primary shadow h-100 py-2 small-card">
+                                    <div class="card-body py-2 text-center">
+                                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                            Total Kuota
+                                        </div>
+                                        <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                            <?= $k['kuota'] ?>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-6 col-md-2">
+                                <div class="card border-left-secondary shadow h-100 py-2 small-card">
+                                    <div class="card-body py-2 text-center">
+                                        <div class="text-xs font-weight-bold text-secondary text-uppercase mb-1">
+                                            Proses Daftar
+                                        </div>
+                                        <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                            <?= $k['jumlah_proses']?>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-6 col-md-2">
+                                <a href="<?= base_url('pembimbing/penilaian?filter=aktif&tingkat='.$k['tingkat_pendidikan']) ?>" class="text-decoration-none">
+                                    <div class="card border-left-success shadow h-100 py-2 small-card hover-card">
+                                        <div class="card-body py-2 text-center">
+                                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                                Aktif Magang
+                                            </div>
+                                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                                <?= $k['jumlah_aktif'] ?>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </a>
+                            </div>
+                            <div class="col-6 col-md-2">
+                                <a href="<?= base_url('pembimbing/penilaian?filter=akan_magang&tingkat='.$k['tingkat_pendidikan']) ?>" class="text-decoration-none">
+                                    <div class="card border-left-info shadow h-100 py-2 small-card hover-card">
+                                        <div class="card-body py-2 text-center">
+                                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                                Akan Magang
+                                            </div>
+                                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                                <?= $k['jumlah_akan_magang'] ?>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </a>
+                            </div>
+
+                            <div class="col-6 col-md-2">
+                                <a href="<?= base_url('pembimbing/penilaian?filter=belum_selesai&tingkat='.$k['tingkat_pendidikan']) ?>" class="text-decoration-none">
+                                    <div class="card border-left-dark shadow h-100 py-2 small-card hover-card">
+                                        <div class="card-body py-2 text-center">
+                                            <div class="text-xs font-weight-bold text-dark text-uppercase mb-1">
+                                                Belum Lulus
+                                            </div>
+                                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                                <?= $k['jumlah_belum_selesai'] ?>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </a>
+                            </div>
+
+                            <div class="col-6 col-md-2">
+                                <div class="card border-left-danger shadow h-100 py-2 small-card">
+                                    <div class="card-body py-2 text-center">
+
+                                        <?php
+                                            $bulanPenempatan = date('Y-m-01', strtotime('+2 months'));
+                                            $hariKe = date('N', strtotime($bulanPenempatan));
+
+                                            if ($hariKe == 6) $tanggalMulai = date('Y-m-d', strtotime("$bulanPenempatan +2 days"));
+                                            elseif ($hariKe == 7) $tanggalMulai = date('Y-m-d', strtotime("$bulanPenempatan +1 day"));
+                                            else $tanggalMulai = $bulanPenempatan;
+                                        ?>
+
+                                        <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">
+                                            Kuota <?= date('j', strtotime($tanggalMulai)); ?> <?= format_bulan_singkat($tanggalMulai); ?>
+                                        </div>
+                                        <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                            <?= $k['sisa_kuota'] ?>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                <?php endforeach; ?>
+
+            <?php endforeach; ?>
+
+        <?php else: ?>
+            <p><i>Tidak ada kuota untuk unit ini.</i></p>
+        <?php endif; ?>
+    </div> -->
+
+
+
     <div class="card shadow mb-4">
         <div class="card-body">
             <div class="table-responsive">
                 
-    <table class="table table-bordered table-striped" id="dataTable">
-        <thead class="table-dark">
-            <tr>
-                <th>No</th>
-                <th>Nama</th>
-                <th>NIM/NISN</th>
-                <th>Jurusan</th>
-                <th>Instansi</th>
-                <th>Pembimbing</th>
-                <th>Tgl Mulai</th>
-                <th>Tgl Selesai</th>
-                <th>Laporan</th>
-                <th>Absensi</th>
-                <th>Penilaian</th>
-                <th>Approve</th>
-                <th>Aksi</th>
-            </tr>
-        </thead>
-        <tbody>
-            <?php if (empty($peserta)): ?>
-                <tr><td colspan="12" class="text-center">Tidak ada peserta magang</td></tr>
-            <?php else: ?>
-                <?php foreach ($peserta as $i => $item): ?>
+            <table class="table table-bordered table-striped" id="dataTable">
+                <thead class="table-dark">
                     <tr>
-                        <td><?= $i + 1 ?></td>
-                        <td><?= esc($item['nama_peserta']) ?></td>
-                        <td><?= esc($item['nisn_nim']) ?></td>
-                        <td><?= esc($item['nama_jurusan']) ?></td>
-                        <td><?= esc($item['nama_instansi']) ?></td>
-                        <td>
-                            <?php if (empty($item['nama_pembimbing'])): ?>
-                                Belum Ada
-                                <!-- Tombol tambah -->
-                                <button class="btn btn-sm btn-success ml-2" data-toggle="modal" data-target="#tambahPembimbingModal<?= $item['magang_id'] ?>">
-                                    <i class="fas fa-plus"></i>
-                                </button>
-                            <?php else: ?>
-                                <?= esc($item['nama_pembimbing']) ?>
-                                <?php if($userLogin['eselon'] == 2):?>
-                                <!-- Tombol edit -->
-                                <a href="#" class="text-primary ml-2" data-toggle="modal" title="Ganti Pembimbing" data-target="#editPembimbingModal<?= $item['magang_id'] ?>">
-                                    <i class="fas fa-edit"></i>
-                                </a>
-                                <?php endif; ?>
-                            <?php endif; ?>
-                        </td>
-                        <td><?= date('d M Y', strtotime($item['tanggal_masuk'])) ?></td>
-                        <td><?= date('d M Y', strtotime($item['tanggal_selesai'])) ?></td>
-                        <td>
-                            <?php if (!empty($item['laporan'])): ?>
-                                <a href="<?= base_url('uploads/laporan/' . $item['laporan']) ?>" target="_blank">
-                                    Lihat Laporan
-                                </a>
-                            <?php else: ?>
-                                <span class="text-muted">Belum ada</span>
-                            <?php endif; ?>
-                        </td>
-                        <td>
-                            <?php if (!empty($item['absensi'])): ?>
-                                <a href="<?= base_url('uploads/absensi/' . $item['absensi']) ?>" target="_blank">
-                                    Lihat Absensi
-                                </a>
-                            <?php else: ?>
-                                <span class="text-muted">Belum ada</span>
-                            <?php endif; ?>
-                        </td>
-
-                        <td>
-                            <?php if ($item['penilaian_id']): ?>
-                                <?php 
-                                $total = $item['nilai_disiplin'] + $item['nilai_kerajinan'] + $item['nilai_tingkahlaku'] +
-                                        $item['nilai_kerjasama'] + $item['nilai_kreativitas'] + $item['nilai_kemampuankerja'] +
-                                        $item['nilai_tanggungjawab'] + $item['nilai_penyerapan'];
-                                $rata = round($total / 8, 2);
-                                ?>
-                                <span class="badge bg-success text-light">
-                                    <strong><?= $rata ?></strong>
-                                </span>
-                                <!-- Icon Edit -->
-                                <a href="#" class="text-primary ml-2" data-toggle="modal" data-target="#editNilaiModal<?= $item['penilaian_id'] ?>">
-                                    <i class="fas fa-edit"></i>
-                                </a>
-
-                                <!-- Modal Edit Penilaian -->
-                                <div class="modal fade" id="editNilaiModal<?= $item['penilaian_id'] ?>" tabindex="-1" aria-labelledby="editNilaiLabel<?= $item['penilaian_id'] ?>" aria-hidden="true">
-                                    <div class="modal-dialog modal-lg">
-                                        <div class="modal-content">
-                                            <form action="<?= base_url('pembimbing/penilaian/save') ?>" method="post">
-                                                <?= csrf_field() ?>
-                                                <input type="hidden" name="magang_id" value="<?= $item['magang_id'] ?>">
-
-                                                <div class="modal-header bg-primary text-white">
-                                                    <h5 class="modal-title" id="editNilaiLabel<?= $item['penilaian_id'] ?>">
-                                                        Edit Penilaian: <?= esc($item['nama_peserta']) ?>
-                                                    </h5>
-                                                    <button type="button" class="close text-white" data-dismiss="modal">
-                                                        <span>&times;</span>
-                                                    </button>
-                                                </div>
-
-                                                <div class="modal-body">
-                                                    <div class="row">
-                                                        <?php
-                                                        $fields = [
-                                                            'disiplin' => 'Disiplin',
-                                                            'kerajinan' => 'Kerajinan',
-                                                            'tingkahlaku' => 'Tingkah Laku',
-                                                            'kerjasama' => 'Kerja Sama',
-                                                            'kreativitas' => 'Kreativitas',
-                                                            'kemampuankerja' => 'Kemampuan Kerja',
-                                                            'tanggungjawab' => 'Tanggung Jawab',
-                                                            'penyerapan' => 'Penyerapan'
-                                                        ];
-                                                        $nilaiMap = [60=>1,70=>2,80=>3,90=>4,100=>5];
-                                                        foreach ($fields as $name => $label):
-                                                            $nilai = (int) $item['nilai_'.$name];
-                                                            $bintangAktif = $nilaiMap[$nilai] ?? 0;
-                                                        ?>
-                                                            <div class="col-md-6 mb-3">
-                                                                <label class="font-weight-bold"><?= $label ?></label>
-                                                                <div class="rating d-block" data-name="<?= $name ?>">
-                                                                    <?php for ($j = 1; $j <= 5; $j++): ?>
-                                                                        <i class="fa fa-star star <?= ($j <= $bintangAktif) ? 'selected' : '' ?>" data-value="<?= $j ?>"></i>
-                                                                    <?php endfor; ?>
-                                                                    <input type="hidden" name="<?= $name ?>" value="<?= $nilai ?>" required>
-                                                                </div>
-                                                            </div>
-                                                        <?php endforeach; ?>
-                                                    </div>
-
-                                                    <!-- Rata-rata & Kategori -->
-                                                    <div class="alert alert-info mt-3">
-                                                        <strong>Rata-rata Nilai:</strong> <span id="avgScore-<?= $item['penilaian_id'] ?>"><?= $rata ?></span><br>
-                                                        <strong>Kategori:</strong> 
-                                                        <span id="kategori-<?= $item['penilaian_id'] ?>">
-                                                            <?php 
-                                                                if ($rata >= 90) echo "Baik Sekali";
-                                                                elseif ($rata >= 80) echo "Baik";
-                                                                elseif ($rata >= 70) echo "Cukup";
-                                                                elseif ($rata >= 60) echo "Kurang";
-                                                                else echo "-";
-                                                            ?>
-                                                        </span>
-                                                    </div>
-
-                                                    <div class="form-group mt-3">
-                                                        <label class="font-weight-bold">Catatan atau Komentar</label>
-                                                        <textarea name="catatan" class="form-control" rows="3"><?= esc($item['catatan']) ?></textarea>
-                                                    </div>
-                                                </div>
-
-                                                <div class="modal-footer">
-                                                    <button type="submit" class="btn btn-success">Simpan Perubahan</button>
-                                                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Batal</button>
-                                                </div>
-                                            </form>
-                                        </div>
-                                    </div>
-                                </div>
-
-                            <?php else: ?>
-                                <span class="badge bg-warning text-light">Belum Dinilai</span>
-                            <?php endif; ?>
-                        </td>
-
-                        <td>
-                            <?php if ($item['approve_kaunit'] == 1): ?>
-                                <span class="badge bg-success text-light">Disetujui</span>
-                            <?php elseif ($item['approve_kaunit'] == 2): ?>
-                                <span class="badge bg-danger text-light">Ditolak</span>
-                            <?php else: ?>
-                                <span class="badge bg-warning text-light">Belum Disetujui</span>
-                            <?php endif; ?>
-                        </td>
-                        <td>
-                            <?php if (!empty($item['pembimbing_id'])): ?>
-                                <?php if ($item['penilaian_id']): ?>
-                                    <button type="button" title="Detail Nilai" class="btn btn-sm btn-outline-info" data-toggle="modal" data-target="#modalDetail-<?= $item['magang_id'] ?>">
-                                        <i class="fas fa-info-circle"></i>
-                                    </button>
-                                <?php else: ?>
-                                    <?php if(!empty($item['laporan']) && !empty($item['absensi'])): ?>
-                                    <button type="button" class="btn btn-sm btn-success" data-toggle="modal" data-target="#modalNilai-<?= $item['magang_id'] ?>">
-                                        <i class="bi bi-pencil-square"></i> Nilai
-                                    </button>
-                                    <?php else : ?>
-                                        <button type="button" class="btn btn-sm btn-secondary" title="Laporan & Absensi Belum Diupload">
-                                        <i class="bi bi-pencil-square"></i> Nilai
-                                        </button>
-                                    <?php endif;?>
-                                <?php endif; ?>
-                            <?php else :?>
-                                <button type="button" class="btn btn-sm btn-primary" data-toggle="modal" data-target="#tambahPembimbingModal<?= $item['magang_id'] ?>">
-                                    <i class="fas fa-user-plus"></i> Tambah Pembimbing
-                                </button>
-                                
-                            <?php endif; ?>
-                            
-
-                        </td>
+                        <th>No</th>
+                        <th>Nama</th>
+                        <th>NIM/NISN</th>
+                        <th>Jurusan</th>
+                        <th>Instansi</th>
+                        <th>Pembimbing</th>
+                        <th>Tgl Mulai</th>
+                        <th>Tgl Selesai</th>
+                        <th>Laporan</th>
+                        <th>Absensi</th>
+                        <th>Penilaian</th>
+                        <th>Approve</th>
+                        <th>Aksi</th>
                     </tr>
-                <?php endforeach ?>
-            <?php endif ?>
-        </tbody>
-    </table>
+                </thead>
+                <tbody>
+                    <?php if (!empty($peserta)): ?>
+                        <?php foreach ($peserta as $i => $item): ?>
+                            <tr>
+                                <td><?= $i + 1 ?></td>
+                                <td><?= esc($item['nama_peserta']) ?></td>
+                                <td><?= esc($item['nisn_nim']) ?></td>
+                                <td><?= esc($item['nama_jurusan']) ?></td>
+                                <td><?= esc($item['nama_instansi']) ?></td>
+                                <td>
+                                    <?php if (empty($item['nama_pembimbing'])): ?>
+                                        Belum Ada
+                                        <!-- Tombol tambah -->
+                                        <button class="btn btn-sm btn-success ml-2" data-toggle="modal" data-target="#tambahPembimbingModal<?= $item['magang_id'] ?>">
+                                            <i class="fas fa-plus"></i>
+                                        </button>
+                                    <?php else: ?>
+                                        <?= esc($item['nama_pembimbing']) ?>
+                                        <?php if($userLogin['eselon'] == 2):?>
+                                        <!-- Tombol edit -->
+                                        <a href="#" class="text-primary ml-2" data-toggle="modal" title="Ganti Pembimbing" data-target="#editPembimbingModal<?= $item['magang_id'] ?>">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <?php endif; ?>
+                                    <?php endif; ?>
+                                </td>
+                                <td><?= date('d M Y', strtotime($item['tanggal_masuk'])) ?></td>
+                                <td><?= date('d M Y', strtotime($item['tanggal_selesai'])) ?></td>
+                                <td>
+                                    <?php if (!empty($item['laporan'])): ?>
+                                        <a href="<?= base_url('uploads/laporan/' . $item['laporan']) ?>" target="_blank">
+                                            Lihat Laporan
+                                        </a>
+                                    <?php else: ?>
+                                        <span class="text-muted">Belum ada</span>
+                                    <?php endif; ?>
+                                </td>
+                                <td>
+                                    <?php if (!empty($item['absensi'])): ?>
+                                        <a href="<?= base_url('uploads/absensi/' . $item['absensi']) ?>" target="_blank">
+                                            Lihat Absensi
+                                        </a>
+                                    <?php else: ?>
+                                        <span class="text-muted">Belum ada</span>
+                                    <?php endif; ?>
+                                </td>
+
+                                <td>
+                                    <?php if ($item['penilaian_id']): ?>
+                                        <?php 
+                                        $total = $item['nilai_disiplin'] + $item['nilai_kerajinan'] + $item['nilai_tingkahlaku'] +
+                                                $item['nilai_kerjasama'] + $item['nilai_kreativitas'] + $item['nilai_kemampuankerja'] +
+                                                $item['nilai_tanggungjawab'] + $item['nilai_penyerapan'];
+                                        $rata = round($total / 8, 2);
+                                        ?>
+                                        <span class="badge bg-success text-light">
+                                            <strong><?= $rata ?></strong>
+                                        </span>
+                                        <!-- Icon Edit -->
+                                        <a href="#" class="text-primary ml-2" data-toggle="modal" data-target="#editNilaiModal<?= $item['penilaian_id'] ?>">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+
+                                        <!-- Modal Edit Penilaian -->
+                                        <div class="modal fade" id="editNilaiModal<?= $item['penilaian_id'] ?>" tabindex="-1" aria-labelledby="editNilaiLabel<?= $item['penilaian_id'] ?>" aria-hidden="true">
+                                            <div class="modal-dialog modal-lg">
+                                                <div class="modal-content">
+                                                    <form action="<?= base_url('pembimbing/penilaian/save') ?>" method="post">
+                                                        <?= csrf_field() ?>
+                                                        <input type="hidden" name="magang_id" value="<?= $item['magang_id'] ?>">
+
+                                                        <div class="modal-header bg-primary text-white">
+                                                            <h5 class="modal-title" id="editNilaiLabel<?= $item['penilaian_id'] ?>">
+                                                                Edit Penilaian: <?= esc($item['nama_peserta']) ?>
+                                                            </h5>
+                                                            <button type="button" class="close text-white" data-dismiss="modal">
+                                                                <span>&times;</span>
+                                                            </button>
+                                                        </div>
+
+                                                        <div class="modal-body">
+                                                            <div class="row">
+                                                                <?php
+                                                                $fields = [
+                                                                    'disiplin' => 'Disiplin',
+                                                                    'kerajinan' => 'Kerajinan',
+                                                                    'tingkahlaku' => 'Tingkah Laku',
+                                                                    'kerjasama' => 'Kerja Sama',
+                                                                    'kreativitas' => 'Kreativitas',
+                                                                    'kemampuankerja' => 'Kemampuan Kerja',
+                                                                    'tanggungjawab' => 'Tanggung Jawab',
+                                                                    'penyerapan' => 'Penyerapan'
+                                                                ];
+                                                                $nilaiMap = [60=>1,70=>2,80=>3,90=>4,100=>5];
+                                                                foreach ($fields as $name => $label):
+                                                                    $nilai = (int) $item['nilai_'.$name];
+                                                                    $bintangAktif = $nilaiMap[$nilai] ?? 0;
+                                                                ?>
+                                                                    <div class="col-md-6 mb-3">
+                                                                        <label class="font-weight-bold"><?= $label ?></label>
+                                                                        <div class="rating d-block" data-name="<?= $name ?>">
+                                                                            <?php for ($j = 1; $j <= 5; $j++): ?>
+                                                                                <i class="fa fa-star star <?= ($j <= $bintangAktif) ? 'selected' : '' ?>" data-value="<?= $j ?>"></i>
+                                                                            <?php endfor; ?>
+                                                                            <input type="hidden" name="<?= $name ?>" value="<?= $nilai ?>" required>
+                                                                        </div>
+                                                                    </div>
+                                                                <?php endforeach; ?>
+                                                            </div>
+
+                                                            <!-- Rata-rata & Kategori -->
+                                                            <div class="alert alert-info mt-3">
+                                                                <strong>Rata-rata Nilai:</strong> <span id="avgScore-<?= $item['penilaian_id'] ?>"><?= $rata ?></span><br>
+                                                                <strong>Kategori:</strong> 
+                                                                <span id="kategori-<?= $item['penilaian_id'] ?>">
+                                                                    <?php 
+                                                                        if ($rata >= 90) echo "Baik Sekali";
+                                                                        elseif ($rata >= 80) echo "Baik";
+                                                                        elseif ($rata >= 70) echo "Cukup";
+                                                                        elseif ($rata >= 60) echo "Kurang";
+                                                                        else echo "-";
+                                                                    ?>
+                                                                </span>
+                                                            </div>
+
+                                                            <div class="form-group mt-3">
+                                                                <label class="font-weight-bold">Catatan atau Komentar</label>
+                                                                <textarea name="catatan" class="form-control" rows="3"><?= esc($item['catatan']) ?></textarea>
+                                                            </div>
+                                                        </div>
+
+                                                        <div class="modal-footer">
+                                                            <button type="submit" class="btn btn-success">Simpan Perubahan</button>
+                                                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Batal</button>
+                                                        </div>
+                                                    </form>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                    <?php else: ?>
+                                        <span class="badge bg-warning text-light">Belum Dinilai</span>
+                                    <?php endif; ?>
+                                </td>
+
+                                <td>
+                                    <?php if ($item['approve_kaunit'] == 1): ?>
+                                        <span class="badge bg-success text-light">Disetujui</span>
+                                    <?php elseif ($item['approve_kaunit'] == 2): ?>
+                                        <span class="badge bg-danger text-light">Ditolak</span>
+                                    <?php else: ?>
+                                        <span class="badge bg-warning text-light">Belum Disetujui</span>
+                                    <?php endif; ?>
+                                </td>
+                                <td>
+                                    <?php if (!empty($item['pembimbing_id'])): ?>
+                                        <?php if ($item['penilaian_id']): ?>
+                                            <button type="button" title="Detail Nilai" class="btn btn-sm btn-outline-info" data-toggle="modal" data-target="#modalDetail-<?= $item['magang_id'] ?>">
+                                                <i class="fas fa-info-circle"></i>
+                                            </button>
+                                        <?php else: ?>
+                                            <?php if(!empty($item['laporan']) && !empty($item['absensi'])): ?>
+                                            <button type="button" class="btn btn-sm btn-success" data-toggle="modal" data-target="#modalNilai-<?= $item['magang_id'] ?>">
+                                                <i class="bi bi-pencil-square"></i> Nilai
+                                            </button>
+                                            <?php else : ?>
+                                                <button type="button" class="btn btn-sm btn-secondary" title="Laporan & Absensi Belum Diupload">
+                                                <i class="bi bi-pencil-square"></i> Nilai
+                                                </button>
+                                            <?php endif;?>
+                                        <?php endif; ?>
+                                    <?php else :?>
+                                        <button type="button" class="btn btn-sm btn-primary" data-toggle="modal" data-target="#tambahPembimbingModal<?= $item['magang_id'] ?>">
+                                            <i class="fas fa-user-plus"></i> Tambah Pembimbing
+                                        </button>
+                                        
+                                    <?php endif; ?>
+                                    
+
+                                </td>
+                            </tr>
+                        <?php endforeach ?>
+                    <?php endif ?>
+                </tbody>
+            </table>
 
     <?php if (!empty($peserta)): ?>
         <?php foreach ($peserta as $item): ?>
@@ -460,6 +674,118 @@
         </div>
     </div>
 </div>
+<script>
+flatpickr(".monthpicker", {
+    plugins: [
+        new monthSelectPlugin({
+            shorthand: false,
+            dateFormat: "Y-m",
+            altFormat: "F Y",
+            altInput: true
+        })
+    ]
+});
+</script>
+<script>
+const makeRedirect = (filter, tingkat) => {
+    const unit = "<?= $unitGet ?>";
+    let url = "<?= base_url('pembimbing/penilaian') ?>";
+    const params = [];
+    if (filter) params.push("filter=" + filter);
+    if (tingkat) params.push("tingkat=" + tingkat);
+    if (unit) params.push("unit_kerja=" + unit);
+    window.location.href = url + "?" + params.join("&");
+};
+
+// Data SMK
+const dataSmk = {
+    labels: ['Proses Daftar', 'Aktif Magang', 'Akan Magang', 'Belum Lulus'],
+    values: [
+        <?= $chartData['SMK']['proses'] ?>,
+        <?= $chartData['SMK']['aktif'] ?>,
+        <?= $chartData['SMK']['akan_masuk'] ?>,
+        <?= $chartData['SMK']['belum_lulus'] ?>
+    ],
+    filters: ['proses', 'aktif', 'akan_magang', 'belum_selesai']
+};
+
+// Data PT
+const dataPt = {
+    labels: ['Proses Daftar', 'Aktif Magang', 'Akan Magang', 'Belum Lulus'],
+    values: [
+        <?= $chartData['Perguruan Tinggi']['proses'] ?>,
+        <?= $chartData['Perguruan Tinggi']['aktif'] ?>,
+        <?= $chartData['Perguruan Tinggi']['akan_masuk'] ?>,
+        <?= $chartData['Perguruan Tinggi']['belum_lulus'] ?>
+    ],
+    filters: ['proses', 'aktif', 'akan_magang', 'belum_selesai']
+};
+
+// COLORS 
+const colors = ['#4e73df', '#1cc88a', '#36b9cc', '#5a5c69'];
+
+function makePie(canvasId, data, tingkat) {
+
+    const total = data.values.reduce((a, b) => a + b, 0);
+    if (total === 0) {
+
+        const canvas = document.getElementById(canvasId);
+
+        // Ganti canvas dengan teks dalam card-body yang sama
+        canvas.outerHTML = `
+            <div class="d-flex justify-content-center align-items-center" 
+                 style="height: 230px; color:#6c757d; font-size:18px;">
+                Data tidak ada
+            </div>
+        `;
+
+        return;
+    }
+    
+    const ctx = document.getElementById(canvasId).getContext('2d');
+    const chart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: data.labels,
+            datasets: [{
+                data: data.values,
+                backgroundColor: colors,
+                hoverOffset: 8,
+                borderWidth: 2,
+                borderColor: '#ffffff'
+            }]
+        },
+        // plugins: [ChartDataLabels],
+        options: {
+            responsive: true,
+            cutout: "55%",
+            maintainAspectRatio: false, 
+            aspectRatio: 1.6,
+            plugins: {
+                // datalabels: {
+                //     font: { weight: 'bold', size: 11 },
+                //     color: '#6c757d',
+                //     formatter: (value, ctx) => {
+                //         return value; 
+                //     }
+                // },
+                legend: { position: 'right' }
+            },
+            onClick: (e, item) => {
+                if (item.length > 0) {
+                    let index = item[0].index;
+                    makeRedirect(data.filters[index], tingkat);
+                }
+            }
+        }
+    });
+}
+
+// Render chart
+makePie('chartSmk', dataSmk, 'SMK');
+makePie('chartPt', dataPt, 'Perguruan Tinggi');
+
+</script>
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     const nilaiMap = {1:60, 2:70, 3:80, 4:90, 5:100};

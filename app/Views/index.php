@@ -1,6 +1,6 @@
 <?= $this->extend('template'); ?>
 <?= $this->section('content'); ?>
-<style>
+<!-- <style>
     .select2-container--default
     .select2-selection--multiple
     .select2-selection__choice {
@@ -55,6 +55,41 @@
       transform: scale(1.05);
     }
 
+</style> -->
+
+<style>
+.select2-container {
+  width: 100% !important;
+}
+
+.select2--modal-fix {
+  position: relative !important;
+}
+
+.select2-dropdown {
+  z-index: 2000 !important;
+  position: absolute !important;
+}
+.select2-container .select2-selection--multiple {
+  border: 1px solid #ced4da !important;
+  border-radius: 0.375rem !important;
+  padding: 0.375rem 0.75rem;
+  min-height: calc(2.25rem + 2px);
+}
+
+.select2-container--default .select2-selection--multiple .select2-selection__choice {
+  background-color: #0d6efd !important;
+  border: none !important;
+  color: #fff !important;
+  border-radius: 0.25rem !important;
+  padding: 0 0.5rem !important;
+  margin-top: 0.25rem !important;
+}
+
+.select2-container--default .select2-selection--multiple .select2-selection__choice__remove {
+  color: #fff !important;
+  margin-right: 0.25rem;
+}
 </style>
 
 <?php if (session()->getFlashdata('success')): ?>
@@ -63,8 +98,10 @@ Swal.fire({
     icon: 'success',
     title: 'Sukses',
     text: '<?= session()->getFlashdata('success') ?>',
-    timer: 2000,
-    showConfirmButton: false
+    confirmButtonText: 'OK',
+    showConfirmButton: true,
+    allowOutsideClick: false, 
+    allowEscapeKey: false
 });
 </script>
 <?php elseif (session()->getFlashdata('error')): ?>
@@ -302,7 +339,7 @@ Swal.fire({
               <li>KTP/KK</li>
             </ul>
           </div>
-          <button class="btn btn-danger w-100 mt-3" data-bs-toggle="modal" data-bs-target="#modalPenelitianComingSoon">Daftar Penelitian</button>
+          <button class="btn btn-danger w-100 mt-3" data-bs-toggle="modal" data-bs-target="#modalPendaftaranPenelitian">Daftar Penelitian</button>
         </div>
       `;
       btn.innerHTML = `<i class="bi bi-chevron-left"></i>`;
@@ -381,32 +418,58 @@ Swal.fire({
 <div class="modal fade" id="modalPendaftaranPenelitian" tabindex="-1" aria-labelledby="modalPenelitianLabel" aria-hidden="true">
   <div class="modal-dialog modal-lg modal-dialog-centered">
     <div class="modal-content rounded-4 shadow">
-      <div class="modal-header">
+      <div class="modal-header bg-primary text-white">
         <h5 class="modal-title" id="modalPenelitianLabel">Pendaftaran Penelitian</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Tutup"></button>
       </div>
-      <form action="/penelitian/daftar" method="post">
+      <form id="formPendaftaranPenelitian" action="<?= base_url('penelitian/daftar') ?>" method="post">
         <div class="modal-body">
           <div class="mb-3">
-            <label for="judul" class="form-label">Judul Penelitian</label>
+            <label for="judul" class="form-label">Judul Penelitian<span class="text-danger">*</span></label>
             <input type="text" class="form-control" id="judul" name="judul" placeholder="Masukkan judul penelitian" required>
           </div>
           <div class="mb-3">
-            <label for="tanggal_mulai" class="form-label">Tanggal Mulai Penelitian</label>
-            <input type="date" class="form-control" id="tanggal_mulai" name="tanggal_mulai" required>
+            <label for="keyword" class="form-label">Kata Kunci Penelitian<span class="text-danger">*</span></label>
+            <!-- <input type="text" class="form-control" id="bidang" name="bidang" placeholder="Contoh: Teknologi Semen, Lingkungan, dll" required> -->
+            <select class="form-control select2" multiple="multiple" id="keyword" name="keyword_ids[]" required>
+              <?php foreach ($keyword as $item): ?>
+                <option value="<?= $item['keyword_id'] ?>">
+                  <?= esc($item['keyword_nama']) ?>
+                </option>
+              <?php endforeach; ?>
+            </select>
           </div>
           <div class="mb-3">
-            <label for="deskripsi" class="form-label">Deskripsi Singkat</label>
-            <textarea class="form-control" id="deskripsi" name="deskripsi" rows="3" placeholder="Tuliskan ringkasan topik atau metode penelitian"></textarea>
+            <label for="deskripsi" class="form-label">Deskripsi Singkat<span class="text-danger">*</span></label>
+            <textarea class="form-control" id="deskripsi" name="deskripsi" rows="3" minlength="200" placeholder="Tuliskan ringkasan topik atau metode penelitian" required></textarea>
+            <small id="counterDeskripsi" class="text-muted">0 / 200 karakter</small>
           </div>
           <div class="mb-3">
-            <label for="dosen_pembimbing" class="form-label">Nama Dosen Pembimbing</label>
-            <input type="text" class="form-control" id="dosen_pembimbing" name="dosen_pembimbing" placeholder="Opsional">
+            <label for="rencana_masuk" class="form-label">Pilih Rencana Mulai Penelitian<span class="text-danger">*</span></label>
+            <select class="form-control" id="rencana_masuk" name="rencana_masuk" required>
+              <option value="">-- Pilih Tanggal --</option>
+              <?php foreach ($pilihanTanggal as $tgl): ?>
+                <option value="<?= $tgl ?>">
+                  <?= format_tanggal_indonesia($tgl) ?>
+                </option>
+              <?php endforeach; ?>
+            </select>
           </div>
           <div class="mb-3">
-            <label for="bidang" class="form-label">Bidang Penelitian</label>
-            <input type="text" class="form-control" id="bidang" name="bidang" placeholder="Contoh: Teknologi Semen, Lingkungan, dll">
+            <label for="durasi" class="form-label">Durasi Penelitian<span class="text-danger">*</span></label>
+            <select class="form-control" id="durasi" name="durasi" rows="3"required>
+              <option value="" disabled selected>-- Pilih Durasi Penelitian --</option>
+              <option value="1">1 Bulan</option>
+              <option value="2">2 Bulan</option>
+              <option value="3">3 Bulan</option>
+            </select>
           </div>
+          
+          <div class="mb-3">
+            <label for="dosen_pembimbing" class="form-label">Nama Dosen Pembimbing<span class="text-danger">*</span></label>
+            <input type="text" class="form-control" id="dosen_pembimbing" name="dosen_pembimbing" placeholder="Tuliskan Nama Dosen Pembimbing" required>
+          </div>
+          
         </div>
         <div class="modal-footer">
           <button type="submit" class="btn btn-primary w-100">Kirim Pendaftaran</button>
@@ -492,13 +555,52 @@ Swal.fire({
 
 <!-- Script AOS -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+const textarea = document.getElementById('deskripsi');
+const counter  = document.getElementById('counterDeskripsi');
+
+textarea.addEventListener('input', function () {
+    let total = this.value.length;
+    counter.textContent = total + " / 200 karakter";
+
+    // perubahan warna agar user tahu sudah cukup atau belum
+    if (total < 200) {
+        counter.classList.remove("text-success");
+        counter.classList.add("text-danger");
+    } else {
+        counter.classList.remove("text-danger");
+        counter.classList.add("text-success");
+    }
+});
+</script>
+<script>
+document.getElementById('formPendaftaranPenelitian').addEventListener('submit', function(e) {
+    e.preventDefault(); // cegah submit langsung
+
+    Swal.fire({
+        title: 'Kirim Pendaftaran?',
+        text: "Pastikan data penelitian sudah diisi dengan benar.",
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: 'Ya, kirim!',
+        cancelButtonText: 'Batal',
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            this.submit(); // jika dikonfirmasi → submit form
+        }
+    });
+});
+</script>
+
 <script>
   AOS.init({
     duration: 800,
     easing: 'ease-in-out',
     once: true,
   });
-
 
 </script>
 

@@ -55,7 +55,7 @@
                                     <td><?= esc($data['alasan_batal']); ?></td>
                                     <td class="text-center">
                                         <!-- <a href="<?= base_url('admin/manage-pendaftaran/detail/' . $data['magang_id']); ?>" class="btn btn-info btn-sm">Detail</a> -->
-                                        <button class="btn btn-sm btn-info" data-toggle="modal" data-target="#detailModal<?= $data['magang_id'] ?>">Detail</button>
+                                        <button class="btn btn-sm btn-info" data-toggle="modal" title="Detail" data-target="#detailModal<?= $data['magang_id'] ?>"><i class="fas fa-eye"></i></button>
                                     </td>
                                 </tr>
                             <?php endforeach; ?>

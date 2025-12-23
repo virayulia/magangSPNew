@@ -23,9 +23,10 @@ class UserModel extends MythUserModel
         'instagram', 'instagram_followers', 'tiktok','tiktok_followers',
         'tingkat_pendidikan', 'instansi_id','jurusan_id','semester','nilai_ipk', 'rfid_no', 'cv','proposal','surat_permohonan',
         'tanggal_surat','no_surat','nama_pimpinan','jabatan','email_instansi','bpjs_kes','bpjs_tk',
-        'buktibpjs_tk','ktp_kk',
+        'buktibpjs_tk','ktp_kk','tanda_tangan',
         'password_hash', 'reset_hash', 'reset_at', 'reset_expires', 'activate_hash', 
-        'status', 'status_message', 'active', 'force_pass_reset', 'permissions', 'deleted_at', 'eselon'
+        'status', 'status_message', 'active', 'force_pass_reset', 'permissions', 'deleted_at', 'eselon',
+        'must_change_password'
     ];
     protected $useTimestamps   = true;
     protected $validationRules = [

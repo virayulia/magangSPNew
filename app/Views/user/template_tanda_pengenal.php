@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>ID Card Magang</title>
+    <title>ID Card Magang/Penelitian</title>
     <link rel="shortcut icon" href="<?= base_url('assets/img/SP_logo.png'); ?>" type="image/png">
     <style>
         body {
@@ -135,8 +135,11 @@
             <img src="<?= base_url('assets/img/SIG_Logo.png') ?>" alt="SIG Logo" class="logo">
             <img src="<?= base_url('assets/img/SP_logo2.png') ?>" alt="SP Logo" class="logo">
         </div>
-
-        <div class="header">Magang</div>
+        <?php if($tipe === 'magang') :?> 
+            <div class="header">Magang</div>
+        <?php elseif($tipe === 'penelitian') :?> 
+            <div class="header">Penelitian</div>
+        <?php endif; ?>
 
         <img src="<?= base_url('/uploads/user-image/' . $user->user_image) ?>" alt="Foto" class="foto">
 
@@ -144,8 +147,8 @@
             <h3><strong><?= esc($user->fullname) ?></strong></h3>
             <p><?= esc($user->nisn_nim) ?>
             <br><?= esc($user->nama_instansi) ?>
-            <br><?= esc($magang['unit_kerja']) ?>
-            <br><?= format_tanggal_singkat($magang['tanggal_masuk']) ?> - <?= format_tanggal_singkat($magang['tanggal_selesai']) ?></p>
+            <br><?= esc($data['unit_kerja']) ?>
+            <br><?= format_tanggal_singkat($data['tanggal_masuk']) ?> - <?= format_tanggal_singkat($data['tanggal_selesai']) ?></p>
         </div>
 
         <div class="footer">© PT. Semen Padang</div>

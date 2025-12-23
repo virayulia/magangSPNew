@@ -75,7 +75,7 @@ class CronController extends BaseController
         }
 
         $db = \Config\Database::connect();
-        $targetDate = date('Y-m-d', strtotime('+2 days'));
+        $targetDate = date('Y-m-d', strtotime('+3 days'));
 
         // Ambil data mahasiswa yang akan masuk
         $pendaftar = $db->table('magang')
@@ -108,12 +108,15 @@ class CronController extends BaseController
         foreach ($grouped as $email_unit => $dataUnit) {
             $email->clear();
             $email->setTo($email_unit);
+            $unit_id = 44;
+            $signature = getSignature($unit_id);
             $email->setSubject('Pemberitahuan Penerimaan Peserta Magang');
             $email->setMailType('html');
 
             $email->setMessage(view('emails/reminder_magang', [
                 'unit'  => $dataUnit['unit'],
                 'list'  => $dataUnit['list'],
+                'signature' => $signature
             ]));
 
             if ($email->send()) {
@@ -144,7 +147,242 @@ class CronController extends BaseController
         ]);
     }
 
+    public function remindPembimbing($token = null)
+    {
+        // 🔐 Token keamanan
+        if ($token !== 'semen123') {
+            return $this->response
+                ->setStatusCode(403)
+                ->setJSON(['error' => 'Unauthorized']);
+        }
 
+        $db = \Config\Database::connect();
+
+        // Target: mahasiswa sudah masuk magang tapi belum ada pembimbing
+        $data = $db->table('magang')
+            ->select('
+                magang.*,
+                users.fullname,
+                instansi.nama_instansi,
+                jurusan.nama_jurusan,
+                unit_kerja.unit_kerja,
+                unit_kerja.email_pimpinan as email_unit
+            ')
+            ->join('users', 'users.id = magang.user_id', 'left')
+            ->join('instansi', 'instansi.instansi_id = users.instansi_id', 'left')
+            ->join('jurusan', 'jurusan.jurusan_id = users.jurusan_id', 'left')
+            ->join('unit_kerja', 'unit_kerja.unit_id = magang.unit_id', 'left')
+            ->where('magang.status_akhir', 'magang')
+            ->where('magang.pembimbing_id IS NULL', null, false)
+            ->get()
+            ->getResult();
+
+        // Kelompokkan per unit
+        $grouped = [];
+        foreach ($data as $p) {
+            if (!$p->email_unit) continue;
+
+            $grouped[$p->email_unit]['unit'] = $p->unit_kerja;
+            $grouped[$p->email_unit]['list'][] = [
+                'nama'     => $p->fullname,
+                'jurusan'  => $p->nama_jurusan,
+                'instansi' => $p->nama_instansi,
+                'tanggal'  => $p->tanggal_masuk,
+            ];
+        }
+
+        $email = \Config\Services::email();
+        $sentUnits = [];
+        $count = 0;
+
+        foreach ($grouped as $email_unit => $dataUnit) {
+
+            $email->clear();
+            $email->setTo($email_unit);
+            $email->setSubject('Reminder Penetapan Pembimbing Magang');
+            $email->setMailType('html');
+
+            // Kalau mau signature dinamis per unit
+            $unit_id = 44;
+            $signature = getSignature($unit_id);
+
+            $email->setMessage(view('emails/reminder_pembimbing', [
+                'unit'      => $dataUnit['unit'],
+                'list'      => $dataUnit['list'],
+                'signature' => $signature
+            ]));
+
+            if ($email->send()) {
+                $count++;
+                $sentUnits[] = $dataUnit['unit'] . " <{$email_unit}>";
+            }
+        }
+
+        // CC laporan ke admin
+        if (!empty($sentUnits)) {
+            $email->clear();
+            $email->setTo('musmardi@sig.id');
+            $email->setSubject('Laporan Reminder Pembimbing Magang');
+            $email->setMailType('html');
+
+            $email->setMessage("
+                <p>Unit yang sudah dikirim reminder pembimbing:</p>
+                <ul>" . implode('', array_map(fn($u) => "<li>{$u}</li>", $sentUnits)) . "</ul>
+                <p>Total: {$count} unit.</p>
+            ");
+
+            $email->send();
+        }
+
+        return $this->response->setJSON([
+            'status'  => 'success',
+            'message' => "{$count} email reminder pembimbing dikirim."
+        ]);
+    }
+
+    // public function remindPembimbing($token = null)
+    // {
+    //     // ===============================
+    //     // 1. KEAMANAN TOKEN
+    //     // ===============================
+    //     if ($token !== env('CRON_TOKEN', 'semen123')) {
+    //         return $this->response
+    //             ->setStatusCode(403)
+    //             ->setJSON(['error' => 'Unauthorized']);
+    //     }
+
+    //     $db = \Config\Database::connect();
+
+    //     // ===============================
+    //     // 2. MODE TESTING
+    //     // ===============================
+    //     $testMode = $this->request->getGet('test');       
+    //     $testUnit = $this->request->getGet('unit_id');  
+
+    //     // cegah kirim massal via browser
+    //     if (!$this->request->isCLI() && !$testMode) {
+    //         return $this->response
+    //             ->setStatusCode(403)
+    //             ->setJSON(['error' => 'Cron hanya boleh dijalankan via CLI atau TEST MODE']);
+    //     }
+
+    //     // ===============================
+    //     // 3. QUERY DATA
+    //     // ===============================
+    //     $query = $db->table('magang')
+    //         ->select('
+    //             magang.magang_id,
+    //             magang.tanggal_masuk,
+    //             magang.unit_id,
+    //             users.fullname,
+    //             instansi.nama_instansi,
+    //             jurusan.nama_jurusan,
+    //             unit_kerja.unit_kerja,
+    //             unit_kerja.email_pimpinan as email_unit
+    //         ')
+    //         ->join('users', 'users.id = magang.user_id', 'left')
+    //         ->join('instansi', 'instansi.instansi_id = users.instansi_id', 'left')
+    //         ->join('jurusan', 'jurusan.jurusan_id = users.jurusan_id', 'left')
+    //         ->join('unit_kerja', 'unit_kerja.unit_id = magang.unit_id', 'left')
+    //         ->where('magang.status_akhir', 'magang')
+    //         ->where('magang.pembimbing_id IS NULL', null, false);
+
+    //     // 🔍 filter khusus saat testing
+    //     if ($testMode && $testUnit) {
+    //         $query->where('magang.unit_id', $testUnit);
+    //     }
+
+    //     $data = $query->get()->getResult();
+
+    //     if (empty($data)) {
+    //         return $this->response->setJSON([
+    //             'status' => 'info',
+    //             'message' => 'Tidak ada data yang perlu dikirim.'
+    //         ]);
+    //     }
+
+    //     // ===============================
+    //     // 4. KELOMPOKKAN PER UNIT
+    //     // ===============================
+    //     $grouped = [];
+    //     foreach ($data as $p) {
+    //         if (!$p->email_unit) continue;
+
+    //         $grouped[$p->email_unit]['unit'] = $p->unit_kerja;
+    //         $grouped[$p->email_unit]['list'][] = [
+    //             'nama'     => $p->fullname,
+    //             'jurusan'  => $p->nama_jurusan,
+    //             'instansi' => $p->nama_instansi,
+    //             'tanggal'  => $p->tanggal_masuk
+    //         ];
+    //     }
+
+    //     // ===============================
+    //     // 5. KIRIM EMAIL
+    //     // ===============================
+    //     $email = \Config\Services::email();
+    //     $sentUnits = [];
+    //     $count = 0;
+
+    //     foreach ($grouped as $email_unit => $dataUnit) {
+
+    //         $email->clear();
+
+    //         // 🎯 tujuan email
+    //         $toEmail = $testMode
+    //             ? env('TEST_EMAIL', 'virayukia1234@gmail.com')
+    //             : $email_unit;
+
+    //         $subjectPrefix = $testMode ? '[TEST] ' : '';
+
+    //         // signature (kalau dinamis per unit)
+    //         $unit_id = $testUnit ?? 44;
+    //         $signature = getSignature($unit_id);
+
+    //         $email->setTo($toEmail);
+    //         $email->setSubject($subjectPrefix . 'Reminder Penetapan Pembimbing Magang');
+    //         $email->setMailType('html');
+
+    //         $email->setMessage(view('emails/reminder_pembimbing', [
+    //             'unit'      => $dataUnit['unit'],
+    //             'list'      => $dataUnit['list'],
+    //             'signature' => $signature
+    //         ]));
+
+    //         if ($email->send()) {
+    //             $count++;
+    //             $sentUnits[] = $dataUnit['unit'] . " <{$toEmail}>";
+    //         }
+    //     }
+
+    //     // ===============================
+    //     // 6. LAPORAN KE ADMIN
+    //     // ===============================
+    //     if (!empty($sentUnits)) {
+    //         $email->clear();
+    //         $email->setTo('virayulia.contact@gmail.com');
+    //         $email->setSubject($subjectPrefix . 'Laporan Reminder Pembimbing Magang');
+    //         $email->setMailType('html');
+
+    //         $email->setMessage("
+    //             <p>Berikut unit yang dikirimi reminder pembimbing:</p>
+    //             <ul>" . implode('', array_map(fn($u) => "<li>{$u}</li>", $sentUnits)) . "</ul>
+    //             <p>Total: <strong>{$count}</strong> unit.</p>
+    //         ");
+
+    //         $email->send();
+    //     }
+
+    //     // ===============================
+    //     // 7. RESPONSE
+    //     // ===============================
+    //     return $this->response->setJSON([
+    //         'status' => 'success',
+    //         'mode'   => $testMode ? 'TEST MODE' : 'PRODUCTION',
+    //         'count'  => $count,
+    //         'units'  => $sentUnits
+    //     ]);
+    // }
 
     public function autoTolakTidakKonfirmasi($token = null)
     {
@@ -186,12 +424,14 @@ class CronController extends BaseController
                 // Kirim email penolakan
                 $email = \Config\Services::email();
                 $email->setTo($data->email);
-
+                $unit_id = 44;
+                $signature = getSignature($unit_id);
                 $email->setSubject('Konfirmasi Seleksi Magang Dibatalkan');
                 $email->setMailType('html');
                 $email->setMessage(view('emails/penolakan_tidak_konfirmasi', [
                     'nama' => $data->fullname ?? 'Saudara',
                     'unit' => $data->unit_kerja ?? 'Unit terkait',
+                    'signature' => $signature
                 ]));
 
                 if (!$email->send()) {
@@ -314,6 +554,8 @@ class CronController extends BaseController
         foreach ($dataList as $data) {
             $email = \Config\Services::email();
             $email->setTo($data->email);
+            $unit_id = 44;
+            $signature = getSignature($unit_id);
             $email->setSubject('Reminder: Segera Lengkapi Berkas Magang Anda');
             $email->setMailType('html');
 
@@ -330,6 +572,7 @@ class CronController extends BaseController
                 'unit' => $data->unit_kerja ?? 'Unit terkait',
                 'tanggal_masuk' => date('d-m-Y', strtotime($data->tanggal_masuk)),
                 'dokumenKosong' => $kosong,
+                'signature' => $signature
             ]));
 
             if ($email->send()) {
@@ -378,13 +621,15 @@ class CronController extends BaseController
         foreach ($dataList as $data) {
             $email = \Config\Services::email();
             $email->setTo($data->email);
-
+            $unit_id = 44;
+            $signature = getSignature($unit_id);
             $email->setSubject('Mohon Segera Isi Feedback Magang Anda');
             $email->setMailType('html');
             $email->setMessage(view('emails/akhir_magang', [
                 'nama'   => $data->fullname ?? $data->username,
                 'unit'   => $data->unit_kerja ?? 'Unit terkait',
                 'tanggal_selesai' => $today,
+                'signature' => $signature
             ]));
 
             if ($email->send()) {
@@ -403,6 +648,109 @@ class CronController extends BaseController
             'pesan'    => $messages
         ]);
     }
+
+    public function reminderUploadLaporan($token = null)
+    {
+        // ================== KEAMANAN ==================
+        if ($token !== 'semen123') {
+            return $this->response
+                ->setStatusCode(403)
+                ->setJSON(['error' => 'Unauthorized']);
+        }
+
+        $db = \Config\Database::connect();
+        $builder = $db->table('magang');
+
+        $today = date('Y-m-d');
+
+        // ================== AMBIL DATA ==================
+        $dataList = $builder
+            ->select('
+                magang.*,
+                users.email,
+                users.fullname,
+                unit_kerja.unit_kerja
+            ')
+            ->join('users', 'users.id = magang.user_id', 'left')
+            ->join('unit_kerja', 'unit_kerja.unit_id = magang.unit_id', 'left')
+            ->whereIn('magang.status_akhir', ['magang', 'lulus'])
+            ->where('magang.tanggal_selesai <=', $today)
+            ->where("DATE_ADD(magang.tanggal_selesai, INTERVAL 15 DAY) >=", $today)
+            ->groupStart()
+                ->groupStart()
+                    ->where('magang.laporan IS NULL')
+                    ->where('magang.url_laporan IS NULL')
+                ->groupEnd()
+                ->orGroupStart()
+                    ->where('magang.absensi IS NULL')
+                    ->where('magang.url_absensi IS NULL')
+                ->groupEnd()
+            ->groupEnd()
+            ->get()
+            ->getResult();
+
+        $successCount = 0;
+        $failCount = 0;
+        $messages = [];
+
+        // ================== LOOP EMAIL ==================
+        foreach ($dataList as $data) {
+
+            // Hitung sisa hari upload
+            $tglSelesai = new \DateTime($data->tanggal_selesai);
+            $deadline   = (clone $tglSelesai)->modify('+15 days');
+            $todayDt    = new \DateTime($today);
+
+            $sisaHari = $todayDt->diff($deadline)->days;
+            if ($todayDt > $deadline) {
+                continue; // safety
+            }
+
+            // Dokumen yang belum lengkap
+            $belumLengkap = [];
+
+            if (empty($data->laporan) && empty($data->url_laporan)) {
+                $belumLengkap[] = 'Laporan Magang';
+            }
+
+            if (empty($data->absensi) && empty($data->url_absensi)) {
+                $belumLengkap[] = 'Absensi Magang';
+            }
+
+            // ================== EMAIL ==================
+            $email = \Config\Services::email();
+            $email->setTo($data->email);
+            $email->setSubject('Reminder Upload Laporan & Absensi Magang');
+            $email->setMailType('html');
+
+            $signature = getSignature(44);
+
+            $email->setMessage(view('emails/reminder_upload_laporan', [
+                'nama'        => $data->fullname ?? 'Saudara',
+                'unit'        => $data->unit_kerja ?? '-',
+                'tanggalSelesai' => date('d-m-Y', strtotime($data->tanggal_selesai)),
+                'sisaHari'    => $sisaHari,
+                'dokumen'     => $belumLengkap,
+                'signature'   => $signature
+            ]));
+
+            if ($email->send()) {
+                $successCount++;
+            } else {
+                $failCount++;
+                $messages[] = "Gagal kirim ke {$data->email}";
+                log_message('error', $email->printDebugger());
+            }
+        }
+
+        return $this->response->setJSON([
+            'status'   => 'ok',
+            'berhasil' => $successCount,
+            'gagal'    => $failCount,
+            'pesan'    => $messages
+        ]);
+    }
+
 
 
 

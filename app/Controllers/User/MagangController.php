@@ -3,6 +3,7 @@
 namespace App\Controllers\User;
 
 use App\Controllers\BaseController;
+use App\Controllers\Unitkerja;
 use CodeIgniter\HTTP\ResponseInterface;
 use App\Libraries\MY_TCPDF as TCPDF;
 use App\Models\UserModel;
@@ -14,6 +15,15 @@ use App\Models\PenilaianModel;
 use App\Models\DetailJawabanSafetyModel;
 use App\Models\FeedbackModel;
 use App\Models\SertifikatModel;
+use App\Models\UnitUserModel;
+use Endroid\QrCode\Builder\Builder as QrBuilder;
+use Endroid\QrCode\Writer\PngWriter;
+use Endroid\QrCode\ErrorCorrectionLevel;
+use Endroid\QrCode\Logo\Logo;
+use Endroid\QrCode\Encoding\Encoding;
+use Endroid\QrCode\RoundBlockSizeMode;
+use Endroid\QrCode\Color\Color;
+
 
 class MagangController extends BaseController
 {
@@ -27,6 +37,7 @@ class MagangController extends BaseController
     protected $detailJawabanModel;
     protected $feedbackModel;
     protected $sertifikatModel;
+    protected $unitUserModel;
 
     
     public function __construct()
@@ -41,6 +52,7 @@ class MagangController extends BaseController
         $this->detailJawabanModel = new DetailJawabanSafetyModel();
         $this->feedbackModel = new FeedbackModel();
         $this->sertifikatModel = new SertifikatModel();
+        $this->unitUserModel = new UnitUserModel();
 
 
     }
@@ -242,7 +254,8 @@ class MagangController extends BaseController
             throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound('Data pengguna tidak ditemukan.');
         }
         return view('user/template_tanda_pengenal', [
-            'magang' => $magang,
+            'data' => $magang,
+            'tipe'  => 'magang',
             'user' => $user,
         ]);
     }
@@ -276,8 +289,9 @@ class MagangController extends BaseController
         $riwayatSafety = [];
         if ($pendaftaran) {
             $riwayatSafety = $this->jawabanModel
-                ->join('magang', 'magang.magang_id = jawaban_safety.magang_id')
+                ->join('magang', 'magang.magang_id = jawaban_safety.relasi_id')
                 ->where('magang.magang_id', $pendaftaran['magang_id'])
+                ->where('jawaban_safety.tipe', 'magang')
                 ->orderBy('tanggal_ujian', 'desc')
                 ->findAll();
         }
@@ -329,6 +343,7 @@ class MagangController extends BaseController
 
         // Kalau sudah lulus, tampilkan view pelaksanaan normal
         return view('user/surat_pernyataan', [
+            'tipe'      => 'magang',
             'user_data' => $userData,
             'pendaftaran' => $pendaftaran
         ]);
@@ -353,9 +368,11 @@ class MagangController extends BaseController
 
     public function safetyTes()
     {
-        $data['soal'] = $this->soalSafetyModel->findAll();
+        $soal = $this->soalSafetyModel->findAll();
 
-        return view('user/tes-safety', $data);
+        return view('user/tes-safety',
+                    ['soal' => $soal,
+                    'tipe'  => 'magang']);
     }
 
     public function submitTes()
@@ -378,8 +395,9 @@ class MagangController extends BaseController
 
         // Hitung jumlah percobaan HARI INI
         $percobaanHariIni = $this->jawabanModel
-            ->where('magang_id', $magangId)
+            ->where('relasi_id', $magangId)
             ->where('tanggal_ujian', $tanggalHariIni)
+            ->where('tipe','magang')
             ->countAllResults();
 
         if ($percobaanHariIni >= 3) {
@@ -397,7 +415,8 @@ class MagangController extends BaseController
 
         // Simpan jawaban utama dulu
         $this->jawabanModel->insert([
-            'magang_id'     => $magangId,
+            'tipe'          => 'magang',
+            'relasi_id'     => $magangId,
             'nilai'         => 0,
             'percobaan_ke'  => $percobaanHariIni + 1, 
             'tanggal_ujian' => $tanggalHariIni,
@@ -438,6 +457,113 @@ class MagangController extends BaseController
         return redirect()->to('/pelaksanaan')->with('success', "Tes selesai. Skor Anda: $skor ($status)");
     }
 
+     public function cetak_absensi($id)
+    {
+        $db = db_connect();
+        $pendaftaran = $db->table('magang')
+            ->select('magang.*, users.fullname, users.nisn_nim, unit_kerja.unit_kerja')
+            ->join('users', 'users.id = magang.user_id')
+            ->join('unit_kerja', 'unit_kerja.unit_id = magang.unit_id')
+            ->where('magang.magang_id', $id)
+            ->get()->getRowArray();
+
+        if (!$pendaftaran) {
+            return redirect()->back()->with('error', 'Data tidak ditemukan');
+        }
+
+        // ==================== MULAI PDF ====================
+        $pdf = new \TCPDF('P', PDF_UNIT, 'A4', true, 'UTF-8', false);
+        $pdf->SetTitle('Lembar Absensi');
+        $pdf->SetMargins(25, 15, 25); // margin kiri-kanan lebih lebar sedikit
+        $pdf->setPrintHeader(false); // ⬅️ tambahkan baris ini
+        $pdf->setPrintFooter(false); // ⬅️ tambahkan baris ini (opsional)
+        $pdf->AddPage();
+
+        // ================== Header (Logo) ==================
+        $sigLogo = FCPATH . 'assets/img/SIG_Logo.png';
+        $spLogo = FCPATH . 'assets/img/SP_logo22.png';
+
+        if (file_exists($sigLogo)) {
+            $pdf->Image($sigLogo, 25, 12, 10, '', 'PNG');
+        }
+        if (file_exists($spLogo)) {
+            $pdf->Image($spLogo, 180, 10, 10, '', 'PNG');
+        }
+
+        // ==================== JUDUL ====================
+        $pdf->SetFont('times', 'B', 12);
+        $pdf->Cell(0, 8, 'LEMBAR ABSENSI', 0, 1, 'C');
+        $pdf->Ln(4);
+
+        // ==================== DATA PESERTA ====================
+        $pdf->SetFont('times', '', 11);
+        $pdf->Cell(35, 7, 'Nama', 0, 0);
+        $pdf->Cell(5, 7, ':', 0, 0);
+        $pdf->Cell(100, 7, $pendaftaran['fullname'], 0, 1);
+
+        $pdf->Cell(35, 7, 'NISN/NIM', 0, 0);
+        $pdf->Cell(5, 7, ':', 0, 0);
+        $pdf->Cell(100, 7, $pendaftaran['nisn_nim'], 0, 1);
+
+        $pdf->Cell(35, 7, 'Bagian / Unit Kerja', 0, 0);
+        $pdf->Cell(5, 7, ':', 0, 0);
+        $pdf->Cell(100, 7, $pendaftaran['unit_kerja'], 0, 1);
+
+        $pdf->Cell(35, 7, 'Bulan', 0, 0);
+        $pdf->Cell(5, 7, ':', 0, 1);
+        $pdf->Ln(3);
+
+        // ==================== TABEL ABSENSI ====================
+        $pdf->SetFont('times', 'B', 10);
+
+        // Baris header atas (Paraf)
+        $pdf->Cell(20, 10, 'Tanggal', 1, 0, 'C');
+        $pdf->Cell(20, 10, 'Masuk', 1, 0, 'C');
+        $pdf->Cell(20, 10, 'Keluar', 1, 0, 'C');
+        $pdf->Cell(105, 5, 'Paraf', 1, 0, 'C'); // merge 5 kolom ke bawah
+        $pdf->Cell(0, 5, '', 0, 1); // newline untuk baris header bawah
+
+        // Header bawah (Hadir, Sakit, Izin, Alpa, Keterangan)
+        $pdf->SetX($pdf->GetX() - 160);
+        $pdf->Cell(10, 5, '', 0, 0); 
+        $pdf->Cell(15, 5, 'Hadir', 1, 0, 'C');
+        $pdf->Cell(15, 5, 'Sakit', 1, 0, 'C');
+        $pdf->Cell(15, 5, 'Izin', 1, 0, 'C');
+        $pdf->Cell(15, 5, 'Alpa', 1, 0, 'C');
+        $pdf->Cell(45, 5, 'Keterangan', 1, 1, 'C');
+
+        $pdf->SetFont('times', '', 10);
+
+        // Isi tabel (1–31)
+        for ($i = 1; $i <= 31; $i++) {
+
+            // ============= Warna Belang =============
+            if ($i % 2 == 0) {
+                // warna abu muda
+                $pdf->SetFillColor(235, 235, 235);
+            } else {
+                // warna putih
+                $pdf->SetFillColor(255, 255, 255);
+            }
+            $fill = true;
+            // ========================================
+
+            $pdf->Cell(20, 6, $i, 1, 0, 'C', $fill);
+            $pdf->Cell(20, 6, '', 1, 0, 'C', $fill);
+            $pdf->Cell(20, 6, '', 1, 0, 'C', $fill);
+            $pdf->Cell(15, 6, '', 1, 0, 'C', $fill);
+            $pdf->Cell(15, 6, '', 1, 0, 'C', $fill);
+            $pdf->Cell(15, 6, '', 1, 0, 'C', $fill);
+            $pdf->Cell(15, 6, '', 1, 0, 'C', $fill);
+            $pdf->Cell(45, 6, '', 1, 1, 'C', $fill);
+        }
+
+
+        // ==================== OUTPUT ====================
+        $pdf->Output('Absensi_' . $pendaftaran['nisn_nim'] . '.pdf', 'I');
+        exit;
+    }
+
     public function unggahIndex()
     {
         $userId = user_id();
@@ -463,11 +589,11 @@ class MagangController extends BaseController
             ->orderBy('tanggal_daftar', 'desc')
             ->first();
     
-        $riwayatSafety = $this->jawabanModel
-            ->join('magang', 'magang.magang_id = jawaban_safety.magang_id')
-            ->where('magang.user_id', $userId)
-            ->orderBy('tanggal_ujian', 'desc')
-            ->findAll();
+        // $riwayatSafety = $this->jawabanModel
+        //     ->join('magang', 'magang.magang_id = jawaban_safety.magang_id')
+        //     ->where('magang.user_id', $userId)
+        //     ->orderBy('tanggal_ujian', 'desc')
+        //     ->findAll();
         
         // Ambil periode aktif
         $db = \Config\Database::connect();
@@ -486,17 +612,22 @@ class MagangController extends BaseController
             'periode'   => $periode,
             'user_data' => $userData,
             'pendaftaran' => $pendaftaran,
-            'riwayat_safety' => $riwayatSafety
+            // 'riwayat_safety' => $riwayatSafety
         ]);
     }
 
     public function uploadLaporanAbsensi($id)
     {
-        $laporan = $this->request->getFile('laporan');
-        $absensi = $this->request->getFile('absensi');
-        $magang  = $this->magangModel->find($id);
+        // Ambil input form
+        $judulLaporan = $this->request->getPost('judul');
+        $laporan      = $this->request->getFile('laporan');
+        $url_laporan      = $this->request->getPost('url_laporan');
+        $absensi      = $this->request->getFile('absensi');
+        $url_absensi      = $this->request->getPost('url_absensi');
 
-        if (!$magang) {
+        $magang = $this->magangModel->find($id);
+
+        if (!$magang) { 
             return redirect()->back()->with('error', 'Data magang tidak ditemukan.');
         }
 
@@ -507,39 +638,71 @@ class MagangController extends BaseController
 
         $result = [];
 
-        // === Upload Laporan ===
+        // Ambil tanggal + jam sekarang
+        $now = date('Y-m-d H:i:s');
+
+        // === Simpan judul laporan ===
+        if (!empty($judulLaporan)) {
+            $this->magangModel->update($id, [
+                'judul_laporan' => $judulLaporan,
+            ]);
+            $result[] = 'Judul laporan berhasil disimpan.';
+        }
+        if (!empty($url_laporan)) {
+            $this->magangModel->update($id, [
+                'url_laporan' => $url_laporan,
+            ]);
+            $result[] = 'URL laporan berhasil disimpan.';
+        }
+
+        if (!empty($url_absensi)) {
+            $this->magangModel->update($id, [
+                'url_absensi' => $url_absensi,
+            ]);
+            $result[] = 'URL absensi berhasil disimpan.';
+        }
+
+        // === Upload File Laporan ===
         if ($laporan && $laporan->isValid()) {
-            if ($laporan->getSize() > 10 * 1024 * 1024) { // 10 MB
+
+            if ($laporan->getSize() > 10 * 1024 * 1024) {
                 return redirect()->back()->with('error', 'Ukuran file laporan terlalu besar. Maksimal 10 MB.');
             }
 
-            $laporanName = uploadBerkasUser($laporan, $user->fullname ?? 'user', 'laporan');
+            $laporanName = uploadBerkasUser($laporan, $user->fullname ?? 'user', 'laporan', $magang['laporan']);
             if ($laporanName) {
-                $this->magangModel->update($id, ['laporan' => $laporanName]);
-                $result[] = 'Laporan berhasil diupload.';
+                $this->magangModel->update($id, [
+                    'laporan'            => $laporanName,
+                    'tgl_upload_laporan' => $now
+                ]);
+                $result[] = 'File laporan berhasil diupload.';
             }
         }
 
         // === Upload Absensi ===
         if ($absensi && $absensi->isValid()) {
-            if ($absensi->getSize() > 2 * 1024 * 1024) { // 2 MB
+
+            if ($absensi->getSize() > 2 * 1024 * 1024) {
                 return redirect()->back()->with('error', 'Ukuran file absensi terlalu besar. Maksimal 2 MB.');
             }
 
-            $absensiName = uploadBerkasUser($absensi, $user->fullname ?? 'user', 'absensi');
+            $absensiName = uploadBerkasUser($absensi, $user->fullname ?? 'user', 'absensi', $magang['absensi']);
             if ($absensiName) {
-                $this->magangModel->update($id, ['absensi' => $absensiName]);
-                $result[] = 'Absensi berhasil diupload.';
+                $this->magangModel->update($id, [
+                    'absensi'            => $absensiName,
+                    'tgl_upload_absensi' => $now
+                ]);
+                $result[] = 'File absensi berhasil diupload.';
             }
         }
 
+        // === Notifikasi ===
         if (!empty($result)) {
             return redirect()->back()->with('success', implode(' ', $result));
         }
 
-        return redirect()->back()->with('error', 'Tidak ada file yang berhasil diupload.');
+        return redirect()->back()->with('error', 'Tidak ada file atau data yang berhasil diupload.');
     }
-
 
     public function sertifikatIndex()
     {
@@ -642,178 +805,36 @@ class MagangController extends BaseController
     }
 
 
-    public function cetakSertifikat($saveToFile = false)
+    public function cetakSertifikat()
     {
         $userId = user_id();
 
-        // Ambil data user & magang terbaru yang lulus
-        $user = $this->userModel->join('jurusan', 'jurusan.jurusan_id = users.jurusan_id')
-                                ->join('instansi', 'instansi.instansi_id = users.instansi_id')
-                                ->find($userId);
-        $magang = $this->magangModel->join('unit_kerja', 'unit_kerja.unit_id=magang.unit_id')
+        // ================= DATA USER & MAGANG =================
+        $user = $this->userModel
+            ->join('jurusan', 'jurusan.jurusan_id = users.jurusan_id')
+            ->join('instansi', 'instansi.instansi_id = users.instansi_id')
+            ->find($userId);
+
+        $magang = $this->magangModel
+            ->join('unit_kerja', 'unit_kerja.unit_id = magang.unit_id')
             ->where('user_id', $userId)
             ->where('status_akhir', 'lulus')
             ->orderBy('magang_id', 'DESC')
             ->first();
 
         if (!$magang) {
-            return redirect()->back()->with('error', 'Tidak ada magang aktif untuk dicetak sertifikat.');
+            return redirect()->back()->with('error', 'Tidak ada magang lulus.');
         }
 
-        $penilaian = $this->penilaianModel->where('magang_id', $magang['magang_id'])->first();
-
-        if (!$penilaian || $magang['ka_unit_approve'] != 1) {
-            return redirect()->back()->with('error', 'Sertifikat belum bisa diunduh.');
-        }
-
-        // Hitung total & rata-rata
-        $totalNilai = $penilaian['nilai_disiplin']
-            + $penilaian['nilai_kerajinan']
-            + $penilaian['nilai_tingkahlaku']
-            + $penilaian['nilai_kerjasama']
-            + $penilaian['nilai_kreativitas']
-            + $penilaian['nilai_kemampuankerja']
-            + $penilaian['nilai_tanggungjawab']
-            + $penilaian['nilai_penyerapan'];
-
-        $rataRata = round($totalNilai / 8, 0); // bulatkan ke integer
-
-        // Tentukan kategori
-        if ($rataRata >= 90) $kategori = 'Baik Sekali';
-        elseif ($rataRata >= 80) $kategori = 'Baik';
-        elseif ($rataRata >= 70) $kategori = 'Cukup';
-        elseif ($rataRata >= 60) $kategori = 'Kurang';
-        else $kategori = 'Sangat Kurang';
-
-        // ================== Nomor Sertifikat ==================
-        $tahunSekarang = date('Y');
-        $bulanSekarang = date('m');
-
-        // cek apakah sudah ada nomor sertifikat untuk magang ini
-        $sertifikat = $this->sertifikatModel
+        $penilaian = $this->penilaianModel
             ->where('magang_id', $magang['magang_id'])
             ->first();
 
-        if (!$sertifikat) {
-            // ambil nomor urut terakhir tahun berjalan
-            $last = $this->sertifikatModel
-                ->where('tahun', $tahunSekarang)
-                ->orderBy('nomor', 'DESC')
-                ->first();
-
-            $nextNumber = $last ? intval($last['nomor']) + 1 : 1;
-
-            // simpan ke tabel sertifikat
-            $this->sertifikatModel->insert([
-                'magang_id' => $magang['magang_id'],
-                'nomor'     => $nextNumber,
-                'tahun'     => $tahunSekarang,
-            ]);
-        } else {
-            $nextNumber = $sertifikat['nomor'];
+        if (!$penilaian || $magang['ka_unit_approve'] != 1) {
+            return redirect()->back()->with('error', 'Sertifikat belum bisa dicetak.');
         }
 
-        // format nomor sertifikat
-        $noUrut = str_pad($nextNumber, 4, '0', STR_PAD_LEFT);
-        $noSertifikat = "{$noUrut}/MAGANG/SP/{$bulanSekarang}.{$tahunSekarang}";
-
-
-        // Inisialisasi TCPDF
-        $pdf = new \TCPDF('P', PDF_UNIT, 'A4', true, 'UTF-8', false);
-        $pdf->SetPrintHeader(false);
-        $pdf->SetPrintFooter(false);
-        $pdf->SetMargins(0, 0, 0);
-        $pdf->SetAutoPageBreak(TRUE, 0);
-
-        // ================= Halaman 1 =================
-        $pdf->AddPage();
-        $cover1 = FCPATH . 'assets/img/page1.png';
-        $pdf->Image($cover1, 0, 0, 210, 297, '', '', '', false, 300);
-
-        // Nomor sertifikat
-        $pdf->SetFont('times', 'I', 14);
-        $pdf->SetXY(11, 63.5); 
-        $pdf->Cell(210, 10,": " .$noSertifikat, 0, 1, 'C');
-
-        // Nama peserta
-        $pdf->SetFont('times', 'B', 24);
-        $pdf->SetXY(0, 90);
-        $pdf->Cell(210, 18, $user->fullname ?? $user->nama, 0, 1, 'C');
-
-        $pdf->SetFont('times', '', 16);
-        $pdf->Cell(210, 9, ($user->nisn_nim ?? '-'), 0, 1, 'C');
-        $pdf->Cell(210, 9, ($user->nama_jurusan ?? '-'), 0, 1, 'C');
-        $pdf->Cell(210, 9, ($user->nama_instansi ?? '-'), 0, 1, 'C');
-
-        // Kalimat keterangan
-        $pdf->Ln(10);
-        $pdf->SetFont('times', '', 14);
-        $marginKiri = 25;
-        $marginKanan = 25;
-        $halamanLebar = $pdf->GetPageWidth();
-        $lebarText = $halamanLebar - $marginKiri - $marginKanan;
-        $pdf->SetX($marginKiri);
-
-        $teks = "Telah selesai melakukan kerja praktek di " .
-            ($magang['unit_kerja'] ?? '-') . " PT Semen Padang " .
-            "dari tanggal " . format_tanggal_indonesia($magang['tanggal_masuk']) .
-            " s/d " . format_tanggal_indonesia($magang['tanggal_selesai']) .
-            " dengan hasil :";
-
-        $pdf->MultiCell($lebarText, 8, $teks, 0, 'C');
-
-        //Kategori
-        $pdf->SetFont('times', 'B', 18);
-        $pdf->SetXY(0, 170);
-        $pdf->Cell(210, 10, $kategori, 0, 1, 'C');
-
-
-        // Ambil tanggal approve
-        $tanggalApprove = !empty($magang['tanggal_approve']) 
-            ? format_tanggal_indonesia($magang['tanggal_approve']) 
-            : '-';
-        // Tambah Stempel
-        $stempelPath = FCPATH . 'assets/img/stempel.png';
-        if (file_exists($stempelPath)) {
-            // X, Y, Width
-            $pdf->Image($stempelPath, 17, 210, 45, 0, 'PNG', '', '', false, 300);
-        }
-        // Posisi mulai (pojok kiri bawah, misal 190mm dari atas)
-        $pdf->SetFont('times', '', 16);
-        $pdf->SetXY(30, 200);
-        $pdf->Cell(0, 8, "Padang, " . $tanggalApprove, 0, 1, 'L');
-
-        $pdf->SetFont('times', 'B', 16);
-        $pdf->SetX(30);
-        $pdf->Cell(0, 8, "Learning & People Development", 0, 1, 'L');
-
-        // Tambahkan tanda tangan (PNG/JPG transparan lebih bagus)
-        $ttdPath = FCPATH . 'assets/img/ttd.png'; // ganti dengan path tanda tanganmu
-        if (file_exists($ttdPath)) {
-            $pdf->Image($ttdPath, 30, 215, 45, 0, '', '', '', false, 300);
-
-        }
-
-        // Nama pejabat
-        $pdf->SetFont('times', 'B', 16);
-        $pdf->SetXY(30, 235);
-        $pdf->Cell(0, 8, "Siska Ayu Soraya", 0, 1, 'L');
-
-        $pdf->SetFont('times', '', 14);
-        $pdf->SetX(30);
-        $pdf->Cell(0, 8, "Kepala", 0, 1, 'L');
-
-
-        // ================= Halaman 2 =================
-        $pdf->AddPage();
-        $cover2 = FCPATH . 'assets/img/page2.png';
-        $pdf->Image($cover2, 0, 0, 210, 297, '', '', '', false, 300);
-
-        $pdf->SetFont('times', '', 16);
-
-        $startY = 86;
-        $stepY  = 12.5;
-
+        // ================= HITUNG NILAI =================
         $nilaiList = [
             $penilaian['nilai_disiplin'],
             $penilaian['nilai_kerajinan'],
@@ -825,92 +846,668 @@ class MagangController extends BaseController
             $penilaian['nilai_penyerapan'],
         ];
 
-        // Fungsi terbilang khusus 0 - 100
-        function terbilang($angka) {
-            $angka = intval($angka);
-            if ($angka > 100) return "Seratus"; // mentok 100
+        $rataRata = round(array_sum($nilaiList) / count($nilaiList));
 
-            $baca = ["", "Satu", "Dua", "Tiga", "Empat", "Lima",
-                    "Enam", "Tujuh", "Delapan", "Sembilan", "Sepuluh", "Sebelas"];
+        if ($rataRata >= 90) $kategori = 'Baik Sekali';
+        elseif ($rataRata >= 80) $kategori = 'Baik';
+        elseif ($rataRata >= 70) $kategori = 'Cukup';
+        elseif ($rataRata >= 60) $kategori = 'Kurang';
+        else $kategori = 'Sangat Kurang';
 
-            if ($angka == 0) return "Nol";
-            elseif ($angka < 12) return $baca[$angka];
-            elseif ($angka < 20) return $baca[$angka - 10] . " Belas";
-            elseif ($angka < 100) {
-                $puluh = intval($angka / 10);
-                $sisa  = $angka % 10;
-                $hasil = $baca[$puluh] . " Puluh";
-                if ($sisa > 0) $hasil .= " " . $baca[$sisa];
-                return $hasil;
-            } else {
-                return "Seratus";
+        // ================= SERTIFIKAT =================
+        $tahun = date('Y');
+        $bulan = date('m');
+
+        $sertifikat = $this->sertifikatModel
+            ->where('magang_id', $magang['magang_id'])
+            ->first();
+
+        // === Jika BELUM ADA DATA sertifikat → buat
+        if (!$sertifikat) {
+            $last = $this->sertifikatModel
+                ->where('tahun', $tahun)
+                ->orderBy('nomor', 'DESC')
+                ->first();
+
+            $nomor = $last ? $last['nomor'] + 1 : 1;
+            $qrToken = bin2hex(random_bytes(20));
+
+            $this->sertifikatModel->insert([
+                'magang_id' => $magang['magang_id'],
+                'nomor'     => $nomor,
+                'tahun'     => $tahun,
+                'qr_token'  => $qrToken,
+            ]);
+
+            $sertifikat = $this->sertifikatModel
+                ->where('magang_id', $magang['magang_id'])
+                ->first();
+        }
+
+        // === Lazy QR token
+        if (empty($sertifikat['qr_token'])) {
+            $qrToken = bin2hex(random_bytes(20));
+            $this->sertifikatModel->update($sertifikat['sertifikat_id'], [
+                'qr_token' => $qrToken
+            ]);
+            $sertifikat['qr_token'] = $qrToken;
+        }
+
+        // ================= FILE PATH =================
+        $fileName = 'sertifikat-' . $sertifikat['qr_token'] . '.pdf';
+        $filePath = FCPATH . 'uploads/sertifikat/pdf/' . $fileName;
+
+        // ================= JIKA FILE SUDAH ADA =================
+        if (!empty($sertifikat['file_sertifikat']) && file_exists($filePath)) {
+            return $this->response
+                ->setHeader('Content-Type', 'application/pdf')
+                ->setBody(file_get_contents($filePath));
+        }
+
+        $kepala = $this->unitUserModel
+            ->select('users.fullname, unit_kerja.unit_kerja, users.eselon, users.tanda_tangan')
+            ->join('users', 'users.id = unit_user.user_id')
+            ->join('unit_kerja', 'unit_kerja.unit_id = unit_user.unit_id')
+            ->where('unit_user.unit_id', 44)
+            ->where('users.eselon', '2')
+            ->first();
+
+        // --- Rapikan Fullname ---
+        $fullname = $kepala['fullname'];
+
+        // Hilangkan gelar umum (awal / akhir nama)
+        $fullname = preg_replace('/\b(Drs?|Ir|H|S\.Kom|M\.Kom|M\.Sc|M\.M|PhD|S\.Pd|M\.Pd|S\.T|M\.T)\b\.?/i', '', $fullname);
+
+        // Hilangkan gelar belakang seperti: ", S.Kom", ", M.Kom"
+        $fullname = preg_replace('/,\s*[A-Za-z\.]+$/i', '', $fullname);
+
+        // Rapikan spasi
+        $fullname = trim($fullname);
+
+        // Kapital awal setiap kata
+        $fullname = ucwords(strtolower($fullname));
+
+        $namaKepala = $fullname;
+
+        $unitkerja = $kepala['unit_kerja'];
+
+        // Hilangkan kata "Unit" di awal
+        $unitkerja = preg_replace('/^Unit\s*/i', '', $unitkerja);
+
+        // Kapital awal kata (kalau mau)
+        $unitkerja = ucwords(strtolower($unitkerja));
+
+        $unitKepala = $unitkerja;
+
+
+        // ================= NOMOR SERTIFIKAT =================
+        $noUrut = str_pad($sertifikat['nomor'], 4, '0', STR_PAD_LEFT);
+        $noSertifikat = "{$noUrut}/MAGANG/SP/{$bulan}.{$tahun}";
+
+        // ================= GENERATE QR =================
+        // $qrUrl  = base_url('sertifikat/verify/' . $sertifikat['qr_token']);
+        $localIp = '192.168.229.8';
+        $qrUrl = "http://{$localIp}/magangSPNew/public/sertifikat/verify/" . $sertifikat['qr_token'];
+        $qrPath = FCPATH . 'uploads/sertifikat/qr/' . $sertifikat['qr_token'] . '.png';
+        $logoPath = FCPATH . 'assets/img/SP_logo.png';
+
+        if (!file_exists($logoPath)) {
+            throw new \RuntimeException('Logo QR tidak ditemukan: ' . $logoPath);
+        }
+        if (!file_exists($qrPath)) {
+            if (!is_dir(dirname($qrPath))) {
+                mkdir(dirname($qrPath), 0775, true);
             }
+        
+
+            $builder = new QrBuilder(
+                writer: new PngWriter(),
+                writerOptions: [],
+                validateResult: false,
+                data: $qrUrl,
+
+                // ❗ TIDAK BOLEH NULL
+                encoding: new Encoding('UTF-8'),
+                errorCorrectionLevel: ErrorCorrectionLevel::High,
+                size: 300,
+                margin: 10,
+
+                roundBlockSizeMode: RoundBlockSizeMode::Margin,
+                foregroundColor: new Color(0, 0, 0),
+                backgroundColor: new Color(255, 255, 255),
+
+                labelText: '',
+                
+
+                // LOGO
+                logoPath: $logoPath,
+                logoResizeToWidth: 70,
+                logoResizeToHeight: null,
+                logoPunchoutBackground: true
+            );
+
+            $result = $builder->build();
+            $result->saveToFile($qrPath);
+
+
         }
 
-        foreach ($nilaiList as $i => $nilai) {
-            $y = $startY + ($i * $stepY);
+        // ================= TCPDF =================
+        $pdf = new \TCPDF('P', PDF_UNIT, 'A4', true, 'UTF-8', false);
+        $pdf->SetPrintHeader(false);
+        $pdf->SetPrintFooter(false);
+        $pdf->SetMargins(0, 0, 0);
+        $pdf->SetAutoPageBreak(TRUE, 0);
 
-            // angka
-            $pdf->SetXY(97, $y);
-            $pdf->Cell(20, 10, $nilai, 0, 0, 'C');
+        // ================= Halaman 1 =================
+            $pdf->AddPage();
+            $cover1 = FCPATH . 'assets/img/page1.png';
+            $pdf->Image($cover1, 0, 0, 210, 297, '', '', '', false, 300);
 
-            // huruf
-            $pdf->SetXY(123, $y);
-            $pdf->Cell(40, 10, terbilang($nilai), 0, 0, 'L');
+            // Nomor sertifikat
+            $pdf->SetFont('times', 'I', 14);
+            $pdf->SetXY(11, 63.5); 
+            $pdf->Cell(210, 10,": " .$noSertifikat, 0, 1, 'C');
+
+            // Nama peserta
+            $pdf->SetFont('times', 'B', 24);
+            $pdf->SetXY(0, 90);
+            $pdf->Cell(210, 18, $user->fullname ?? $user->nama, 0, 1, 'C');
+
+            $pdf->SetFont('times', '', 16);
+            $pdf->Cell(210, 9, ($user->nisn_nim ?? '-'), 0, 1, 'C');
+            $pdf->Cell(210, 9, ($user->nama_jurusan ?? '-'), 0, 1, 'C');
+            $pdf->Cell(210, 9, ($user->nama_instansi ?? '-'), 0, 1, 'C');
+
+            // Kalimat keterangan
+            $pdf->Ln(10);
+            $pdf->SetFont('times', '', 14);
+            $marginKiri = 25;
+            $marginKanan = 25;
+            $halamanLebar = $pdf->GetPageWidth();
+            $lebarText = $halamanLebar - $marginKiri - $marginKanan;
+            $pdf->SetX($marginKiri);
+
+            $teks = "Telah selesai melakukan kerja praktek di " .
+                ($magang['unit_kerja'] ?? '-') . " PT Semen Padang " .
+                "dari tanggal " . format_tanggal_indonesia($magang['tanggal_masuk']) .
+                " s/d " . format_tanggal_indonesia($magang['tanggal_selesai']) .
+                " dengan hasil :";
+
+            $pdf->MultiCell($lebarText, 8, $teks, 0, 'C');
+
+            //Kategori
+            $pdf->SetFont('times', 'B', 18);
+            $pdf->SetXY(0, 170);
+            $pdf->Cell(210, 10, $kategori, 0, 1, 'C');
+
+
+            // Ambil tanggal approve
+            $tanggalApprove = !empty($magang['tanggal_approve']) 
+                ? format_tanggal_indonesia($magang['tanggal_approve']) 
+                : '-';
+            // Tambah Stempel
+            $stempelPath = FCPATH . 'assets/img/stempel.png';
+            if (file_exists($stempelPath)) {
+                // X, Y, Width
+                $pdf->Image($stempelPath, 17, 210, 45, 0, 'PNG', '', '', false, 300);
+            }
+            // Posisi mulai (pojok kiri bawah, misal 190mm dari atas)
+            $pdf->SetFont('times', '', 16);
+            $pdf->SetXY(30, 200);
+            $pdf->Cell(0, 8, "Padang, " . $tanggalApprove, 0, 1, 'L');
+
+            $pdf->SetFont('times', 'B', 16);
+            $pdf->SetX(30);
+            $pdf->Cell(0, 8, $unitKepala, 0, 1, 'L');
+
+            // Tambahkan tanda tangan (PNG/JPG transparan lebih bagus)
+            $ttdPath = FCPATH . 'uploads/tanda-tangan/'. $kepala['tanda_tangan']; // ganti dengan path tanda tanganmu
+            if (file_exists($ttdPath)) {
+                $pdf->Image($ttdPath, 30, 215, 45, 0, '', '', '', false, 300);
+
+            }
+
+            // Nama pejabat
+            $pdf->SetFont('times', 'B', 16);
+            $pdf->SetXY(30, 235);
+            $pdf->Cell(0, 8, $namaKepala, 0, 1, 'L');
+
+            $pdf->SetFont('times', '', 14);
+            $pdf->SetX(30);
+            $pdf->Cell(0, 8, "Kepala", 0, 1, 'L');
+
+            // === TEKS DI ATAS QR
+            $pdf->SetFont('times', 'I', 9);   // font kecil & miring
+            $pdf->SetTextColor(0, 0, 0);
+
+            // Posisi X sama dengan QR, Y sedikit di atas QR
+            $pdf->SetXY(160, 245);
+            $pdf->Cell(30, 6, 'Scan me for validate', 0, 0, 'C');
+
+            // === QR KANAN BAWAH HALAMAN 1
+            $pdf->Image($qrPath, 160, 250, 30, 30, 'PNG');
+
+            // ================= Halaman 2 =================
+            $pdf->AddPage();
+            $cover2 = FCPATH . 'assets/img/page2.png';
+            $pdf->Image($cover2, 0, 0, 210, 297, '', '', '', false, 300);
+
+            $pdf->SetFont('times', '', 16);
+
+            $startY = 86;
+            $stepY  = 12.5;
+
+            $nilaiList = [
+                $penilaian['nilai_disiplin'],
+                $penilaian['nilai_kerajinan'],
+                $penilaian['nilai_tingkahlaku'],
+                $penilaian['nilai_kerjasama'],
+                $penilaian['nilai_kreativitas'],
+                $penilaian['nilai_kemampuankerja'],
+                $penilaian['nilai_tanggungjawab'],
+                $penilaian['nilai_penyerapan'],
+            ];
+
+            // Fungsi terbilang khusus 0 - 100
+            function terbilang($angka) {
+                $angka = intval($angka);
+                if ($angka > 100) return "Seratus"; // mentok 100
+
+                $baca = ["", "Satu", "Dua", "Tiga", "Empat", "Lima",
+                        "Enam", "Tujuh", "Delapan", "Sembilan", "Sepuluh", "Sebelas"];
+
+                if ($angka == 0) return "Nol";
+                elseif ($angka < 12) return $baca[$angka];
+                elseif ($angka < 20) return $baca[$angka - 10] . " Belas";
+                elseif ($angka < 100) {
+                    $puluh = intval($angka / 10);
+                    $sisa  = $angka % 10;
+                    $hasil = $baca[$puluh] . " Puluh";
+                    if ($sisa > 0) $hasil .= " " . $baca[$sisa];
+                    return $hasil;
+                } else {
+                    return "Seratus";
+                }
+            }
+
+            foreach ($nilaiList as $i => $nilai) {
+                $y = $startY + ($i * $stepY);
+
+                // angka
+                $pdf->SetXY(97, $y);
+                $pdf->Cell(20, 10, $nilai, 0, 0, 'C');
+
+                // huruf
+                $pdf->SetXY(123, $y);
+                $pdf->Cell(40, 10, terbilang($nilai), 0, 0, 'L');
+            }
+
+            // Rata-rata + kategori
+            $pdf->SetXY(97, $startY + (8 * $stepY));
+            $pdf->Cell(20, 10, $rataRata, 0, 0, 'C');
+            $pdf->SetXY(123, $startY + (8 * $stepY));
+            $pdf->Cell(40, 10, terbilang($rataRata), 0, 0, 'L');
+
+            // tampilkan kategori full
+            $pdf->SetXY(123, $startY + (8 * $stepY) + 12.5);
+            $pdf->Cell(60, 10, $kategori, 0, 0, 'L');
+
+            //tambah stempel
+            if (file_exists($stempelPath)) {
+                $pdf->Image($stempelPath, 110, 215, 45, 0, 'PNG', '', '', false, 300);
+            }
+            //TTD pojok kanan
+            $pdf->SetFont('times', '', 16);
+            $pdf->SetXY(105, 215);
+            $pdf->Cell(0, 8, "Padang, " . $tanggalApprove, 0, 1, 'L');
+            $pdf->SetFont('times', 'B', 16);
+            $pdf->SetX(105);
+            $pdf->Cell(0, 8, $unitKepala, 0, 1, 'L');
+
+            
+            // Tambahkan tanda tangan (PNG/JPG transparan lebih bagus)
+            $ttdPath = FCPATH . 'uploads/tanda-tangan/'.$kepala['tanda_tangan']; // ganti dengan path tanda tanganmu
+            if (file_exists($ttdPath)) {
+                $pdf->Image($ttdPath, 105, 228, 45, 0, '', '', '', false, 300);
+
+            }
+
+            // Nama pejabat
+            $pdf->SetFont('times', 'B', 16);
+            $pdf->SetXY(105, 245);
+            $pdf->Cell(0, 8, $namaKepala, 0, 1, 'L');
+
+            $pdf->SetFont('times', '', 14);
+            $pdf->SetX(105);
+            $pdf->Cell(0, 8, "Kepala", 0, 1, 'L');
+
+        // ================= SIMPAN PDF =================
+        if (!is_dir(dirname($filePath))) {
+            mkdir(dirname($filePath), 0775, true);
         }
 
-        // Rata-rata + kategori
-        $pdf->SetXY(97, $startY + (8 * $stepY));
-        $pdf->Cell(20, 10, $rataRata, 0, 0, 'C');
-        $pdf->SetXY(123, $startY + (8 * $stepY));
-        $pdf->Cell(40, 10, terbilang($rataRata), 0, 0, 'L');
+        $pdf->Output($filePath, 'F');
 
-        // tampilkan kategori full
-        $pdf->SetXY(123, $startY + (8 * $stepY) + 12.5);
-        $pdf->Cell(60, 10, $kategori, 0, 0, 'L');
+        $this->sertifikatModel->update($sertifikat['sertifikat_id'], [
+            'file_sertifikat' => $fileName
+        ]);
 
-        //tambah stempel
-        if (file_exists($stempelPath)) {
-            $pdf->Image($stempelPath, 110, 215, 45, 0, 'PNG', '', '', false, 300);
-        }
-        //TTD pojok kanan
-        $pdf->SetFont('times', '', 16);
-        $pdf->SetXY(105, 215);
-        $pdf->Cell(0, 8, "Padang, " . $tanggalApprove, 0, 1, 'L');
-        $pdf->SetFont('times', 'B', 16);
-        $pdf->SetX(105);
-        $pdf->Cell(0, 8, "Learning & People Development", 0, 1, 'L');
+        return $this->response
+            ->setHeader('Content-Type', 'application/pdf')
+            ->setBody(file_get_contents($filePath));
+    }
+
+
+
+
+
+
+    // old
+    // public function cetakSertifikat($saveToFile = false)
+    // {
+    //     $userId = user_id();
+
+    //     // Ambil data user & magang terbaru yang lulus
+    //     $user = $this->userModel->join('jurusan', 'jurusan.jurusan_id = users.jurusan_id')
+    //                             ->join('instansi', 'instansi.instansi_id = users.instansi_id')
+    //                             ->find($userId);
+    //     $magang = $this->magangModel->join('unit_kerja', 'unit_kerja.unit_id=magang.unit_id')
+    //         ->where('user_id', $userId)
+    //         ->where('status_akhir', 'lulus')
+    //         ->orderBy('magang_id', 'DESC')
+    //         ->first();
+
+    //     if (!$magang) {
+    //         return redirect()->back()->with('error', 'Tidak ada magang aktif untuk dicetak sertifikat.');
+    //     }
+
+    //     $penilaian = $this->penilaianModel->where('magang_id', $magang['magang_id'])->first();
+
+    //     if (!$penilaian || $magang['ka_unit_approve'] != 1) {
+    //         return redirect()->back()->with('error', 'Sertifikat belum bisa diunduh.');
+    //     }
+
+    //     // Hitung total & rata-rata
+    //     $totalNilai = $penilaian['nilai_disiplin']
+    //         + $penilaian['nilai_kerajinan']
+    //         + $penilaian['nilai_tingkahlaku']
+    //         + $penilaian['nilai_kerjasama']
+    //         + $penilaian['nilai_kreativitas']
+    //         + $penilaian['nilai_kemampuankerja']
+    //         + $penilaian['nilai_tanggungjawab']
+    //         + $penilaian['nilai_penyerapan'];
+
+    //     $rataRata = round($totalNilai / 8, 0); // bulatkan ke integer
+
+    //     // Tentukan kategori
+    //     if ($rataRata >= 90) $kategori = 'Baik Sekali';
+    //     elseif ($rataRata >= 80) $kategori = 'Baik';
+    //     elseif ($rataRata >= 70) $kategori = 'Cukup';
+    //     elseif ($rataRata >= 60) $kategori = 'Kurang';
+    //     else $kategori = 'Sangat Kurang';
+
+    //     $kepala = $this->unitUserModel
+    //     ->select('users.fullname, unit_kerja.unit_kerja, users.eselon, users.tanda_tangan')
+    //     ->join('users', 'users.id = unit_user.user_id')
+    //     ->join('unit_kerja', 'unit_kerja.unit_id = unit_user.unit_id')
+    //     ->where('unit_user.unit_id', 44)
+    //     ->where('users.eselon', '2')
+    //     ->first();
+
+    //     // --- Rapikan Fullname ---
+    //     $fullname = $kepala['fullname'];
+
+    //     // Hilangkan gelar umum (awal / akhir nama)
+    //     $fullname = preg_replace('/\b(Drs?|Ir|H|S\.Kom|M\.Kom|M\.Sc|M\.M|PhD|S\.Pd|M\.Pd|S\.T|M\.T)\b\.?/i', '', $fullname);
+
+    //     // Hilangkan gelar belakang seperti: ", S.Kom", ", M.Kom"
+    //     $fullname = preg_replace('/,\s*[A-Za-z\.]+$/i', '', $fullname);
+
+    //     // Rapikan spasi
+    //     $fullname = trim($fullname);
+
+    //     // Kapital awal setiap kata
+    //     $fullname = ucwords(strtolower($fullname));
+
+    //     $namaKepala = $fullname;
+
+    //     $unitkerja = $kepala['unit_kerja'];
+
+    //     // Hilangkan kata "Unit" di awal
+    //     $unitkerja = preg_replace('/^Unit\s*/i', '', $unitkerja);
+
+    //     // Kapital awal kata (kalau mau)
+    //     $unitkerja = ucwords(strtolower($unitkerja));
+
+    //     $unitKepala = $unitkerja;
+
+    //     // ================== Nomor Sertifikat ==================
+    //     $tahunSekarang = date('Y');
+    //     $bulanSekarang = date('m');
+
+    //     // cek apakah sudah ada nomor sertifikat untuk magang ini
+    //     $sertifikat = $this->sertifikatModel
+    //         ->where('magang_id', $magang['magang_id'])
+    //         ->first();
+
+    //     if (!$sertifikat) {
+    //         // ambil nomor urut terakhir tahun berjalan
+    //         $last = $this->sertifikatModel
+    //             ->where('tahun', $tahunSekarang)
+    //             ->orderBy('nomor', 'DESC')
+    //             ->first();
+
+    //         $nextNumber = $last ? intval($last['nomor']) + 1 : 1;
+
+    //         // simpan ke tabel sertifikat
+    //         $this->sertifikatModel->insert([
+    //             'magang_id' => $magang['magang_id'],
+    //             'nomor'     => $nextNumber,
+    //             'tahun'     => $tahunSekarang,
+    //         ]);
+    //     } else {
+    //         $nextNumber = $sertifikat['nomor'];
+    //     }
+
+    //     // format nomor sertifikat
+    //     $noUrut = str_pad($nextNumber, 4, '0', STR_PAD_LEFT);
+    //     $noSertifikat = "{$noUrut}/MAGANG/SP/{$bulanSekarang}.{$tahunSekarang}";
+
+
+        // // Inisialisasi TCPDF
+        // $pdf = new \TCPDF('P', PDF_UNIT, 'A4', true, 'UTF-8', false);
+        // $pdf->SetPrintHeader(false);
+        // $pdf->SetPrintFooter(false);
+        // $pdf->SetMargins(0, 0, 0);
+        // $pdf->SetAutoPageBreak(TRUE, 0);
+
+    //     // ================= Halaman 1 =================
+    //     $pdf->AddPage();
+    //     $cover1 = FCPATH . 'assets/img/page1.png';
+    //     $pdf->Image($cover1, 0, 0, 210, 297, '', '', '', false, 300);
+
+    //     // Nomor sertifikat
+    //     $pdf->SetFont('times', 'I', 14);
+    //     $pdf->SetXY(11, 63.5); 
+    //     $pdf->Cell(210, 10,": " .$noSertifikat, 0, 1, 'C');
+
+    //     // Nama peserta
+    //     $pdf->SetFont('times', 'B', 24);
+    //     $pdf->SetXY(0, 90);
+    //     $pdf->Cell(210, 18, $user->fullname ?? $user->nama, 0, 1, 'C');
+
+    //     $pdf->SetFont('times', '', 16);
+    //     $pdf->Cell(210, 9, ($user->nisn_nim ?? '-'), 0, 1, 'C');
+    //     $pdf->Cell(210, 9, ($user->nama_jurusan ?? '-'), 0, 1, 'C');
+    //     $pdf->Cell(210, 9, ($user->nama_instansi ?? '-'), 0, 1, 'C');
+
+    //     // Kalimat keterangan
+    //     $pdf->Ln(10);
+    //     $pdf->SetFont('times', '', 14);
+    //     $marginKiri = 25;
+    //     $marginKanan = 25;
+    //     $halamanLebar = $pdf->GetPageWidth();
+    //     $lebarText = $halamanLebar - $marginKiri - $marginKanan;
+    //     $pdf->SetX($marginKiri);
+
+    //     $teks = "Telah selesai melakukan kerja praktek di " .
+    //         ($magang['unit_kerja'] ?? '-') . " PT Semen Padang " .
+    //         "dari tanggal " . format_tanggal_indonesia($magang['tanggal_masuk']) .
+    //         " s/d " . format_tanggal_indonesia($magang['tanggal_selesai']) .
+    //         " dengan hasil :";
+
+    //     $pdf->MultiCell($lebarText, 8, $teks, 0, 'C');
+
+    //     //Kategori
+    //     $pdf->SetFont('times', 'B', 18);
+    //     $pdf->SetXY(0, 170);
+    //     $pdf->Cell(210, 10, $kategori, 0, 1, 'C');
+
+
+    //     // Ambil tanggal approve
+    //     $tanggalApprove = !empty($magang['tanggal_approve']) 
+    //         ? format_tanggal_indonesia($magang['tanggal_approve']) 
+    //         : '-';
+    //     // Tambah Stempel
+    //     $stempelPath = FCPATH . 'assets/img/stempel.png';
+    //     if (file_exists($stempelPath)) {
+    //         // X, Y, Width
+    //         $pdf->Image($stempelPath, 17, 210, 45, 0, 'PNG', '', '', false, 300);
+    //     }
+    //     // Posisi mulai (pojok kiri bawah, misal 190mm dari atas)
+    //     $pdf->SetFont('times', '', 16);
+    //     $pdf->SetXY(30, 200);
+    //     $pdf->Cell(0, 8, "Padang, " . $tanggalApprove, 0, 1, 'L');
+
+    //     $pdf->SetFont('times', 'B', 16);
+    //     $pdf->SetX(30);
+    //     $pdf->Cell(0, 8, $unitKepala, 0, 1, 'L');
+
+    //     // Tambahkan tanda tangan (PNG/JPG transparan lebih bagus)
+    //     $ttdPath = FCPATH . 'uploads/tanda-tangan/'. $kepala['tanda_tangan']; // ganti dengan path tanda tanganmu
+    //     if (file_exists($ttdPath)) {
+    //         $pdf->Image($ttdPath, 30, 215, 45, 0, '', '', '', false, 300);
+
+    //     }
+
+    //     // Nama pejabat
+    //     $pdf->SetFont('times', 'B', 16);
+    //     $pdf->SetXY(30, 235);
+    //     $pdf->Cell(0, 8, $namaKepala, 0, 1, 'L');
+
+    //     $pdf->SetFont('times', '', 14);
+    //     $pdf->SetX(30);
+    //     $pdf->Cell(0, 8, "Kepala", 0, 1, 'L');
+
+
+    //     // ================= Halaman 2 =================
+    //     $pdf->AddPage();
+    //     $cover2 = FCPATH . 'assets/img/page2.png';
+    //     $pdf->Image($cover2, 0, 0, 210, 297, '', '', '', false, 300);
+
+    //     $pdf->SetFont('times', '', 16);
+
+    //     $startY = 86;
+    //     $stepY  = 12.5;
+
+    //     $nilaiList = [
+    //         $penilaian['nilai_disiplin'],
+    //         $penilaian['nilai_kerajinan'],
+    //         $penilaian['nilai_tingkahlaku'],
+    //         $penilaian['nilai_kerjasama'],
+    //         $penilaian['nilai_kreativitas'],
+    //         $penilaian['nilai_kemampuankerja'],
+    //         $penilaian['nilai_tanggungjawab'],
+    //         $penilaian['nilai_penyerapan'],
+    //     ];
+
+    //     // Fungsi terbilang khusus 0 - 100
+    //     function terbilang($angka) {
+    //         $angka = intval($angka);
+    //         if ($angka > 100) return "Seratus"; // mentok 100
+
+    //         $baca = ["", "Satu", "Dua", "Tiga", "Empat", "Lima",
+    //                 "Enam", "Tujuh", "Delapan", "Sembilan", "Sepuluh", "Sebelas"];
+
+    //         if ($angka == 0) return "Nol";
+    //         elseif ($angka < 12) return $baca[$angka];
+    //         elseif ($angka < 20) return $baca[$angka - 10] . " Belas";
+    //         elseif ($angka < 100) {
+    //             $puluh = intval($angka / 10);
+    //             $sisa  = $angka % 10;
+    //             $hasil = $baca[$puluh] . " Puluh";
+    //             if ($sisa > 0) $hasil .= " " . $baca[$sisa];
+    //             return $hasil;
+    //         } else {
+    //             return "Seratus";
+    //         }
+    //     }
+
+    //     foreach ($nilaiList as $i => $nilai) {
+    //         $y = $startY + ($i * $stepY);
+
+    //         // angka
+    //         $pdf->SetXY(97, $y);
+    //         $pdf->Cell(20, 10, $nilai, 0, 0, 'C');
+
+    //         // huruf
+    //         $pdf->SetXY(123, $y);
+    //         $pdf->Cell(40, 10, terbilang($nilai), 0, 0, 'L');
+    //     }
+
+    //     // Rata-rata + kategori
+    //     $pdf->SetXY(97, $startY + (8 * $stepY));
+    //     $pdf->Cell(20, 10, $rataRata, 0, 0, 'C');
+    //     $pdf->SetXY(123, $startY + (8 * $stepY));
+    //     $pdf->Cell(40, 10, terbilang($rataRata), 0, 0, 'L');
+
+    //     // tampilkan kategori full
+    //     $pdf->SetXY(123, $startY + (8 * $stepY) + 12.5);
+    //     $pdf->Cell(60, 10, $kategori, 0, 0, 'L');
+
+    //     //tambah stempel
+    //     if (file_exists($stempelPath)) {
+    //         $pdf->Image($stempelPath, 110, 215, 45, 0, 'PNG', '', '', false, 300);
+    //     }
+    //     //TTD pojok kanan
+    //     $pdf->SetFont('times', '', 16);
+    //     $pdf->SetXY(105, 215);
+    //     $pdf->Cell(0, 8, "Padang, " . $tanggalApprove, 0, 1, 'L');
+    //     $pdf->SetFont('times', 'B', 16);
+    //     $pdf->SetX(105);
+    //     $pdf->Cell(0, 8, $unitKepala, 0, 1, 'L');
 
         
-        // Tambahkan tanda tangan (PNG/JPG transparan lebih bagus)
-        $ttdPath = FCPATH . 'assets/img/ttd.png'; // ganti dengan path tanda tanganmu
-        if (file_exists($ttdPath)) {
-            $pdf->Image($ttdPath, 105, 228, 45, 0, '', '', '', false, 300);
+    //     // Tambahkan tanda tangan (PNG/JPG transparan lebih bagus)
+    //     $ttdPath = FCPATH . 'uploads/tanda-tangan/'.$kepala['tanda_tangan']; // ganti dengan path tanda tanganmu
+    //     if (file_exists($ttdPath)) {
+    //         $pdf->Image($ttdPath, 105, 228, 45, 0, '', '', '', false, 300);
 
-        }
+    //     }
 
-        // Nama pejabat
-        $pdf->SetFont('times', 'B', 16);
-        $pdf->SetXY(105, 245);
-        $pdf->Cell(0, 8, "Siska Ayu Soraya", 0, 1, 'L');
+    //     // Nama pejabat
+    //     $pdf->SetFont('times', 'B', 16);
+    //     $pdf->SetXY(105, 245);
+    //     $pdf->Cell(0, 8, $namaKepala, 0, 1, 'L');
 
-        $pdf->SetFont('times', '', 14);
-        $pdf->SetX(105);
-        $pdf->Cell(0, 8, "Kepala", 0, 1, 'L');
+    //     $pdf->SetFont('times', '', 14);
+    //     $pdf->SetX(105);
+    //     $pdf->Cell(0, 8, "Kepala", 0, 1, 'L');
 
-        // ================= Output =================
-        $fileName = 'sertifikat-magang-' . url_title($user->fullname ?? $user->nama, '-', true) . '-' . date('YmdHis') . '.pdf';
+    //     // ================= Output =================
+    //     $fileName = 'sertifikat-magang-' . url_title($user->fullname ?? $user->nama, '-', true) . '-' . date('YmdHis') . '.pdf';
 
-        if ($saveToFile) {
-            $filePath = WRITEPATH . 'uploads/' . $fileName;
-            $pdf->Output($filePath, 'F');
-            return $filePath;
-        } else {
-            $this->response->setContentType('application/pdf');
-            $pdf->Output($fileName, 'I');
-            exit;
-        }
-    }
+    //     if ($saveToFile) {
+    //         $filePath = WRITEPATH . 'uploads/' . $fileName;
+    //         $pdf->Output($filePath, 'F');
+    //         return $filePath;
+    //     } else {
+    //         $this->response->setContentType('application/pdf');
+    //         $pdf->Output($fileName, 'I');
+    //         exit;
+    //     }
+    // }
 
 
 

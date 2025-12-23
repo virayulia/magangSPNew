@@ -12,8 +12,14 @@ class PenelitianModel extends Model
     protected $returnType       = 'array';
     protected $useSoftDeletes   = false;
     protected $protectFields    = true;
-    protected $allowedFields    = ['user_id','unit_id','judul_penelitian','tanggal_daftar','status_seleksi', 'tanggal_masuk',
-                                    'deskripsi', 'dosen_pembimbing','bidang' ];
+    protected $allowedFields    = ['user_id','unit_id','judul_penelitian', 'durasi','tanggal_daftar',
+                                    'status_verifikasi','tanggal_verifikasi', 'approve_unit', 'tanggal_approve_unit','cttn_approve_unit',
+                                    'deskripsi', 'dosen_pembimbing','bidang', 'rencana_masuk','pembimbing_id', 'absensi','catatan_absensi',
+                                    'tgl_upload_absensi', 'tgl_upload_formulir',
+                                    'tanggal_masuk', 'tanggal_selesai', 'status_akhir', 'status_konfirmasi','tanggal_konfirmasi',
+                                'status_validasi_konfirmasi', 'tanggal_validasi_konfirmasi', 'status_berkas_lengkap','tanggal_berkas_lengkap',
+                            'cttn_berkas_lengkap','tanggal_setujui_pernyataan', 'formulir_penelitian','catatan_formulir',
+                            'finalisasi','ka_unit_approve','tanggal_approve', 'status_pembimbing','catatan_pembimbing'];
 
     protected bool $allowEmptyInserts = false;
     protected bool $updateOnlyChanged = true;

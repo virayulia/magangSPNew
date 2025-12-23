@@ -19,6 +19,7 @@
 							<label for="login"><?=lang('Auth.email')?></label>
 							<input type="email" class="form-control <?php if (session('errors.login')) : ?>is-invalid<?php endif ?>"
 								   name="login" placeholder="<?=lang('Auth.email')?>">
+							<small class="text-danger">*gunakan email terdaftar untuk internal gunakan email sig</small>
 							<div class="invalid-feedback">
 								<?= session('errors.login') ?>
 							</div>

@@ -9,103 +9,83 @@
 </a>
 
 <?php if(in_groups('admin')): ?>
-    <div class="sidebar-heading">
-        Magang
-    </div>
-    <li class="nav-item">
-        <a class="nav-link" href="<?= base_url('admin/manage-pendaftaran'); ?>">
-            <i class="fas fa-fw fa-table"></i>
-            <span>Data Pendaftar</span></a>
-    </li>
-    <li class="nav-item">
-        <a class="nav-link" href="<?= base_url('admin/manage-seleksi'); ?>">
-            <i class="fas fa-fw fa-table"></i>
-            <span>Seleksi Pendaftar</span></a>
-    </li>
-    <li class="nav-item">
-        <a class="nav-link" href="<?= base_url('admin/manage-pendaftaran-gagal'); ?>">
-            <i class="fas fa-fw fa-table"></i>
-            <span>Pendaftaran Ditolak</span></a>
-    </li>
-    <li class="nav-item">
-        <a class="nav-link" href="<?= base_url('admin/manage-validasi-konfirmasi'); ?>">
-            <i class="fas fa-fw fa-table"></i>
-            <span>Approval Konfirmasi</span></a>
-    </li>
-    <li class="nav-item">
-        <a class="nav-link" href="<?= base_url('admin/manage-kelengkapan-berkas'); ?>">
-            <i class="fas fa-fw fa-table"></i>
-            <span>Kelengkapan Berkas</span></a>
-    </li>
-    <li class="nav-item">
-        <a class="nav-link" href="<?= base_url('admin/manage-hasil-tes'); ?>">
-            <i class="fas fa-fw fa-table"></i>
-            <span> Hasil Tes Safety</span></a>
-    </li>
-    <li class="nav-item">
-        <a class="nav-link" href="<?= base_url('admin/manage-magang'); ?>">
-            <i class="fas fa-fw fa-table"></i>
-            <span> Peserta Magang</span></a>
-    </li>
-    <li class="nav-item">
-        <a class="nav-link" href="<?= base_url('admin/manage-feedback'); ?>">
-            <i class="fas fa-fw fa-table"></i>
-            <span> Feedback</span></a>
-    </li>
-    <li class="nav-item">
-        <a class="nav-link" href="<?= base_url('admin/manage-alumni'); ?>">
-            <i class="fas fa-fw fa-table"></i>
-            <span> Alumni Magang</span></a>
-    </li>
-    <div class="sidebar-heading">
-        Penelitian
-    </div>
-    <!-- Nav Item - Tables -->
-    <li class="nav-item">
-        <a class="nav-link" href="<?= base_url('admin/manage-penelitian'); ?>">
-            <i class="fas fa-fw fa-table"></i>
-            <span>Data Pendaftar</span></a>
-    </li>
-    <div class="sidebar-heading">
-        Kelola
-    </div>
 
-    <li class="nav-item">
-        <a class="nav-link" href="<?= base_url('admin/kelola-lowongan'); ?>">
-            <i class="fas fa-fw fa-table"></i>
-            <span>Lowongan</span></a>
+    <hr class="sidebar-divider my-0">
+
+    <li class="nav-item active">
+        <a class="nav-link" href="<?= base_url('admin/dashboard'); ?>">
+            <i class="fas fa-fw fa-tachometer-alt"></i>
+            <span>Dashboard</span></a>
     </li>
+
+    <hr class="sidebar-divider">
+
+    <!-- Heading -->
+    <div class="sidebar-heading">Magang & Penelitian</div>
+
+    <!-- Collapse Magang -->
     <li class="nav-item">
-        <a class="nav-link" href="<?= base_url('admin/kuota-unit'); ?>">
-            <i class="fas fa-fw fa-table"></i>
-            <span>Kuota Magang</span></a>
-    </li>
-    <li class="nav-item">
-        <a class="nav-link" href="<?= base_url('admin/jurusan-unit'); ?>">
-            <i class="fas fa-fw fa-table"></i>
-            <span>Jurusan Unit</span></a>
-    </li>
-    <!-- <li class="nav-item">
-        <a class="nav-link collapsed" href="/kelola-unit" data-toggle="collapse" data-target="#collapseThree"
-            aria-expanded="true" aria-controls="collapseTwo">
-            <i class="fas fa-fw fa-table"></i>
-            <span>Unit dan Kuota</span>
+        <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#menuMagang" aria-expanded="false">
+            <i class="fas fa-fw fa-user-graduate"></i>
+            <span>Magang</span>
         </a>
-        <div id="collapseThree" class="collapse" aria-labelledby="headingTwo" data-parent="#accordionSidebar">
+        <div id="menuMagang" class="collapse">
             <div class="bg-white py-2 collapse-inner rounded">
-                <a class="collapse-item" href="/kelola-kuota-unit">Kuota Unit</a>
-                <a class="collapse-item" href="/kelola-kuota">Lihat Kuota Tersedia</a>
+                <a class="collapse-item" href="<?= base_url('admin/manage-pendaftaran'); ?>">Data Pendaftar</a>
+                <a class="collapse-item" href="<?= base_url('admin/manage-seleksi'); ?>">Seleksi Pendaftar</a>
+                <a class="collapse-item" href="<?= base_url('admin/manage-pendaftaran-gagal'); ?>">Pendaftaran Ditolak</a>
+                <a class="collapse-item" href="<?= base_url('admin/manage-validasi-konfirmasi'); ?>">Approval Konfirmasi</a>
+                <a class="collapse-item" href="<?= base_url('admin/manage-kelengkapan-berkas'); ?>">Kelengkapan Berkas</a>
+                <a class="collapse-item" href="<?= base_url('admin/manage-hasil-tes'); ?>">Hasil Tes Safety</a>
+                <a class="collapse-item" href="<?= base_url('admin/manage-magang'); ?>">Peserta Magang</a>
+                <a class="collapse-item" href="<?= base_url('admin/manage-feedback'); ?>">Feedback</a>
+                <a class="collapse-item" href="<?= base_url('admin/manage-alumni'); ?>">Alumni Magang</a>
             </div>
         </div>
-    </li> -->
-    <!-- Nav Item - Pages Collapse Menu -->
+    </li>
+
+    <!-- Collapse Penelitian -->
     <li class="nav-item">
-        <a class="nav-link collapsed" href="<?= base_url('admin/manage-user'); ?>" data-toggle="collapse" data-target="#collapseTwo"
-            aria-expanded="true" aria-controls="collapseTwo">
-            <i class="fas fa-fw fa-cog"></i>
+        <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#menuPenelitian" aria-expanded="false">
+            <i class="fas fa-fw fa-flask"></i>
+            <span>Penelitian</span>
+        </a>
+        <div id="menuPenelitian" class="collapse">
+            <div class="bg-white py-2 collapse-inner rounded">
+                <a class="collapse-item" href="<?= base_url('admin/manage-penelitian'); ?>">Data Pendaftar</a>
+                <a class="collapse-item" href="<?= base_url('admin/penelitian/validasi-konfirmasi'); ?>">Approval Konfirmasi</a>
+                <a class="collapse-item" href="<?= base_url('admin/penelitian/kelengkapan-berkas'); ?>">Kelengkapan Berkas</a>
+                <a class="collapse-item" href="<?= base_url('admin/manage-peserta-penelitian'); ?>">Peserta Penelitian</a>
+            </div>
+        </div>
+    </li>
+
+
+    <!-- Divider -->
+    <hr class="sidebar-divider my-0">
+
+    <!-- Collapse Kelola -->
+    <li class="nav-item">
+        <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#menuKelola" aria-expanded="false">
+            <i class="fas fa-fw fa-tasks"></i>
+            <span>Kelola</span>
+        </a>
+        <div id="menuKelola" class="collapse">
+            <div class="bg-white py-2 collapse-inner rounded">
+                <a class="collapse-item" href="<?= base_url('admin/kelola-lowongan'); ?>">Lowongan</a>
+                <a class="collapse-item" href="<?= base_url('admin/kuota-unit'); ?>">Kuota Magang</a>
+                <a class="collapse-item" href="<?= base_url('admin/jurusan-unit'); ?>">Jurusan Unit</a>
+            </div>
+        </div>
+    </li>
+
+    <!-- Collapse Pengguna -->
+    <li class="nav-item">
+        <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#menuPengguna" aria-expanded="false">
+            <i class="fas fa-fw fa-users-cog"></i>
             <span>Pengguna</span>
         </a>
-        <div id="collapseTwo" class="collapse" aria-labelledby="headingTwo" data-parent="#accordionSidebar">
+        <div id="menuPengguna" class="collapse">
             <div class="bg-white py-2 collapse-inner rounded">
                 <a class="collapse-item" href="<?= base_url('admin/manage-user'); ?>">Data User</a>
                 <a class="collapse-item" href="<?= base_url('admin/manage-user-admin'); ?>">Data Admin</a>
@@ -113,24 +93,38 @@
             </div>
         </div>
     </li>
+
+    <!-- Collapse Data Master -->
     <li class="nav-item">
-        <a class="nav-link collapsed" href="<?= base_url('admin/kelola-unit'); ?>" data-toggle="collapse" data-target="#collapseFour"
-            aria-expanded="true" aria-controls="collapseFour">
-            <i class="fas fa-fw fa-table"></i>
+        <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#menuMaster" aria-expanded="false">
+            <i class="fas fa-fw fa-database"></i>
             <span>Data Master</span>
         </a>
-        <div id="collapseFour" class="collapse" aria-labelledby="headingFour" data-parent="#accordionSidebar">
+        <div id="menuMaster" class="collapse">
             <div class="bg-white py-2 collapse-inner rounded">
                 <a class="collapse-item" href="<?= base_url('admin/kelola-unit'); ?>">Unit Kerja</a>
-                <a class="collapse-item" href="<?= base_url('admin/kelola-instansi'); ?>">Perguruan Tinggi/Sekolah</a>
+                <a class="collapse-item" href="<?= base_url('admin/kelola-instansi'); ?>">Perguruan Tinggi / Sekolah</a>
                 <a class="collapse-item" href="<?= base_url('admin/kelola-jurusan'); ?>">Jurusan</a>
                 <a class="collapse-item" href="<?= base_url('admin/kelola-rfid'); ?>">RFID</a>
+                <a class="collapse-item" href="<?= base_url('admin/kelola-keyword'); ?>">Keyword</a>
             </div>
         </div>
     </li>
 
-    <!-- Divider -->
-    <hr class="sidebar-divider d-none d-md-block">
+    <!-- Collapse Logs -->
+    <li class="nav-item mb-2">
+        <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#menuLogs" aria-expanded="false">
+            <i class="fas fa-fw fa-database"></i>
+            <span>Logs</span>
+        </a>
+        <div id="menuLogs" class="collapse">
+            <div class="bg-white py-2 collapse-inner rounded">
+                <a class="collapse-item" href="<?= base_url('admin/access-log'); ?>">Access Log</a>
+                <a class="collapse-item" href="<?= base_url('admin/change-log'); ?>">Change Log</a>
+                <a class="collapse-item" href="<?= base_url('admin/user-manual'); ?>">User Manual</a>
+            </div>
+        </div>
+    </li>
 
 <?php elseif(in_groups('pembimbing')): ?>
     <?php 
@@ -147,6 +141,22 @@
                 <i class="fas fa-fw fa-table"></i>
                 <span> Alumni Magang</span></a>
         </li>
+        <li class="nav-item">
+            <a class="nav-link" href="<?= base_url('pembimbing/approve-penelitian'); ?>">
+                <i class="fas fa-fw fa-table"></i>
+                <span>Approve Penelitian</span>
+            </a>
+        </li>
+    <?php elseif(in_array(44, $unitIds) && user() && user()->eselon === '3'): ?>
+        <div class="sidebar-heading">
+            Penelitian
+        </div>
+        <li class="nav-item">
+            <a class="nav-link" href="<?= base_url('pembimbing/approve-unit-penelitian'); ?>">
+                <i class="fas fa-fw fa-table"></i>
+                <span>Approve Unit Penelitian</span>
+            </a>
+        </li>
     <?php endif; ?>
 
     <div class="sidebar-heading">
@@ -156,6 +166,11 @@
         <a class="nav-link" href="<?= base_url('pembimbing/penilaian'); ?>">
             <i class="fas fa-fw fa-table"></i>
             <span>Peserta Magang</span></a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" href="<?= base_url('pembimbing/peserta-penelitian'); ?>">
+            <i class="fas fa-fw fa-table"></i>
+            <span>Peserta Penelitian</span></a>
     </li>
     <?php if (user() && user()->eselon === '2'): ?>
         <li class="nav-item">

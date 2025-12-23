@@ -57,80 +57,29 @@
                                     <i class="fas fa-check"></i> Aktivasi
                                 </a>
                             <?php endif; ?>
-                              <button type="button" class="btn btn-sm btn-warning" data-toggle="modal" data-target="#editUserModal<?= $user->id ?>">
-                                <i class="fas fa-edit"></i> Edit
-                              </button>
-                              <a href="<?= base_url('admin/manage-user/delete/'.$user->id) ?>" class="btn btn-sm btn-danger" onclick="return confirm('Yakin ingin menghapus user ini?')">
-                                <i class="fas fa-trash"></i> Hapus
+                              <button
+                                type="button"
+                                class="btn btn-sm btn-warning btn-edit"
+                                data-toggle="modal"
+                                data-target="#editUserModal"
+                                data-id="<?= $user->id ?>"
+                                data-email="<?= esc($user->email) ?>"
+                                data-fullname="<?= esc($user->fullname) ?>"
+                                data-no_hp="<?= esc($user->no_hp) ?>"
+                                data-semester="<?= esc($user->semester) ?>"
+                                data-nilai_ipk="<?= esc($user->nilai_ipk) ?>"
+                                data-instansi="<?= $user->instansi_id ?>"
+                                data-jurusan="<?= $user->jurusan_id ?>"
+                            >
+                                <i class="fas fa-edit"></i>
+                            </button>
+
+
+                              <a href="<?= base_url('admin/manage-user/delete/'.$user->id) ?>" title="Hapus" class="btn btn-sm btn-danger" onclick="return confirm('Yakin ingin menghapus user ini?')">
+                                <i class="fas fa-trash"></i> 
                               </a>
                             </td>
                         </tr>
-
-                        <!-- Modal Edit-->
-                        <div class="modal fade" id="editUserModal<?= $user->id ?>" tabindex="-1" role="dialog" aria-labelledby="editUserModalLabel<?= $user->id ?>" aria-hidden="true">
-                        <div class="modal-dialog modal-lg" role="document">
-                            <form action="<?= base_url('admin/manage-user/update/' . $user->id) ?>" method="post">
-                            <?= csrf_field() ?>
-                            <div class="modal-content">
-                                <div class="modal-header">
-                                <h5 class="modal-title" id="editUserModalLabel<?= $user->id ?>">Edit User: <?= esc($user->fullname) ?></h5>
-                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                                    <span aria-hidden="true">&times;</span>
-                                </button>
-                                </div>
-                                <div class="modal-body row">
-                                <div class="col-md-6">
-                                    <div class="form-group">
-                                    <label>Email</label>
-                                    <input type="email" name="email" value="<?= esc($user->email) ?>" class="form-control" required>
-                                    </div>
-                                    <div class="form-group">
-                                    <label>Fullname</label>
-                                    <input type="text" name="fullname" value="<?= esc($user->fullname) ?>" class="form-control" required>
-                                    </div>
-                                    <div class="form-group">
-                                    <label>No HP</label>
-                                    <input type="text" name="no_hp" value="<?= esc($user->no_hp) ?>" class="form-control">
-                                    </div>
-                                    <div class="form-group">
-                                    <label>Semester</label>
-                                    <input type="number" name="semester" value="<?= esc($user->semester) ?>" class="form-control">
-                                    </div>
-                                    <div class="form-group">
-                                    <label>Nilai IPK</label>
-                                    <input type="text" name="nilai_ipk" value="<?= esc($user->nilai_ipk) ?>" class="form-control">
-                                    </div>
-                                </div>
-
-                                <div class="col-md-6">
-                                    <div class="form-group">
-                                        <label>Instansi</label>
-                                        <select name="instansi_id" id="editInstansi" class="form-control">
-                                        <?php foreach ($instansi as $ins): ?>
-                                            <option value="<?= $ins['instansi_id'] ?>"><?= $ins['nama_instansi'] ?></option>
-                                        <?php endforeach; ?>
-                                        </select>
-                                    </div>
-
-                                    <div class="form-group">
-                                        <label>Jurusan</label>
-                                        <select name="jurusan_id" id="editJurusan" class="form-control">
-                                        <?php foreach ($jurusan as $jur): ?>
-                                            <option value="<?= $jur['jurusan_id'] ?>"><?= $jur['nama_jurusan'] ?></option>
-                                        <?php endforeach; ?>
-                                        </select>
-                                    </div>
-                                    <div class="form-group">
-                                </div>
-                                </div>
-                                <div class="modal-footer">
-                                <button type="submit" class="btn btn-primary">Simpan Perubahan</button>
-                                <button type="button" class="btn btn-secondary" data-dismiss="modal">Batal</button>
-                                </div>
-                            </div>
-                            </form>
-                        </div>
-                        </div>
                         
                     <?php endforeach; ?>
                 </tbody>
@@ -138,7 +87,109 @@
         </div>
     </div>
 </div>
+<!-- Modal Edit -->
+</div>
+<div class="modal fade" id="editUserModal" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <form id="formEditUser" method="post">
+      <?= csrf_field() ?>
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Edit User</h5>
+          <button type="button" class="close" data-dismiss="modal">
+            <span>&times;</span>
+          </button>
+        </div>
 
+        <div class="modal-body row">
+          <div class="col-md-6">
+            <div class="form-group">
+              <label>Email</label>
+              <input type="email" name="email" id="editEmail" class="form-control" required>
+            </div>
+            <div class="form-group">
+              <label>Fullname</label>
+              <input type="text" name="fullname" id="editFullname" class="form-control" required>
+            </div>
+            <div class="form-group">
+              <label>No HP</label>
+              <input type="text" name="no_hp" id="editNoHp" class="form-control">
+            </div>
+            <div class="form-group">
+              <label>Semester</label>
+              <input type="number" name="semester" id="editSemester" class="form-control">
+            </div>
+            <div class="form-group">
+              <label>Nilai IPK</label>
+              <input type="text" name="nilai_ipk" id="editNilaiIpk" class="form-control">
+            </div>
+          </div>
+
+          <div class="col-md-6">
+            <div class="form-group">
+              <label>Instansi</label>
+              <select name="instansi_id" id="editInstansi" class="form-control select2" >
+                <?php foreach ($instansi as $ins): ?>
+                  <option value="<?= $ins['instansi_id'] ?>">
+                    <?= $ins['nama_instansi'] ?>
+                  </option>
+                <?php endforeach; ?>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label>Jurusan</label>
+              <select name="jurusan_id" id="editJurusan" class="form-control select2" >
+                <?php foreach ($jurusan as $jur): ?>
+                  <option value="<?= $jur['jurusan_id'] ?>">
+                    <?= $jur['nama_jurusan'] ?>
+                  </option>
+                <?php endforeach; ?>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-primary">
+            <i class="fas fa-save"></i> Simpan
+          </button>
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">
+            Batal
+          </button>
+        </div>
+      </div>
+    </form>
+  </div>
 </div>
 
-<?= $this->endSection() ?>
+
+<?= $this->endSection(); ?>
+<?= $this->section('scripts'); ?>
+<script>
+$(document).on('click', '.btn-edit', function () {
+    const btn = $(this);
+
+    $('#editEmail').val(btn.data('email'));
+    $('#editFullname').val(btn.data('fullname'));
+    $('#editNoHp').val(btn.data('no_hp'));
+    $('#editSemester').val(btn.data('semester'));
+    $('#editNilaiIpk').val(btn.data('nilai_ipk'));
+
+    $('#editInstansi')
+        .val(btn.data('instansi'))
+        .trigger('change');
+
+    $('#editJurusan')
+        .val(btn.data('jurusan'))
+        .trigger('change');
+
+    $('#formEditUser').attr(
+        'action',
+        "<?= base_url('admin/manage-user/update') ?>/" + btn.data('id')
+    );
+});
+</script>
+
+
+<?= $this->endSection(); ?>

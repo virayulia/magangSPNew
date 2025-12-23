@@ -46,9 +46,9 @@
                             <td><?= esc($p->nama_instansi); ?></td>
                             <td><?= format_tanggal_indonesia_dengan_jam(esc($p->tanggal_daftar)); ?></td>
                             <td><?= esc($p->durasi); ?> bulan</td>
-                            <td><?= $p->cv ? '<a href="'.base_url('uploads/cv/'.$p->cv).'" target="_blank">Lihat</a>' : '<span class="text-muted">-</span>'; ?></td>
-                            <td><?= $p->proposal ? '<a href="'.base_url('uploads/proposal/'.$p->proposal).'" target="_blank">Lihat</a>' : '<span class="text-muted">-</span>'; ?></td>
-                            <td><?= $p->surat_permohonan ? '<a href="'.base_url('uploads/surat-permohonan/'.$p->surat_permohonan).'" target="_blank">Lihat</a>' : '<span class="text-muted">-</span>'; ?></td>
+                            <td class="text-center"><?= $p->cv ? '<a href="'.base_url('uploads/cv/'.$p->cv).'" target="_blank" class="btn btn-sm btn-info"><i class="fas fa-eye"></i></a>' : '<span class="text-muted">-</span>'; ?></td>
+                            <td class="text-center"><?= $p->proposal ? '<a href="'.base_url('uploads/proposal/'.$p->proposal).'" target="_blank"  class="btn btn-sm btn-info"><i class="fas fa-eye"></i></a>' : '<span class="text-muted">-</span>'; ?></td>
+                            <td class="text-center"><?= $p->surat_permohonan ? '<a href="'.base_url('uploads/surat-permohonan/'.$p->surat_permohonan).'" target="_blank"  class="btn btn-sm btn-info"><i class="fas fa-eye"></i></a>' : '<span class="text-muted">-</span>'; ?></td>
                         </tr>
                     <?php endforeach; ?>
                 </tbody>

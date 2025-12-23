@@ -12,7 +12,7 @@ class RfidAssignmentModel extends Model
     protected $returnType       = 'array';
     protected $useSoftDeletes   = false;
     protected $protectFields    = true;
-    protected $allowedFields    = ['magang_id','rfid_id','tanggal_pinjam','tanggal_kembali','status',
+    protected $allowedFields    = ['tipe','relasi_id','rfid_id','tanggal_pinjam','tanggal_kembali','status',
                                     'denda_bayar', 'tanggal_bayar'];
 
     protected bool $allowEmptyInserts = false;

@@ -12,7 +12,7 @@ class JawabanSafetyModel extends Model
     protected $returnType       = 'array';
     protected $useSoftDeletes   = false;
     protected $protectFields    = true;
-    protected $allowedFields    = ['magang_id', 'nilai','status','percobaan_ke','tanggal_ujian','created_at'];
+    protected $allowedFields    = ['tipe','relasi_id', 'nilai','status','percobaan_ke','tanggal_ujian','created_at'];
 
     protected bool $allowEmptyInserts = false;
     protected bool $updateOnlyChanged = true;

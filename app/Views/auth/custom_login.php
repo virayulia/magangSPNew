@@ -54,7 +54,9 @@
                   <div class="mb-3">
                     <label for="login" class="form-label"><?=lang('Auth.email')?></label>
                     <input type="email" class="form-control <?php if (session('errors.login')) : ?>is-invalid<?php endif ?>" 
-                      name="login" placeholder="<?=lang('Auth.email')?>" required>
+                      name="login" placeholder="<?=lang('Auth.email')?> terdaftar atau email sig.id" required>
+                    <small class="text-danger">*Untuk internal Semen Padang, gunakan: NAMA.ANDA@SIG.ID</small>
+
                     <div class="invalid-feedback">
                       <?= session('errors.login') ?>
                     </div>

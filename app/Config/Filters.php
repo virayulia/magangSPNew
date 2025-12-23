@@ -16,6 +16,8 @@ use CodeIgniter\Filters\SecureHeaders;
 use App\Filters\AdminFilter;
 use App\Filters\PembimbingFilter;
 use App\Filters\UserFilter;
+use App\Filters\RoleRedirect;
+use App\Filters\ForcePassReset;
 use Myth\Auth\Filters\LoginFilter;
 
 class Filters extends BaseFilters
@@ -44,7 +46,8 @@ class Filters extends BaseFilters
         'admin'         => AdminFilter::class,
         'user'          => UserFilter::class,
         'pembimbing'    => PembimbingFilter::class,
-        'roleRedirect' => \App\Filters\RoleRedirect::class,
+        'roleRedirect' => RoleRedirect::class,
+        'forcePassReset' => ForcePassReset::class,
     ];
 
     /**

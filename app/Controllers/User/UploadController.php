@@ -26,7 +26,7 @@ class UploadController extends BaseController
         $file = $this->request->getFile('cv');
 
         if ($file && $file->isValid()) {
-            $namaFile = uploadBerkasUser($file, $fullname, 'cv');
+            $namaFile = uploadBerkasUser($file, $fullname, 'cv', $user->cv);
 
             if ($namaFile) {
                 $this->userModel->update($id, ['cv' => $namaFile]);
@@ -71,7 +71,7 @@ class UploadController extends BaseController
         $user = $this->userModel->find($id);
 
         if ($file && $file->isValid()) {
-            $filename = uploadBerkasUser($file, $user->fullname ?? 'user', 'proposal');
+            $filename = uploadBerkasUser($file, $user->fullname ?? 'user', 'proposal', $user->proposal);
 
             if ($filename) {
                 $this->userModel->update($id, ['proposal' => $filename]);
@@ -127,7 +127,7 @@ class UploadController extends BaseController
         $user = $this->userModel->find($id);
 
         if ($file && $file->isValid() && !$file->hasMoved()) {
-            $filename = uploadBerkasUser($file, $user->fullname ?? 'user', 'surat-permohonan');
+            $filename = uploadBerkasUser($file, $user->fullname ?? 'user', 'surat-permohonan', $user->surat_permohonan);
 
             if ($filename) {
                 $this->userModel->update($id, [
@@ -202,7 +202,7 @@ class UploadController extends BaseController
                 ]);
             }
 
-            $filename = uploadBerkasUser($file, $user->fullname ?? 'user', 'ktp-kk');
+            $filename = uploadBerkasUser($file, $user->fullname ?? 'user', 'ktp-kk', $user->ktp_kk);
 
             if ($filename) {
                 $this->userModel->update($id, ['ktp_kk' => $filename]);
@@ -264,7 +264,7 @@ class UploadController extends BaseController
                 ]);
             }
 
-            $filename = uploadBerkasUser($file, $user->fullname ?? 'user', 'bpjs-kes');
+            $filename = uploadBerkasUser($file, $user->fullname ?? 'user', 'bpjs-kes', $user->bpjs_kes);
 
             if ($filename) {
                 $this->userModel->update($id, ['bpjs_kes' => $filename]);
@@ -326,7 +326,7 @@ class UploadController extends BaseController
                 ]);
             }
 
-            $filename = uploadBerkasUser($file, $user->fullname ?? 'user', 'bpjs-tk');
+            $filename = uploadBerkasUser($file, $user->fullname ?? 'user', 'bpjs-tk', $user->bpjs_tk);
 
             if ($filename) {
                 $this->userModel->update($id, ['bpjs_tk' => $filename]);
@@ -388,7 +388,7 @@ class UploadController extends BaseController
                 ]);
             }
 
-            $filename = uploadBerkasUser($file, $user->fullname ?? 'user', 'buktibpjs-tk');
+            $filename = uploadBerkasUser($file, $user->fullname ?? 'user', 'buktibpjs-tk', $user->buktibpjs_tk);
 
             if ($filename) {
                 $this->userModel->update($id, ['buktibpjs_tk' => $filename]);
