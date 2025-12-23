@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Waktu pembuatan: 23 Des 2025 pada 03.51
+-- Waktu pembuatan: 23 Des 2025 pada 05.06
 -- Versi server: 10.4.32-MariaDB
 -- Versi PHP: 8.2.12
 
@@ -1677,8 +1677,6 @@ CREATE TABLE `magang` (
   `tanggal_konfirmasi` datetime DEFAULT NULL,
   `status_validasi_berkas` varchar(50) DEFAULT NULL,
   `tanggal_validasi_berkas` datetime DEFAULT NULL,
-  `status_approval` varchar(10) DEFAULT NULL,
-  `tanggal_approval` date DEFAULT NULL,
   `status_berkas_lengkap` varchar(50) DEFAULT NULL,
   `tanggal_berkas_lengkap` datetime DEFAULT NULL,
   `cttn_berkas_lengkap` varchar(50) DEFAULT NULL,
@@ -1689,8 +1687,13 @@ CREATE TABLE `magang` (
   `pembimbing_id` int(11) DEFAULT NULL,
   `allow_upload` tinyint(1) DEFAULT 0,
   `absensi` varchar(255) DEFAULT NULL,
+  `url_absensi` varchar(255) DEFAULT NULL,
+  `tgl_upload_absensi` datetime DEFAULT NULL,
   `catatan_absensi` varchar(255) DEFAULT NULL,
+  `judul_laporan` varchar(255) DEFAULT NULL,
   `laporan` varchar(255) DEFAULT NULL,
+  `url_laporan` varchar(255) DEFAULT NULL,
+  `tgl_upload_laporan` datetime DEFAULT NULL,
   `catatan_laporan` varchar(255) DEFAULT NULL,
   `finalisasi` datetime DEFAULT NULL,
   `ka_unit_approve` tinyint(4) DEFAULT NULL,
@@ -1755,8 +1758,8 @@ CREATE TABLE `penelitian` (
   `durasi` int(11) NOT NULL,
   `tanggal_masuk` date DEFAULT NULL,
   `tanggal_selesai` date DEFAULT NULL,
-  `status_verifikasi` varchar(20) DEFAULT NULL,
-  `tanggal_verifikasi` date DEFAULT NULL,
+  `status_seleksi` varchar(20) DEFAULT NULL,
+  `tanggal_seleksi` date DEFAULT NULL,
   `approve_unit` varchar(4) DEFAULT NULL,
   `tanggal_approve_unit` date DEFAULT NULL,
   `cttn_approve_unit` varchar(255) DEFAULT NULL,
