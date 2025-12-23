@@ -277,8 +277,8 @@
                     <tr><th>Tanggal Masuk</th><td><?= esc(format_tanggal_indonesia($item['tanggal_masuk'])) ?></td></tr>
                     <tr><th>Tanggal Selesai</th><td><?= esc(format_tanggal_indonesia($item['tanggal_selesai'])) ?></td></tr>
                     <tr><th>Durasi</th><td><?= esc($item['durasi']) ?> bulan</td></tr>
-                    <tr><th>Status Seleksi</th><td><?= esc($item['status_verifikasi'] ?? 'Belum Diseleksi') ?></td></tr>
-                    <tr><th>Tanggal Seleksi</th><td><?= esc(format_tanggal_indonesia_dengan_jam($item['tanggal_verifikasi']) ?? '-') ?></td></tr>
+                    <tr><th>Status Seleksi</th><td><?= esc($item['status_seleksi'] ?? 'Belum Diseleksi') ?></td></tr>
+                    <tr><th>Tanggal Seleksi</th><td><?= esc(format_tanggal_indonesia_dengan_jam($item['tanggal_seleksi']) ?? '-') ?></td></tr>
                     <tr><th>Status Konfirmasi</th><td><?= esc($item['status_konfirmasi'] === 'Y' ? 'Dikonfirmasi' : ($item['status_konfirmasi'] === 'N' ? 'Tidak Konfirmasi' : 'Belum Dikonfirmasi')) ?></td></tr>
                     <tr><th>Tanggal Konfirmasi</th><td><?= esc(format_tanggal_indonesia_dengan_jam($item['tanggal_konfirmasi']) ?? '-') ?></td></tr>
                     <tr><th>Status Approval Konfirmasi</th>

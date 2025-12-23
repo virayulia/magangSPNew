@@ -40,8 +40,9 @@ $routes->get('cron/remind-unit/(:segment)', 'CronController::remindUnit/$1');
 $routes->get('cron/autoTolakTidakKonfirmasi/(:segment)', 'CronController::autoTolakTidakKonfirmasi/$1');
 // $routes->get('cron/autoTolakTidakValidasiBerkas/(:segment)', 'CronController::autoTolakTidakValidasiBerkas/$1');
 $routes->get('cron/reminderLengkapiBerkas/(:segment)', 'CronController::reminderLengkapiBerkas/$1');
-$routes->get('cron/autoKirimEmailAkhirMagang/(:segment)', 'CronController::autoKirimEmailAkhirMagang/$1');
-$routes->get('cron/remind-pembimbing/(:segment)', 'CronController::remindPembimbing/$1');
+$routes->get('cron/autoKirimEmailAkhirMagang/(:segment)', 'CronController::autoKirimEmailAkhirProgram/$1');
+$routes->get('cron/remind-pembimbing/(:segment)', 'CronController::remindSetPembimbing/$1');
+$routes->get('cron/remind-upload-laporan/(:segment)', 'CronController::reminderUploadLaporan/$1');
 
 $routes->get('must-change-password', 'ForcePassResetController::index');
 $routes->post('must-change-password', 'ForcePassResetController::update');

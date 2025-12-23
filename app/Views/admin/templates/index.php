@@ -669,8 +669,8 @@
                                     <tr><th>Tanggal Masuk</th><td>${formatTanggal(d.tanggal_masuk)}</td></tr>
                                     <tr><th>Tanggal Selesai</th><td>${formatTanggal(d.tanggal_selesai)}</td></tr>
                                     <tr><th>Durasi</th><td>${d.durasi ?? '-'} bulan</td></tr>
-                                    <tr><th>Status Seleksi</th><td>${d.status_verifikasi ?? 'Belum Diterima'}</td></tr>
-                                    <tr><th>Tanggal Seleksi</th><td>${formatTanggal(d.tanggal_verifikasi)}</td></tr>
+                                    <tr><th>Status Seleksi</th><td>${d.status_seleksi ?? 'Belum Diterima'}</td></tr>
+                                    <tr><th>Tanggal Seleksi</th><td>${formatTanggal(d.tanggal_seleksi)}</td></tr>
                                     <tr><th>Status Approve Unit</th><td>${statusApproveUnit(d.approve_unit)}</td></tr>
                                     <tr><th>Tanggal Approve Unit</th><td>${formatTanggal(d.tanggal_approve_unit)}</td></tr>
                                     <tr><th>Catatan Approve Unit</th><td>${d.cttn_approve_unit ?? '-'}</td></tr>

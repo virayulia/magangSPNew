@@ -56,12 +56,12 @@ class PenelitianController extends BaseController
                     break;
 
                 case 'menunggu-approval':
-                    $builder->where('p.status_verifikasi', 'diterima')
+                    $builder->where('p.status_seleksi', 'diterima')
                             ->where('p.approve_unit IS NULL');
                     break;
 
                 case 'diterima':
-                    $builder->where('p.status_verifikasi', 'diterima')
+                    $builder->where('p.status_seleksi', 'diterima')
                             ->where('p.approve_unit', 'Y')
                             ->where('p.status_konfirmasi IS NULL');
                     break;
@@ -122,7 +122,7 @@ class PenelitianController extends BaseController
 
             // 2️⃣ DITERIMA (approve unit sudah Y, tapi belum konfirmasi)
             elseif (
-                strtolower($p['status_verifikasi']) === 'diterima' &&
+                strtolower($p['status_seleksi']) === 'diterima' &&
                 $p['approve_unit'] === 'Y' &&
                 is_null($p['status_konfirmasi'])
             ) {
@@ -131,7 +131,7 @@ class PenelitianController extends BaseController
 
             // 3️⃣ MENUNGGU APPROVAL UNIT
             elseif (
-                strtolower($p['status_verifikasi']) === 'diterima' &&
+                strtolower($p['status_seleksi']) === 'diterima' &&
                 is_null($p['approve_unit'])
             ) {
                 $statusCount['Menunggu Approval']++;
@@ -226,8 +226,8 @@ class PenelitianController extends BaseController
             'unit_id' => $unit_id,
             'tanggal_masuk' => $start->format('Y-m-d'),
             'tanggal_selesai' => $end->format('Y-m-d'),
-            'status_verifikasi' => 'Diterima',
-            'tanggal_verifikasi' => date('Y-m-d H:i:s')
+            'status_seleksi' => 'Diterima',
+            'tanggal_seleksi' => date('Y-m-d H:i:s')
         ];
 
         // Jika unit_id berbeda dengan sebelumnya dan approve_unit = 'N'
@@ -342,8 +342,8 @@ class PenelitianController extends BaseController
             // Simpan ke database
             $db->table('penelitian')->where('penelitian_id', $id)->update([
                 'unit_id'          => $unit_id,
-                'status_verifikasi'   => 'Diterima',
-                'tanggal_verifikasi' => date('Y-m-d H:i:s'),
+                'status_seleksi'   => 'Diterima',
+                'tanggal_seleksi' => date('Y-m-d H:i:s'),
                 'tanggal_masuk'   => $tanggalMulai,
                 'tanggal_selesai' => $end->format('Y-m-d'),
                 'status_akhir'    => 'proses',

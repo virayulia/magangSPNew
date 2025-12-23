@@ -13,7 +13,7 @@ class PenelitianModel extends Model
     protected $useSoftDeletes   = false;
     protected $protectFields    = true;
     protected $allowedFields    = ['user_id','unit_id','judul_penelitian', 'durasi','tanggal_daftar',
-                                    'status_verifikasi','tanggal_verifikasi', 'approve_unit', 'tanggal_approve_unit','cttn_approve_unit',
+                                    'status_seleksi','tanggal_seleksi', 'approve_unit', 'tanggal_approve_unit','cttn_approve_unit',
                                     'deskripsi', 'dosen_pembimbing','bidang', 'rencana_masuk','pembimbing_id', 'absensi','catatan_absensi',
                                     'tgl_upload_absensi', 'tgl_upload_formulir',
                                     'tanggal_masuk', 'tanggal_selesai', 'status_akhir', 'status_konfirmasi','tanggal_konfirmasi',

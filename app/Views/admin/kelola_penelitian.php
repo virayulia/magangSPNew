@@ -99,10 +99,10 @@
                 <td><?= date('d M Y H:i', strtotime($p->tanggal_daftar)) ?></td>
                 <td><?= esc($p->dosen_pembimbing) ?></td>
                 <td>
-                    <?php if ($p->status_verifikasi == 'Ditolak'): ?>
+                    <?php if ($p->status_seleksi == 'Ditolak'): ?>
                         <span class="badge bg-danger text-light">Ditolak Admin</span>
 
-                    <?php elseif ($p->status_verifikasi == 'Diterima'): ?>
+                    <?php elseif ($p->status_seleksi == 'Diterima'): ?>
 
                         <?php if (is_null($p->approve_unit)): ?>
                             <span class="badge bg-warning text-light">Menunggu Approval</span>
@@ -137,7 +137,7 @@
                   <div class="aksi-wrapper">
                     <button class="btn btn-sm btn-info btn-detail-penelitian" data-id="<?= $p->penelitian_id ?>" title="Detail" ><i class="fas fa-info-circle"></i></button>
 
-                    <?php if($p->status_verifikasi == NULL) :?>
+                    <?php if($p->status_seleksi == NULL) :?>
                       <button class="btn btn-success btn-sm" 
                               onclick="bukaModalTerima(<?= $p->penelitian_id ?>)"
                               title="Terima">

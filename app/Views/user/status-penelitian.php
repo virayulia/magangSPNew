@@ -149,7 +149,7 @@ Swal.fire({
                 $step = 5;
             } elseif (!empty($pendaftaran['status_konfirmasi']) && !empty($pendaftaran['tanggal_konfirmasi'])) {
                 $step = 4;
-            } elseif (($pendaftaran['status_verifikasi'] ?? '') === 'Diterima' && ($pendaftaran['approve_unit'] ?? '') === 'Y') {
+            } elseif (($pendaftaran['status_seleksi'] ?? '') === 'Diterima' && ($pendaftaran['approve_unit'] ?? '') === 'Y') {
                 $step = 3;
             } elseif (!empty($pendaftaran['tanggal_daftar'])) {
                 $step = 1;
@@ -198,7 +198,7 @@ Swal.fire({
                         <?php if ($step < 3):?>
                         <small>Konfirmasi penerimaan oleh pendaftar.</small>
                         <?php elseif ($step == 3): ?>
-                            <?php if ($pendaftaran['status_verifikasi'] == 'Ditolak'): ?>
+                            <?php if ($pendaftaran['status_seleksi'] == 'Ditolak'): ?>
                                 <br><br>
                                 <div class="info-card error">
                                     <strong>Terima kasih telah mendaftar.</strong>
@@ -207,7 +207,7 @@ Swal.fire({
                                     Jangan berkecil hati—tetap semangat dan terus tingkatkan kemampuan Anda!
                                     Semoga sukses untuk kesempatan berikutnya.
                                 </div>
-                            <?php elseif ($pendaftaran['status_verifikasi'] == 'Diterima'): ?>
+                            <?php elseif ($pendaftaran['status_seleksi'] == 'Diterima'): ?>
                                 <br><br>
                                 <div class="info-card success">
                                     <strong>Selamat!</strong> <br>
