@@ -133,7 +133,8 @@ Swal.fire({
     <hr>
 
     <?php if (empty($pendaftaran)) : ?>
-        <div class="alert alert-info text-center">
+        <div class="alert alert-warning text-center">
+            <i class="bi bi-exclamation-circle me-1"></i>
             Belum ada Pendaftaran Magang. Daftar <a href="<?= base_url('/magang')?>">disini</a> .
         </div>
     <?php else : ?>
@@ -405,7 +406,7 @@ Swal.fire({
             <?php endforeach ?>
         </div>
     <?php else : ?>
-        <div class="alert alert-info mt-3">
+        <div class="alert alert-warning mt-3">
             Belum ada histori pendaftaran.
         </div>
     <?php endif ?>

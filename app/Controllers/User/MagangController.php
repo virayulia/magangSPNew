@@ -651,6 +651,7 @@ class MagangController extends BaseController
         if (!empty($url_laporan)) {
             $this->magangModel->update($id, [
                 'url_laporan' => $url_laporan,
+                'catatan_laporan' => null,
             ]);
             $result[] = 'URL laporan berhasil disimpan.';
         }
@@ -658,6 +659,7 @@ class MagangController extends BaseController
         if (!empty($url_absensi)) {
             $this->magangModel->update($id, [
                 'url_absensi' => $url_absensi,
+                'catatan_absensi' => null,
             ]);
             $result[] = 'URL absensi berhasil disimpan.';
         }
@@ -673,7 +675,8 @@ class MagangController extends BaseController
             if ($laporanName) {
                 $this->magangModel->update($id, [
                     'laporan'            => $laporanName,
-                    'tgl_upload_laporan' => $now
+                    'tgl_upload_laporan' => $now,
+                    'catatan_laporan'    => null,
                 ]);
                 $result[] = 'File laporan berhasil diupload.';
             }
@@ -690,7 +693,8 @@ class MagangController extends BaseController
             if ($absensiName) {
                 $this->magangModel->update($id, [
                     'absensi'            => $absensiName,
-                    'tgl_upload_absensi' => $now
+                    'tgl_upload_absensi' => $now,
+                    'catatan_absensi'    => null,
                 ]);
                 $result[] = 'File absensi berhasil diupload.';
             }

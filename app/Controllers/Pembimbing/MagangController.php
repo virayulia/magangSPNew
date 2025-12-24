@@ -149,9 +149,8 @@ class MagangController extends BaseController
         ];
 
         $builder = $db->table('magang')
-            ->select('magang.magang_id, magang.tanggal_masuk, magang.tanggal_selesai, magang.pembimbing_id, magang.status_akhir,
+            ->select('magang.*,
                 peserta.fullname AS nama_peserta, peserta.nisn_nim, instansi.nama_instansi, peserta.tingkat_pendidikan,
-                magang.laporan, magang.absensi,
                 jurusan.nama_jurusan,
                 penilaian.penilaian_id, penilaian.nilai_disiplin, penilaian.nilai_kerajinan, penilaian.nilai_tingkahlaku,
                 penilaian.nilai_kerjasama, penilaian.nilai_kreativitas, penilaian.nilai_kemampuankerja, 

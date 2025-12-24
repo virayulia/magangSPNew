@@ -298,7 +298,11 @@ $uri = service('uri');
   <a class="<?= $activeSegment === 'pelaksanaan-penelitian' ? 'active' : '' ?>" href="<?= base_url('pelaksanaan-penelitian'); ?>"><i class="bi bi-calendar-check me-2"></i> Pelaksanaan Penelitian</a>
   <a class="<?= $activeSegment === 'unggah-form-penelitian' ? 'active' : '' ?>" href="<?= base_url('unggah-form-penelitian'); ?>"><i class="bi bi-file-earmark-arrow-up me-2"></i> Unggah Formulir</a>
   <a class="<?= $activeSegment === 'surat-keterangan' ? 'active' : '' ?>" href="<?= base_url('surat-keterangan'); ?>"><i class="bi bi-award me-2"></i> Surat Keterangan</a>
-
+<?php else: ?>
+  <a class="<?= $activeSegment === 'status-lamaran' ? 'active' : '' ?>" href="<?= base_url('status-lamaran'); ?>"><i class="bi bi-list-check me-2"></i> Pendaftaran Magang</a>
+  <a class="<?= $activeSegment === 'pelaksanaan' ? 'active' : '' ?>" href="<?= base_url('pelaksanaan'); ?>"><i class="bi bi-calendar-check me-2"></i> Pelaksanaan Magang</a>
+  <a class="<?= $activeSegment === 'unggah-laporan' ? 'active' : '' ?>" href="<?= base_url('unggah-laporan'); ?>"><i class="bi bi-file-earmark-arrow-up me-2"></i> Unggah Laporan</a>
+  <a class="<?= $activeSegment === 'sertifikat-magang' ? 'active' : '' ?>" href="<?= base_url('sertifikat-magang'); ?>"><i class="bi bi-award me-2"></i> Sertifikat Magang</a>
 <?php endif; ?>
 
 

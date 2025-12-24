@@ -611,10 +611,7 @@ class PenelitianController extends BaseController
     // ===============================
     $builder = $this->penelitianModel
         ->select('
-            penelitian.penelitian_id,
-            penelitian.tanggal_masuk,
-            penelitian.tanggal_selesai,
-            penelitian.status_akhir,
+            penelitian.*r,
 
             unit_kerja.unit_id,
             unit_kerja.unit_kerja,

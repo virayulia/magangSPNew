@@ -150,7 +150,8 @@ if ($hariKe == 6) {
                     </div>
                     <hr>
 
-                    <p class="text-danger fw-semibold mb-3">Penutupan: <?= date('d M Y', strtotime($periode->tanggal_tutup)) ?></p>
+                    <p class="text-danger fw-semibold">Penutupan: <?= format_tanggal_singkat($periode->tanggal_tutup) ?>
+                                           <br> Masuk Magang: <strong class="ms-1"><?= format_tanggal_singkat($tanggalMulai); ?></p>
                       <?php if (logged_in()) : ?>
                           <?php if ($isProfilComplite) : ?>
                             <button

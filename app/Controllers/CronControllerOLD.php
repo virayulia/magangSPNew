@@ -71,7 +71,7 @@ class CronController extends BaseController
         // === Tambahan: Kirim CC laporan ke admin ===
         if (!empty($sentUnits)) {
             $email->clear();
-            $email->setTo('musmardi@sig.id'); // ganti dengan email admin/penanggung jawab
+            $email->setTo('musmardi@sig.id'); 
             $email->setSubject('Laporan Email Pemberitahuan Magang');
             $email->setMailType('html');
 

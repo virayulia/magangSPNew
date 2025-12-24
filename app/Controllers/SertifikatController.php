@@ -14,21 +14,6 @@ class SertifikatController extends BaseController
         $this->sertifikatModel = new SertifikatModel();
     }
     
-    // public function verify($token)
-    // {
-    //     $sertifikat = $this->sertifikatModel
-    //         ->where('qr_token', $token)
-    //         ->first();
-
-    //     if (!$sertifikat || empty($sertifikat['file_sertifikat'])) {
-    //         return view('not_found');
-    //     }
-
-    //     return redirect()->to(
-    //         base_url('uploads/sertifikat/pdf/' . $sertifikat['file_sertifikat'])
-    //     );
-    // }
-
     public function verify($token)
     {
         $sertifikat = $this->sertifikatModel
@@ -39,11 +24,26 @@ class SertifikatController extends BaseController
             return view('not_found');
         }
 
-        $localIp = '192.168.229.8';
-
-        return $this->response->redirect(
-            "http://{$localIp}/magangSPNew/public/uploads/sertifikat/pdf/" 
-            . $sertifikat['file_sertifikat']
+        return redirect()->to(
+            base_url('uploads/sertifikat/pdf/' . $sertifikat['file_sertifikat'])
         );
     }
+
+    // public function verify($token)
+    // {
+    //     $sertifikat = $this->sertifikatModel
+    //         ->where('qr_token', $token)
+    //         ->first();
+
+    //     if (!$sertifikat || empty($sertifikat['file_sertifikat'])) {
+    //         return view('not_found');
+    //     }
+
+    //     $localIp = '192.168.229.8';
+
+    //     return $this->response->redirect(
+    //         "http://{$localIp}/magangSPNew/public/uploads/sertifikat/pdf/" 
+    //         . $sertifikat['file_sertifikat']
+    //     );
+    // }
 }

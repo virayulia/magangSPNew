@@ -1,19 +1,21 @@
 <?php
 
 namespace App\Services;
+use Config\Database;
+use Config\Services;
 
 class ProgramCronService
 {
     private $db;
     private $email;
-    private int $unitId = 44;
+    private $unitId;
 
     public function __construct()
     {
-        $this->db = \Config\Database::connect();
-        $this->email = \Config\Services::email();
+        $this->unitId = 44;
+        $this->db = Database::connect();
+        $this->email = Services::email();
     }
-
     /* =====================================================
      * REMINDER UNIT MASUK (H-3)
      * ===================================================== */

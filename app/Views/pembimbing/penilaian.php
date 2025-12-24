@@ -305,21 +305,33 @@
                                 <td><?= date('d M Y', strtotime($item['tanggal_masuk'])) ?></td>
                                 <td><?= date('d M Y', strtotime($item['tanggal_selesai'])) ?></td>
                                 <td>
-                                    <?php if (!empty($item['laporan'])): ?>
-                                        <a href="<?= base_url('uploads/laporan/' . $item['laporan']) ?>" target="_blank">
-                                            Lihat Laporan
-                                        </a>
+                                    <?php if (!empty($item['laporan']) || !empty($item['url_laporan'])): ?>
+                                        <?php if(!empty($item['laporan'])):?>
+                                            <a href="<?= base_url('uploads/laporan/' . $item['laporan']) ?>" target="_blank" class="btn btn-info btn-sm">
+                                                <i class="fas fa-eye" title="Lihat Laporan"></i>
+                                            </a>
+                                        <?php elseif(!empty($item['url_laporan'])): ?>
+                                            <a href="<?= $item['url_laporan'] ?>" target="_blank" class="btn btn-info btn-sm">
+                                                <i class="fas fa-eye" title="Lihat Laporan"></i>
+                                            </a>
+                                        <?php endif; ?>
                                     <?php else: ?>
-                                        <span class="text-muted">Belum ada</span>
+                                        <button class="btn btn-sm btn-secondary"> <i class="fas fa-times-circle" title="Belum Ada"></i></button>
                                     <?php endif; ?>
                                 </td>
                                 <td>
-                                    <?php if (!empty($item['absensi'])): ?>
-                                        <a href="<?= base_url('uploads/absensi/' . $item['absensi']) ?>" target="_blank">
-                                            Lihat Absensi
-                                        </a>
+                                    <?php if (!empty($item['absensi']) || !empty($item['url_absensi'])): ?>
+                                        <?php if(!empty($item['absensi'])):?>
+                                            <a href="<?= base_url('uploads/absensi/' . $item['absensi']) ?>" target="_blank" class="btn btn-info btn-sm">
+                                                <i class="fas fa-eye" title="Lihat Absensi"></i>
+                                            </a>
+                                        <?php elseif(!empty($item['url_absensi'])): ?>
+                                            <a href="<?= $item['url_absensi'] ?>" target="_blank" class="btn btn-info btn-sm">
+                                                <i class="fas fa-eye" title="Lihat Absensi"></i>
+                                            </a>
+                                        <?php endif; ?>
                                     <?php else: ?>
-                                        <span class="text-muted">Belum ada</span>
+                                        <button class="btn btn-sm btn-secondary"> <i class="fas fa-times-circle" title="Belum Ada"></i></button>
                                     <?php endif; ?>
                                 </td>
 
@@ -437,7 +449,7 @@
                                                 <i class="fas fa-info-circle"></i>
                                             </button>
                                         <?php else: ?>
-                                            <?php if(!empty($item['laporan']) && !empty($item['absensi'])): ?>
+                                            <?php if((!empty($item['laporan']) || !empty($item['url_laporan'])) && (!empty($item['absensi']) || !empty($item['url_absensi']))): ?>
                                             <button type="button" class="btn btn-sm btn-success" data-toggle="modal" data-target="#modalNilai-<?= $item['magang_id'] ?>">
                                                 <i class="bi bi-pencil-square"></i> Nilai
                                             </button>

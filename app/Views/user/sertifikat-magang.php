@@ -36,9 +36,9 @@ Swal.fire({
 
             <div class="card">
                 <div class="card-body">
-                    <h5 class="card-title">📋 Sertifikat Magang</h5>
+                    <!-- <h5 class="card-title">📋 Sertifikat Magang</h5> -->
                     <?php if ($pendaftaran): ?>
-                        <?php if (date('Y-m-d') >= $pendaftaran['tanggal_selesai']): ?>
+                        <?php if (!empty($pendaftaran['tanggal_selesai']) && date('Y-m-d') >= $pendaftaran['tanggal_selesai']): ?>
                             <?php if (!$feedback): ?>
                                 <div class="alert alert-warning">
                                     Sebelum mengunduh sertifikat, silakan isi feedback terlebih dahulu.
@@ -260,12 +260,14 @@ Swal.fire({
                                     </div>
                                 </div>
                         <?php else: ?>
-                            <div class="alert alert-info text-center">
+                            <div class="alert alert-warning text-center">
+                                <i class="bi bi-exclamation-circle me-1"></i>
                                 Sertifikat belum tersedia. Sertifikat dapat diunduh setelah Anda menyelesaikan seluruh kegiatan magang.
                             </div>
                         <?php endif; ?>
                     <?php else: ?>
-                        <div class="alert alert-info text-center">
+                        <div class="alert alert-warning text-center">
+                            <i class="bi bi-exclamation-circle me-1"></i>
                             Belum Ada Sertifikat Magang.
                         </div>
                     <?php endif; ?>

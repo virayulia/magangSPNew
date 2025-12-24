@@ -446,8 +446,8 @@
                                 <div class="aksi-wrapper">
                                     <?php
                                     $hariTerakhir = date('Y-m-d') >= $item['tanggal_selesai']; 
-                                    $laporanAda   = !empty($item['laporan']);
-                                    $absensiAda   = !empty($item['absensi']);
+                                    $laporanAda   = !empty($item['laporan']) || !empty($item['url_laporan']);
+                                    $absensiAda   = !empty($item['absensi']) || !empty($item['url_absensi']);
                                     $nilaiAda     = ($rata > 0);
                                     $rfidOk       = empty($item['status_rfid']) || in_array($item['status_rfid'], ['returned','lost']);
                                     $feedbackAda  = !empty($item['feedback_id']);
@@ -579,7 +579,7 @@
           <p id="namaPesertaLaporan" class="font-weight-bold text-primary"></p>
           <div class="form-group">
             <label>Alasan Penolakan</label>
-            <textarea name="alasan" class="form-control" required></textarea>
+            <textarea name="catatan" class="form-control" required></textarea>
           </div>
         </div>
         <div class="modal-footer">
@@ -604,7 +604,7 @@
           <p id="namaPesertaAbsensi" class="font-weight-bold text-primary"></p>
           <div class="form-group">
             <label>Alasan Penolakan</label>
-            <textarea name="alasan" class="form-control" required></textarea>
+            <textarea name="catatan" class="form-control" required></textarea>
           </div>
         </div>
         <div class="modal-footer">

@@ -2910,9 +2910,9 @@ class MagangController extends BaseController
         $noSertifikat = "{$noUrut}/MAGANG/SP/{$bulan}.{$tahun}";
 
         // ================= GENERATE QR =================
-        // $qrUrl  = base_url('sertifikat/verify/' . $sertifikat['qr_token']);
-        $localIp = '192.168.229.8';
-        $qrUrl = "http://{$localIp}/magangSPNew/public/sertifikat/verify/" . $sertifikat['qr_token'];
+        $qrUrl  = base_url('sertifikat/verify/' . $sertifikat['qr_token']);
+        // $localIp = '192.168.229.8';
+        // $qrUrl = "http://{$localIp}/magangSPNew/public/sertifikat/verify/" . $sertifikat['qr_token'];
         $qrPath = FCPATH . 'uploads/sertifikat/qr/' . $sertifikat['qr_token'] . '.png';
         $logoPath = FCPATH . 'assets/img/SP_logo.png';
 

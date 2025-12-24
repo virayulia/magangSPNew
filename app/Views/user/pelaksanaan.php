@@ -303,7 +303,8 @@ Swal.fire({
         <div class="alert alert-warning"><i class="fas fa-exclamation-circle me-1"></i> Kamu belum menyelesaikan <strong>Pendaftaran Magang</strong>, sehingga belum bisa mengakses informasi pelaksanaan magang.</div>
         <?php endif; ?>
     <?php else: ?>
-        <div class="alert alert-info text-center">
+        <div class="alert alert-warning text-center">
+            <i class="bi bi-exclamation-circle me-1"></i>
             Belum Ada Pelaksanaan Magang.
         </div>
     <?php endif; ?>
