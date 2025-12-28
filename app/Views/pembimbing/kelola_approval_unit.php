@@ -25,7 +25,7 @@
 
   <div class="card shadow mb-4">
     <div class="card-body">
-      <div class="table-responsive">
+      <div class="table-responsive-md">
         <form action="<?= base_url('pembimbing/approve-unit-penelitian/save') ?>" method="post" id="bulkForm">
           <input type="hidden" name="status" id="bulkStatus">
           <div class="mb-3">
@@ -40,7 +40,7 @@
               </div>
           </div>
 
-          <table class="table table-bordered table-striped" id="dataTable">
+          <table class="table table-bordered table-striped w-100" id="dataTable">
             <thead class="thead-dark">
               <tr>
                 <th colspan="11">
@@ -54,13 +54,11 @@
                 <th>No</th>
                 <th>Nama Mahasiswa</th>
                 <th>Jurusan</th>
-                <th>Judul Penelitian</th>
-                <th>Deskripsi</th>
-                <th>Keyword</th>
+                <th>Penelitian</th>
                 <th>Unit Kerja</th>
                 <th>Tanggal Daftar</th>
-                <th>Nama Pembimbing</th>
                 <th>Status</th>
+                <th>Aksi</th>
               </tr>
             </thead>
             <tbody>
@@ -70,17 +68,30 @@
                   <td><?= $no++ ?></td>
                   <td><?= esc($p->fullname) ?></td>
                   <td><?= esc($p->nama_jurusan) ?></td>
-                  <td><?= esc($p->judul_penelitian) ?></td>
-                  <td><?= esc($p->deskripsi) ?></td>
-                  <td><?= esc($p->keywords) ?></td>
+                  <td><?php if(!empty($p->judul_penelitian)):?>
+                        <button 
+                            type="button"
+                            title="Detail Penelitian"
+                            class="btn btn-sm btn-info btn-view-penelitian"
+                            data-penelitian="<?= esc($p->judul_penelitian); ?>"
+                            data-deskripsi="<?= esc($p->deskripsi); ?>"
+                            data-judul="Detail Penelitian"
+                            data-keyword="<?= esc($p->keywords); ?>"
+                            data-dosen="<?= esc($p->dosen_pembimbing); ?>"
+                        >
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    <?php else: ?>
+                      -
+                    <?php endif; ?>
+                  </td>
                   <td><?= esc($p->unit_kerja) ?></td>
-                  <td><?= date('d M Y H:i', strtotime($p->tanggal_daftar)) ?></td>
-                  <td><?= esc($p->dosen_pembimbing) ?></td>
+                  <td><?= date('d-m-Y, H:i', strtotime($p->tanggal_daftar)) ?></td>
                   <td>
                       <?php if ($p->status_akhir == 'pendaftaran'): ?>
                           <span class="btn btn-sm btn-warning text-light"><i class="fas fa-hourglass-half" title="Menunggu"></i></span>
                       <?php elseif ($p->status_akhir == 'proses'): ?>
-                          <?php if ($p->status_verifikasi == 'Y' && ($p->status_konfirmasi == NULL || $p->status_konfirmasi == '')): ?>
+                          <?php if ($p->status_seleksi == 'Y' && ($p->status_konfirmasi == NULL || $p->status_konfirmasi == '')): ?>
                               <span class="btn btn-sm btn-primary text-light"><i class="fas fa-check-circle" title="Diterima"></i> </span>
                           <?php elseif ($p->status_konfirmasi == 'Y'): ?>
                               <span class="btn btn-sm btn-success text-light"><i class="fas fa-user-check" title="Terkonfirmasi"></i> </span>
@@ -88,6 +99,9 @@
                               <span class="btn btn-sm btn-secondary text-light"><i class="fas fa-spinner fa-spin" title="Dalam Proses"></i> </span>
                           <?php endif; ?>
                       <?php endif; ?>
+                  </td>
+                  <td>
+                      <button type="button" class="btn btn-sm btn-info btn-detail-penelitian-pembimbing" data-id="<?= $p->penelitian_id ?>" title="Detail"><i class="fas fa-eye"></i></button>
                   </td>
                 </tr>
               <?php endforeach; ?>
@@ -97,6 +111,28 @@
       </div>
     </div>
   </div>
+</div>
+
+<!-- Modal Detail Peserta -->
+<div class="modal fade" id="modalDetailPeserta" tabindex="-1" aria-labelledby="modalDetailPesertaLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="modalDetailPesertaLabel">Detail Peserta</h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body" id="detailPesertaContent">
+                <p class="text-center text-muted">Memuat data peserta...</p>
+            </div>
+            <div class="modal-footer">
+                <!-- <button id="btnEditPenelitian" class="btn btn-sm btn-warning d-none" title="Edit"><i class="fas fa-edit"></i></button>
+                <button id="btnBatalkanPenelitian" class="btn btn-sm btn-danger d-none"  title="Batalkan"><i class="fas fa-ban"></i></button> -->
+                <button class="btn btn-secondary" data-dismiss="modal"  title="Tutup"><i class="fas fa-times"></i></button>
+            </div>
+        </div>
+    </div>
 </div>
 
 <!-- Modal Bulk Reject -->
@@ -124,8 +160,57 @@
   </div>
 </div>
 
+<!-- Modal Penelitian -->
+<div class="modal fade" id="modalPenelitian" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+
+            <!-- Header -->
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="modalJudul">
+                    Detail Penelitian
+                </h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+
+            <!-- Body -->
+            <div class="modal-body">
+
+                <!-- Info -->
+                <div class="mb-3">
+                    <table class="table table-borderless table-sm mb-0">
+                        <tr>
+                            <th width="25%">Judul Penelitian</th>
+                            <td id="modalJudulP"></td>
+                        </tr>
+                        <tr>
+                            <th>Keywords</th>
+                            <td id="modalKeywords"></td>
+                        </tr>
+                        <tr>
+                            <th>Dosen Pembimbing</th>
+                            <td id="modalDosen"></td>
+                        </tr>
+                    </table>
+                </div>
+
+                <hr class="mt-1">
+
+                <div class="p-3 bg-light rounded">
+                    <label for="modalDeskripsi"><strong>Deskripsi:</strong></label>
+                    <p id="modalDeskripsi" class="mb-0 text-justify"></p>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- SweetAlert2 -->
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
 <script>
 document.addEventListener("DOMContentLoaded", function() {
   const selectAll = document.getElementById('selectAll');
@@ -200,4 +285,21 @@ document.addEventListener("DOMContentLoaded", function() {
 
 });
 </script>
+<script>
+document.addEventListener('click', function (e) {
+    const btn = e.target.closest('.btn-view-penelitian');
+    if (!btn) return;
+
+    e.preventDefault(); 
+
+    document.getElementById('modalJudul').innerText     = btn.dataset.judul;
+    document.getElementById('modalJudulP').innerText    = btn.dataset.penelitian;
+    document.getElementById('modalDeskripsi').innerText = btn.dataset.deskripsi;
+    document.getElementById('modalKeywords').innerText  = btn.dataset.keyword;
+    document.getElementById('modalDosen').innerText  = btn.dataset.dosen;
+
+    $('#modalPenelitian').modal('show');
+});
+</script>
+
 <?= $this->endSection() ?>

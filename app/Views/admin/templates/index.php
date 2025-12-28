@@ -278,8 +278,6 @@
                 $('#pembimbingModal').modal('show');
             });
 
-
-
             // Modal tolak laporan
             $(document).on('click', '.btn-tolak-laporan', function () {
                 const id = $(this).data('id');
@@ -760,6 +758,127 @@
                                 .removeClass('d-none')
                                 .off('click')
                                 .on('click', function() { batalkanPenelitian(id, 'modalDetailPeserta'); });
+                        } else {
+                            $('#detailPesertaContent').html('<p class="text-danger">Data tidak ditemukan.</p>');
+                        }
+                    },
+                    error: function() {
+                        $('#detailPesertaContent').html('<p class="text-danger">Terjadi kesalahan saat mengambil data.</p>');
+                    }
+                });
+            });
+
+            $(document).on('click', '.btn-detail-penelitian-pembimbing', function() {
+                const id = $(this).data('id');
+                $('#modalDetailPeserta').modal('show');
+                $('#detailPesertaContent').html('<p class="text-center text-muted">Memuat data peserta...</p>');
+                
+                $.ajax({
+                    url: "<?= site_url('pembimbing/penelitian/detailPeserta/') ?>" + id,
+                    type: "GET",
+                    dataType: "json",
+                    success: function(response) {
+                        if (response.status === 'success') {
+                            const d = response.data;
+                            $('#modalDetailPesertaLabel').text(`Detail Peserta - ${d.fullname}`);
+                            
+                            let img = d.user_image 
+                                ? `<img src="<?= base_url('uploads/user-image/') ?>${d.user_image}" alt="Foto ${d.fullname}" class="img-thumbnail" style="max-width:150px;">`
+                                : `<span class="text-muted">Tidak ada foto</span>`;
+
+                            // Alamat dan Domisili
+                            const alamat = [d.alamat, `${d.tipe_kota_ktp ?? ''} ${d.kota_ktp ?? ''}`.trim(), d.provinsi_ktp].filter(Boolean).join(', ') || 'Data belum diisi';
+                            const domisili = [d.domisili, `${d.tipe_kota_domisili ?? ''} ${d.kota_domisili ?? ''}`.trim(), d.provinsi_domisili].filter(Boolean).join(', ') || 'Data belum diisi';
+
+                            // Jenis Kelamin
+                            const jk = d.jenis_kelamin === 'L' ? 'Laki-Laki' : (d.jenis_kelamin === 'P' ? 'Perempuan' : '-');
+
+                            let html = `
+                                <h6 class="text-primary">📌 Informasi Mahasiswa</h6>
+                                <table class="table table-sm table-bordered">
+                                    <tr>
+                                        <th>Nama Lengkap</th><td>${d.fullname}</td>
+                                        <td rowspan="4" class="text-center align-middle" style="width:180px;">${img}</td>
+                                    </tr>
+                                    <tr><th>NIM/NISN</th><td>${d.nisn_nim}</td></tr>
+                                    <tr><th>No HP</th><td>${d.no_hp}</td></tr>
+                                    <tr><th>Email</th><td>${d.email}</td></tr>
+                                    <tr><th>Jenis Kelamin</th><td>${jk}</td></tr>
+                                    <tr><th>Alamat</th><td colspan="2">${alamat}</td></tr>
+                                    <tr><th>Domisili</th><td colspan="2">${domisili}</td></tr>
+                                </table>
+
+                                <h6 class="text-primary mt-4">🎓 Pendidikan</h6>
+                                <table class="table table-sm table-bordered">
+                                    <tr><th>Tingkat</th><td>${d.tingkat_pendidikan ?? '-'}</td></tr>
+                                    <tr><th>${d.tingkat_pendidikan === 'SMK' ? 'Sekolah' : 'Perguruan Tinggi'}</th><td>${d.nama_instansi ?? '-'}</td></tr>
+                                    <tr><th>Jurusan</th><td>${d.nama_jurusan ?? '-'}</td></tr>
+                                    ${d.tingkat_pendidikan === 'SMK'
+                                        ? `<tr><th>Kelas</th><td>Kelas ${d.semester ?? '-'}</td></tr>`
+                                        : `<tr><th>Semester</th><td>Semester ${d.semester ?? '-'}</td></tr>
+                                        <tr><th>IPK</th><td>${d.nilai_ipk ?? '-'}</td></tr>`}
+                                </table>
+
+                                <h6 class="text-primary mt-4">🗂️ Dokumen</h6>
+                                <table class="table table-sm table-bordered">
+                                    ${d.tingkat_pendidikan === 'SMK' ? `
+                                        <tr><th>Surat Permohonan</th><td>${linkFile('surat-permohonan', d.surat_permohonan)}</td></tr>
+                                        <tr><th>Tanggal Surat</th><td>${formatTanggal(d.tanggal_surat)}</td></tr>
+                                        <tr><th>Nomor Surat</th><td>${d.no_surat ?? '-'}</td></tr>
+                                        <tr><th>Nama Pimpinan</th><td>${d.nama_pimpinan ?? '-'}</td></tr>
+                                        <tr><th>Jabatan Pimpinan</th><td>${d.jabatan ?? '-'}</td></tr>
+                                        <tr><th>Email Instansi</th><td>${d.email_instansi ?? '-'}</td></tr>
+                                        <tr><th>KTP/KK</th><td>${linkFile('ktp-kk', d.ktp_kk)}</td></tr>
+                                        <tr><th>BPJS TK</th><td>${linkFile('bpjs-tk', d.bpjs_tk)}</td></tr>
+                                        <tr><th>Bukti BPJS TK</th><td>${linkFile('buktibpjs-tk', d.buktibpjs_tk)}</td></tr>
+                                    ` : `
+                                        <tr><th>CV</th><td>${linkFile('cv', d.cv)}</td></tr>
+                                        <tr><th>Proposal</th><td>${linkFile('proposal', d.proposal)}</td></tr>
+                                        <tr><th>Surat Permohonan</th><td>${linkFile('surat-permohonan', d.surat_permohonan)}</td></tr>
+                                        <tr><th>Tanggal Surat</th><td>${formatTanggal(d.tanggal_surat)}</td></tr>
+                                        <tr><th>Nomor Surat</th><td>${d.no_surat ?? '-'}</td></tr>
+                                        <tr><th>Nama Pimpinan</th><td>${d.nama_pimpinan ?? '-'}</td></tr>
+                                        <tr><th>Jabatan Pimpinan</th><td>${d.jabatan ?? '-'}</td></tr>
+                                        <tr><th>Email Instansi</th><td>${d.email_instansi ?? '-'}</td></tr>
+                                        <tr><th>KTP/KK</th><td>${linkFile('ktp-kk', d.ktp_kk)}</td></tr>
+                                        <tr><th>BPJS TK</th><td>${linkFile('bpjs-tk', d.bpjs_tk)}</td></tr>
+                                        <tr><th>Bukti BPJS TK</th><td>${linkFile('buktibpjs-tk', d.buktibpjs_tk)}</td></tr>
+                                    `}
+                                </table>
+
+                                <h6 class="text-primary mt-4">📆 Status Penelitian</h6>
+                                <table class="table table-sm table-bordered">
+                                    <tr><th>Unit Kerja</th><td>${d.unit_kerja ?? 'Belum Ada Unit'}</td></tr>
+                                    <tr><th>Tanggal Masuk</th><td>${formatTanggal(d.tanggal_masuk)}</td></tr>
+                                    <tr><th>Tanggal Selesai</th><td>${formatTanggal(d.tanggal_selesai)}</td></tr>
+                                    <tr><th>Durasi</th><td>${d.durasi ?? '-'} bulan</td></tr>
+                                    <tr><th>Status Seleksi</th><td>${d.status_seleksi ?? 'Belum Diterima'}</td></tr>
+                                    <tr><th>Tanggal Seleksi</th><td>${formatTanggal(d.tanggal_seleksi)}</td></tr>
+                                    <tr><th>Status Approve Unit</th><td>${statusApproveUnit(d.approve_unit)}</td></tr>
+                                    <tr><th>Tanggal Approve Unit</th><td>${formatTanggal(d.tanggal_approve_unit)}</td></tr>
+                                    <tr><th>Catatan Approve Unit</th><td>${d.cttn_approve_unit ?? '-'}</td></tr>
+                                    <tr><th>Status Konfirmasi</th><td>${statusKonfirmasi(d.status_konfirmasi)}</td></tr>
+                                    <tr><th>Tanggal Konfirmasi</th><td>${formatTanggal(d.tanggal_konfirmasi)}</td></tr>
+                                    <tr><th>Status Approval Konfirmasi</th><td>${statusValidasi(d.status_validasi_berkas)}</td></tr>
+                                    <tr><th>Tanggal Approval Konfirmasi</th><td>${formatTanggal(d.tanggal_validasi_berkas)}</td></tr>
+                                    <tr><th>Status Berkas Lengkap</th><td>${statusBerkas(d.status_berkas_lengkap)}</td></tr>
+                                    <tr><th>Tanggal Berkas Lengkap</th><td>${formatTanggal(d.tanggal_berkas_lengkap)}</td></tr>
+                                    <tr><th>Catatan Validasi Berkas</th><td>${d.cttn_berkas_lengkap ?? '-'}</td></tr>
+                                    <tr><th>Tanggal Setujui Pernyataan</th><td>${formatTanggal(d.tanggal_setujui_pernyataan)}</td></tr>
+                                    <tr><th>Nama Pembimbing</th><td>${d.nama_pembimbing ?? '-'}</td></tr>
+                                    <tr><th>Lembar Absensi</th><td>${linkFile('absensi', d.absensi)}</td></tr>
+                                    <tr><th>Catatan Absensi</th><td>${d.catatan_absensi ?? '-'}</td></tr>
+                                    <tr><th>Tanggal Upload Absensi</th><td>${formatTanggal(d.tgl_upload_absensi)}</td></tr>
+                                    <tr><th>Formulir Penelitian</th><td>${linkFile('formpenelitian', d.formulir_penelitian)}</td></tr>
+                                    <tr><th>Catatan Pembimbing</th><td>${d.catatan_formulir ?? '-'}</td></tr>
+                                    <tr><th>Tanggal Konfirmasi</th><td>${formatTanggal(d.tgl_upload_formulir)}</td></tr>
+                                    <tr><th>Status Akhir</th><td><span class="badge badge-info">${d.status_akhir ?? '-'}</span></td></tr>
+
+                                </table>
+
+                            `;
+
+                            $('#detailPesertaContent').html(html);
                         } else {
                             $('#detailPesertaContent').html('<p class="text-danger">Data tidak ditemukan.</p>');
                         }

@@ -343,13 +343,15 @@
                                                 $item['nilai_tanggungjawab'] + $item['nilai_penyerapan'];
                                         $rata = round($total / 8, 2);
                                         ?>
-                                        <span class="badge bg-success text-light">
-                                            <strong><?= $rata ?></strong>
-                                        </span>
-                                        <!-- Icon Edit -->
-                                        <a href="#" class="text-primary ml-2" data-toggle="modal" data-target="#editNilaiModal<?= $item['penilaian_id'] ?>">
-                                            <i class="fas fa-edit"></i>
-                                        </a>
+                                        <div class="aksi-wrapper">
+                                            <span class="btn btn-sm btn-success text-light">
+                                                <strong><?= $rata ?></strong>
+                                            </span>
+                                            <!-- Icon Edit -->
+                                            <a href="#" class="btn btn-sm btn-warning ml-2" data-toggle="modal" data-target="#editNilaiModal<?= $item['penilaian_id'] ?>">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                        </div>
 
                                         <!-- Modal Edit Penilaian -->
                                         <div class="modal fade" id="editNilaiModal<?= $item['penilaian_id'] ?>" tabindex="-1" aria-labelledby="editNilaiLabel<?= $item['penilaian_id'] ?>" aria-hidden="true">
@@ -429,7 +431,7 @@
                                         </div>
 
                                     <?php else: ?>
-                                        <span class="badge bg-warning text-light">Belum Dinilai</span>
+                                        <span class="btn btn-sm btn-warning text-light" title="Belum Dinilai"><i class="fas fa-times"></i></span>
                                     <?php endif; ?>
                                 </td>
 
@@ -437,15 +439,15 @@
                                     <?php if ($item['approve_kaunit'] == 1): ?>
                                         <span class="badge bg-success text-light">Disetujui</span>
                                     <?php elseif ($item['approve_kaunit'] == 2): ?>
-                                        <span class="badge bg-danger text-light">Ditolak</span>
+                                        <span class="btn btn-sm btn-danger text-light" title="Ditolak"><i class="fas fa-times"></i></span>
                                     <?php else: ?>
-                                        <span class="badge bg-warning text-light">Belum Disetujui</span>
+                                        <span class="btn btn-sm btn-warning text-light" title="Belum Disetujui"><i class="fas fa-hourglass"></i></span>
                                     <?php endif; ?>
                                 </td>
                                 <td>
                                     <?php if (!empty($item['pembimbing_id'])): ?>
                                         <?php if ($item['penilaian_id']): ?>
-                                            <button type="button" title="Detail Nilai" class="btn btn-sm btn-outline-info" data-toggle="modal" data-target="#modalDetail-<?= $item['magang_id'] ?>">
+                                            <button type="button" title="Detail Nilai" class="btn btn-sm btn-info" data-toggle="modal" data-target="#modalDetail-<?= $item['magang_id'] ?>">
                                                 <i class="fas fa-info-circle"></i>
                                             </button>
                                         <?php else: ?>

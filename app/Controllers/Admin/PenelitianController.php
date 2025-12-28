@@ -580,6 +580,7 @@ class PenelitianController extends BaseController
             JOIN (
                 SELECT relasi_id, tipe, MAX(created_at) AS max_created
                 FROM jawaban_safety
+                WHERE tipe = 'penelitian'
                 GROUP BY relasi_id, tipe
             ) js2 
             ON js1.relasi_id = js2.relasi_id
@@ -598,6 +599,7 @@ class PenelitianController extends BaseController
             JOIN (
                 SELECT relasi_id, tipe, MAX(assignment_id) AS max_assign
                 FROM rfid_assignment
+                WHERE tipe = 'penelitian'
                 GROUP BY relasi_id, tipe
             ) r2 
             ON r1.relasi_id = r2.relasi_id
@@ -611,7 +613,7 @@ class PenelitianController extends BaseController
     // ===============================
     $builder = $this->penelitianModel
         ->select('
-            penelitian.*r,
+            penelitian.*,
 
             unit_kerja.unit_id,
             unit_kerja.unit_kerja,
@@ -629,7 +631,8 @@ class PenelitianController extends BaseController
             ra.tanggal_kembali,
             ra.tanggal_bayar,
 
-            feedback_penelitian.feedbackp_id
+            feedback_penelitian.feedbackp_id,
+            pembimbing.fullname AS nama_pembimbing, pembimbing.id AS pembimbing_id
         ')
         ->select("
             CASE 
@@ -639,6 +642,7 @@ class PenelitianController extends BaseController
             END AS status_tes
         ", false)
         ->join('users', 'users.id = penelitian.user_id', 'left')
+        ->join('users pembimbing', 'pembimbing.id = penelitian.pembimbing_id', 'left')
         ->join('unit_kerja', 'unit_kerja.unit_id = penelitian.unit_id', 'left')
         ->join($subSafety, 'js.relasi_id = penelitian.penelitian_id', 'left')
         ->join('feedback_penelitian', 'feedback_penelitian.penelitian_id = penelitian.penelitian_id', 'left')
@@ -837,7 +841,7 @@ class PenelitianController extends BaseController
             return redirect()->back()->with('error', 'Silakan pilih pembimbing.');
         }
 
-        $builder->where('penelitian', $penelitian_id)
+        $builder->where('penelitian_id', $penelitian_id)
                 ->update(['pembimbing_id' => $pembimbing_id]);
 
         if ($db->affectedRows() > 0) {

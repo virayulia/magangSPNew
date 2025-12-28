@@ -14,6 +14,7 @@ $routes->get('get-images', 'HomeController::getImages');
 
 
 $routes->get('sertifikat/verify/(:segment)', 'SertifikatController::verify/$1');
+$routes->get('surat/verify/(:segment)', 'SertifikatController::verifySurat/$1');
 
 
 
@@ -293,6 +294,7 @@ $routes->group('pembimbing', ['namespace' => 'App\Controllers\Pembimbing', 'filt
     $routes->get('approve-penelitian', 'PenelitianController::approvePenelitian');
 
     $routes->get('peserta-penelitian', 'PenelitianController::pesertaPenelitian');
+    $routes->get('penelitian/detailPeserta/(:num)', 'PenelitianController::getDetailPenelitian/$1');
     $routes->post('assignPembimbingPenelitian/(:num)', 'PenelitianController::assignPembimbing/$1');
     $routes->post('updatePembimbingPenelitian/(:num)', 'PenelitianController::updatePembimbing/$1');
     $routes->post('approve-formulir', 'PenelitianController::approveFormulir');

@@ -154,8 +154,10 @@
                                     $badgeClass = 'btn btn-sm btn-danger text-light'; 
                                     if ($item['status_tes'] === 'Lulus') {
                                         $badgeClass = 'btn btn-sm btn-success text-light'; 
+                                        $title = 'Lulus';
                                     } elseif ($item['status_tes'] === 'Belum Lulus') {
                                         $badgeClass = 'btn btn-sm btn-warning text-light'; 
+                                        $title = 'Belum Lulus';
                                     }elseif ($item['status_tes'] === '-') {
                                         $badgeClass = 'btn btn-sm btn-danger text-light'; 
                                         $title = 'Belum Tes';
@@ -174,7 +176,7 @@
                                 <?php if (empty($item['nama_pembimbing'])): ?>
                                     <!-- Belum Ada -->
                                     <button 
-                                        class="btn btn-sm btn-success ml-2 btn-set-pembimbing-penelitian"
+                                        class="btn btn-sm btn-primary ml-2 btn-set-pembimbing-penelitian"
                                         data-id="<?= $item['penelitian_id'] ?>"
                                         data-unit="<?= $item['unit_id'] ?>"
                                         data-pembimbing=""
@@ -185,9 +187,9 @@
                                         <i class="fas fa-plus-circle"></i>
                                     </button>
                                 <?php else: ?>
-                                    <?= esc($item['nama_pembimbing']) ?>
+                                    <span title="<?= esc($item['nama_pembimbing']) ?>" class="btn btn-sm btn-info"><i class="fas fa-eye"></i></span>
                                     <button 
-                                        class="btn btn-sm btn-primary ml-2 btn-set-pembimbing-penelitian"
+                                        class="btn btn-sm btn-warning ml-2 btn-set-pembimbing-penelitian"
                                         data-id="<?= $item['penelitian_id'] ?>"
                                         data-unit="<?= $item['unit_id'] ?>"
                                         data-pembimbing="<?= $item['pembimbing_id'] ?>"
@@ -207,7 +209,7 @@
                                 <?php else: ?>
                                     <?php if ($item['status_pembimbing'] === 'Disetujui'): ?>
                                         <!-- Sudah diterima -->
-                                        <a href="<?= base_url('uploads/formpenelitian/' . $item['formulir_penelitian']) ?>" 
+                                        <a href="<?= base_url('uploads/form-penelitian/' . $item['formulir_penelitian']) ?>" 
                                         target="_blank" 
                                         class="btn btn-info btn-sm" 
                                         title="Lihat Formulir">

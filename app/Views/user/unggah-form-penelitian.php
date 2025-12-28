@@ -91,7 +91,7 @@ Swal.fire({
                     <div class="modal-body">
 
                         <div class="mb-3">
-                            <label class="form-label">📄 Formulir Pengambilan Data (PDF, max 2 MB)</label>
+                            <label class="form-label">📄 Formulir Pengambilan Data (PDF, max 2 MB) <small class="text-danger">*minimal ditandatangani Ka Unit (Band 3)</small></label>
                             <input type="file" name="formData" class="form-control" accept="application/pdf">
                             <small class="text-danger">* wajib ada tanda tangan pembimbing min Band 3</small>
 

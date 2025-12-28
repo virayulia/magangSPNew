@@ -1431,6 +1431,7 @@ class MagangController extends BaseController
                 JOIN (
                     SELECT relasi_id, MAX(created_at) AS max_created
                     FROM jawaban_safety
+                    WHERE tipe = 'magang'
                     GROUP BY relasi_id
                 ) js2 ON js1.relasi_id = js2.relasi_id AND js1.created_at = js2.max_created
             ) AS js
@@ -1444,6 +1445,7 @@ class MagangController extends BaseController
                 JOIN (
                     SELECT relasi_id, MAX(assignment_id) AS max_assign
                     FROM rfid_assignment
+                    WHERE tipe = 'magang'
                     GROUP BY relasi_id
                 ) r2 ON r1.relasi_id = r2.relasi_id AND r1.assignment_id = r2.max_assign
             ) AS ra
@@ -1485,6 +1487,7 @@ class MagangController extends BaseController
             ->join('users pembimbing', 'pembimbing.id = magang.pembimbing_id', 'left')
             ->where('magang.status_akhir', 'magang')
             ->groupBy('magang.magang_id');
+            
 
         // Filter dinamis
         // if (!empty($bulanMasuk)) $builder->where('MONTH(magang.tanggal_masuk)', $bulanMasuk);
@@ -2053,7 +2056,8 @@ class MagangController extends BaseController
         if ($magangId && $rfidId) {
             // Simpan ke tabel rfid_assignment
             $this->rfidAssignmentModel->insert([
-                'magang_id'      => $magangId,
+                'tipe'            => 'magang',
+                'relasi_id'      => $magangId,
                 'rfid_id'        => $rfidId,
                 'tanggal_pinjam' => date('Y-m-d H:i:s'),
                 'status'         => 'aktif', 
@@ -2081,7 +2085,7 @@ class MagangController extends BaseController
         }
 
         $rfidId   = $assignment['rfid_id'];
-        $magangId = $assignment['magang_id'];
+        $magangId = $assignment['relasi_id'];
 
         // update assignment lama
        $updateData = [
@@ -2105,7 +2109,8 @@ class MagangController extends BaseController
         // kalau hilang dan diganti RFID baru
         if ($status === 'lost'  && !empty($newRfidId)) {
             $this->rfidAssignmentModel->insert([
-                'magang_id'     => $magangId,
+                'tipe'          => 'magang',
+                'relasi_id'     => $magangId,
                 'rfid_id'       => $newRfidId,
                 'tanggal_pinjam'=> date('Y-m-d H:i:s'),
                 'status'        => 'aktif'
@@ -2369,10 +2374,19 @@ class MagangController extends BaseController
         $db = \Config\Database::connect();
         $db->transStart();
 
-        
-       $this->magangModel->update($magangId, [
-            'finalisasi' => date('Y-m-d H:i:s'), 
+        // Update finalisasi
+        $this->magangModel->update($magangId, [
+            'finalisasi' => date('Y-m-d H:i:s'),
         ]);
+
+        // Ambil KA Unit Diklat (unit_id = 44, eselon = 2)
+        $kaUnit = $db->table('unit_user')
+            ->select('users.email, users.fullname')
+            ->join('users', 'users.id = unit_user.user_id')
+            ->where('unit_user.unit_id', 44)
+            ->where('users.eselon', 2)
+            ->get()
+            ->getRow();
 
         $db->transComplete();
 
@@ -2380,8 +2394,54 @@ class MagangController extends BaseController
             return redirect()->back()->with('error', 'Gagal Finalisasi.');
         }
 
-        return redirect()->back()->with('success', 'Finalisasi Berhasil');
+        // ===============================
+        // Kirim Email setelah transaksi sukses
+        // ===============================
+        if ($kaUnit && !empty($kaUnit->email)) {
+
+            $email = \Config\Services::email();
+
+            $email->setTo($kaUnit->email);
+            $email->setSubject('Notifikasi Finalisasi Magang');
+            $email->setMailType('html');
+            $approveUrl = base_url('pembimbing/approve-magang');
+
+            $email->setMessage("
+                Yth. {$kaUnit->fullname},</p>
+
+                <p>Terdapat data magang yang telah dilakukan finalisasi.</p>
+
+                <p>Silakan melakukan proses <b>approval</b> melalui tombol di bawah ini:</p>
+
+                <p style='margin:30px 0; text-align:center;'>
+                    <a href='{$approveUrl}'
+                    style='
+                        background-color:#28a745;
+                        color:#ffffff;
+                        padding:12px 20px;
+                        text-decoration:none;
+                        border-radius:5px;
+                        font-weight:bold;
+                        display:inline-block;
+                    '>
+                        ✅ Approve Magang
+                    </a>
+                </p>
+
+                <p>Atau salin tautan berikut ke browser Anda:</p>
+                <p><a href='{$approveUrl}'>{$approveUrl}</a></p>
+
+                <br>
+                <p>Terima kasih.</p>
+            ");
+
+
+            $email->send();
+        }
+
+        return redirect()->back()->with('success', 'Finalisasi Berhasil & Email Terkirim');
     }
+
 
 
     public function alumniMagang()

@@ -17,6 +17,13 @@ use App\Models\KeywordModel;
 use App\Models\FeedbackPenelitianModel;
 use App\Models\SuratKeteranganModel;
 use App\Models\UnitUserModel;
+use Endroid\QrCode\Builder\Builder as QrBuilder;
+use Endroid\QrCode\Writer\PngWriter;
+use Endroid\QrCode\ErrorCorrectionLevel;
+use Endroid\QrCode\Logo\Logo;
+use Endroid\QrCode\Encoding\Encoding;
+use Endroid\QrCode\RoundBlockSizeMode;
+use Endroid\QrCode\Color\Color;
 
 class PenelitianController extends BaseController
 {
@@ -653,6 +660,8 @@ class PenelitianController extends BaseController
         return redirect()->back()->with('success', 'Feedback berhasil disimpan.');
     }
 
+    
+
     public function cetakSuratKeterangan($saveToFile = false)
     {
         $userId = user_id();
@@ -728,17 +737,94 @@ class PenelitianController extends BaseController
                 ->orderBy('nomor', 'DESC')
                 ->first();
             $nextNumber = $last ? intval($last['nomor']) + 1 : 1;
+            $qrToken = bin2hex(random_bytes(20));
+
             $this->suratKeteranganModel->insert([
                 'penelitian_id' => $penelitian['penelitian_id'],
                 'nomor' => $nextNumber,
                 'tahun' => $tahunSekarang,
+                'qr_token'  => $qrToken,
             ]);
-        } else {
+            $suratKeterangan = $this->suratKeteranganModel
+                ->where('penelitian_id', $penelitian['penelitian_id'])
+                ->first();
+        } 
+        else {
             $nextNumber = $suratKeterangan['nomor'];
         }
 
+        // === Lazy QR token
+        if (empty($suratKeterangan['qr_token'])) {
+            $qrToken = bin2hex(random_bytes(20));
+            $this->suratKeteranganModel->update($suratKeterangan['sertifikat_id'], [
+                'qr_token' => $qrToken
+            ]);
+            $suratKeterangan['qr_token'] = $qrToken;
+        }
+
+        // ================= FILE PATH =================
+        $fileName = 'surat-keterangan-' . $suratKeterangan['qr_token'] . '.pdf';
+        $filePath = FCPATH . 'uploads/surat/pdf/' . $fileName;
+
+        // ================= JIKA FILE SUDAH ADA =================
+        if (!empty($suratKeterangan['file_surat']) && file_exists($filePath)) {
+            return $this->response
+                ->setHeader('Content-Type', 'application/pdf')
+                ->setBody(file_get_contents($filePath));
+        }
+
+        // ================= NOMOR SURKET =================
+
         $noUrut = str_pad($nextNumber, 4, '0', STR_PAD_LEFT);
         $noSurat = "{$noUrut}/PENELITIAN/SP/{$bulanSekarang}.{$tahunSekarang}";
+
+        // ================= GENERATE QR =================
+        $qrUrl  = base_url('surat/verify/' . $suratKeterangan['qr_token']);
+        // $localIp = '192.168.229.8';
+        // $qrUrl = "http://{$localIp}/magangSPNew/public/sertifikat/verify/" . $sertifikat['qr_token'];
+        $qrPath = FCPATH . 'uploads/surat/qr/' . $suratKeterangan['qr_token'] . '.png';
+        $logoPath = FCPATH . 'assets/img/SP_logo.png';
+
+        if (!file_exists($logoPath)) {
+            throw new \RuntimeException('Logo QR tidak ditemukan: ' . $logoPath);
+        }
+        if (!file_exists($qrPath)) {
+            if (!is_dir(dirname($qrPath))) {
+                mkdir(dirname($qrPath), 0775, true);
+            }
+        
+
+            $builder = new QrBuilder(
+                writer: new PngWriter(),
+                writerOptions: [],
+                validateResult: false,
+                data: $qrUrl,
+
+                // ❗ TIDAK BOLEH NULL
+                encoding: new Encoding('UTF-8'),
+                errorCorrectionLevel: ErrorCorrectionLevel::High,
+                size: 300,
+                margin: 10,
+
+                roundBlockSizeMode: RoundBlockSizeMode::Margin,
+                foregroundColor: new Color(0, 0, 0),
+                backgroundColor: new Color(255, 255, 255),
+
+                labelText: '',
+                
+
+                // LOGO
+                logoPath: $logoPath,
+                logoResizeToWidth: 70,
+                logoResizeToHeight: null,
+                logoPunchoutBackground: true
+            );
+
+            $result = $builder->build();
+            $result->saveToFile($qrPath);
+
+
+        }
 
         // ================== TCPDF ==================
         $pdf = new \TCPDF('P', PDF_UNIT, 'A4', true, 'UTF-8', false);
@@ -759,7 +845,7 @@ class PenelitianController extends BaseController
         }
 
         // ================== Judul ==================
-        $pdf->Ln(20);
+        $pdf->Ln(15);
         $pdf->SetFont('times', 'B', 20);
         $pdf->Cell(0, 12, 'SURAT KETERANGAN', 0, 1, 'C');
 
@@ -800,11 +886,16 @@ class PenelitianController extends BaseController
 
         // ================== Isi surat ==================
         $pdf->Ln(8);
-        $pdf->MultiCell(0, 7,
+        $pdf->MultiCell(
+            0,
+            7,
             'Telah selesai melaksanakan Penelitian/Pengambilan Data di ' .
             ($penelitian['unit_kerja'] ?? '-') . ' PT Semen Padang, ' .
             'dari tanggal ' . format_tanggal_indonesia($penelitian['tanggal_masuk']) .
-            ' s.d. ' . format_tanggal_indonesia($penelitian['tanggal_selesai']) . '.', 0, 'L');
+            ' s.d. ' . format_tanggal_indonesia($penelitian['tanggal_selesai']) . '.',
+            0,
+            'J'
+        );
 
         // ================== Judul Penelitian ==================
         $pdf->Ln(8);
@@ -819,7 +910,7 @@ class PenelitianController extends BaseController
         // ================== Penutup ==================
         $pdf->Ln(8);
         $pdf->SetFont('times', '', 12);
-        $pdf->MultiCell(0, 7, 'Demikian Surat Keterangan ini dibuat untuk dapat dipergunakan sebagaimana mestinya.', 0, 'L');
+        $pdf->MultiCell(0, 7, 'Demikian Surat Keterangan ini dibuat untuk dapat dipergunakan sebagaimana mestinya.', 0, 'J');
 
         // ================== Tanda tangan (rata kiri) ==================
         $pdf->Ln(15);
@@ -848,20 +939,31 @@ class PenelitianController extends BaseController
         $pdf->SetFont('times', '', 12);
         $pdf->Cell(0, 7, "Kepala", 0, 1, 'L');
 
-        
+        // === TEKS DI ATAS QR
+        $pdf->SetFont('times', 'I', 9);   
+        $pdf->SetTextColor(0, 0, 0);
+
+        // Posisi X sama dengan QR, Y sedikit di atas QR
+        $pdf->SetXY(160, 230);
+        $pdf->Cell(30, 6, 'Scan me for validate', 0, 0, 'C');
+
+        // === QR KANAN BAWAH HALAMAN 1
+        $pdf->Image($qrPath, 160, 235, 30, 30, 'PNG');
 
         // ================== Output ==================
-        $fileName = 'surat-keterangan-' . url_title($user->fullname ?? $user->nama, '-', true) . '-' . date('YmdHis') . '.pdf';
-
-        if ($saveToFile) {
-            $filePath = WRITEPATH . 'uploads/' . $fileName;
-            $pdf->Output($filePath, 'F');
-            return $filePath;
-        } else {
-            $this->response->setContentType('application/pdf');
-            $pdf->Output($fileName, 'I');
-            exit;
+        if (!is_dir(dirname($filePath))) {
+            mkdir(dirname($filePath), 0775, true);
         }
+
+        $pdf->Output($filePath, 'F');
+
+        $this->suratKeteranganModel->update($suratKeterangan['surat_keterangan_id'], [
+            'file_surat' => $fileName
+        ]);
+
+        return $this->response
+            ->setHeader('Content-Type', 'application/pdf')
+            ->setBody(file_get_contents($filePath));
     }
 
     public function cetak_absensi($id)

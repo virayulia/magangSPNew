@@ -309,11 +309,11 @@ class PenelitianController extends BaseController
                                     SELECT r1.*
                                     FROM rfid_assignment r1
                                     JOIN (
-                                        SELECT relasi_id, MAX(tanggal_pinjam) AS max_created
+                                        SELECT relasi_id, tipe, MAX(assignment_id) AS max_assign
                                         FROM rfid_assignment
                                         WHERE tipe = 'penelitian'
-                                        GROUP BY relasi_id
-                                    ) r2 ON r1.relasi_id = r2.relasi_id AND r1.tanggal_pinjam = r2.max_created
+                                        GROUP BY relasi_id, tipe
+                                    ) r2 ON r1.relasi_id = r2.relasi_id AND r1.tipe = r2.tipe AND r1.assignment_id = r2.max_assign
                                 ) AS ra", 'ra.relasi_id = penelitian.penelitian_id', 'left')
                         ->join('rfid', 'rfid.id_rfid = ra.rfid_id', 'left')
                         ->where('penelitian.status_akhir', 'penelitian')
@@ -472,6 +472,51 @@ class PenelitianController extends BaseController
             'pembimbing' => $pembimbing,
             'userLogin' => $userLogin,
             'unitPembimbing' => $unitPembimbing
+        ]);
+    }
+
+    public function getDetailPenelitian($id)
+    {
+        $data = $this->penelitianModel
+            ->select("
+                penelitian.*,
+                unit_kerja.unit_kerja,
+                users.id as user_id, users.fullname, users.email,users.user_image,users.nisn_nim, users.no_hp, users.jenis_kelamin, users.alamat,
+                users.province_id, users.city_id, users.domisili, users.provinceDom_id, users.cityDom_id,
+                users.tingkat_pendidikan, users.instansi_id, users.jurusan_id, users.semester, 
+                users.nilai_ipk, users.rfid_no, users.cv, users.proposal, users.surat_permohonan, users.tanggal_surat,
+                users.no_surat, users.nama_pimpinan, users.jabatan, users.email_instansi,users.bpjs_kes, users.bpjs_tk, 
+                users.buktibpjs_tk, users.ktp_kk, users.status,
+                jurusan.nama_jurusan,
+                instansi.nama_instansi,
+                pembimbing.fullname as nama_pembimbing,
+                province_ktp.province AS provinsi_ktp,
+                province_dom.province AS provinsi_domisili,
+                city_ktp.regency AS kota_ktp, 
+                city_ktp.type AS tipe_kota_ktp,
+                city_dom.regency AS kota_domisili,
+                city_dom.type AS tipe_kota_domisili,
+            ")
+            ->join('users', 'users.id = penelitian.user_id')
+            ->join('users pembimbing', 'pembimbing.id = penelitian.pembimbing_id', 'left') 
+            ->join('unit_kerja', 'penelitian.unit_id = unit_kerja.unit_id', 'left')
+            ->join('jurusan', 'users.jurusan_id = jurusan.jurusan_id', 'left')
+            ->join('provinces AS province_ktp', 'province_ktp.id = users.province_id', 'left')
+            ->join('provinces AS province_dom', 'province_dom.id = users.provinceDom_id', 'left')
+            ->join('regencies AS city_ktp', 'city_ktp.id = users.city_id', 'left')
+            ->join('regencies AS city_dom', 'city_dom.id = users.cityDom_id', 'left')
+            ->join('instansi', 'users.instansi_id = instansi.instansi_id', 'left')
+            ->where('penelitian.penelitian_id', $id)
+            ->first();
+
+
+        if (!$data) {
+            return $this->response->setJSON(['status' => 'error', 'message' => 'Data tidak ditemukan']);
+        }
+
+        return $this->response->setJSON([
+            'status' => 'success',
+            'data' => $data
         ]);
     }
 

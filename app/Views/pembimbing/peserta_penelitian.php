@@ -30,21 +30,23 @@
 <!-- Card Tabel -->
 <div class="card shadow mb-4">
     <div class="card-body">
-        <div class="table-responsive">
+        <div class="table-responsive-sm">
             <table class="table table-bordered table-striped" width="100%" cellspacing="0" id="dataTable" >
                 <thead class="table-dark">
                     <tr>
                         <th>No</th>
                         <th>Nama</th>
-                        <th>NIM</th>
+                        <!-- <th>NIM</th> -->
                         <th>Jurusan</th>
                         <th>Instansi</th>
-                        <th>Judul</th>
-                        <th>Deskripsi</th>
+                        <th>Penelitian</th>
+                        <!-- <th>Judul</th>
+                        <th>Deskripsi</th> -->
                         <th>Pembimbing</th>
                         <th>Tanggal Mulai</th>
                         <th>Tanggal Selesai</th>
                         <th>Form Ambil Data</th>
+                        <th>Absensi</th>
                         <th>Aksi</th>
                     </tr>
                 </thead>
@@ -53,11 +55,27 @@
                         <?php $no = 1; foreach ($data as $item): ?>
                             <td><?= $no++; ?></td>
                             <td><?= esc($item['nama_peserta']) ?></td>
-                            <td><?= esc($item['nisn_nim']) ?></td>
+                            <!-- <td><?= esc($item['nisn_nim']) ?></td> -->
                             <td><?= esc($item['nama_jurusan']) ?></td>
                             <td><?= esc($item['nama_instansi']) ?></td>
-                            <td><?= esc($item['judul_penelitian']) ?></td> 
-                            <td><?= esc($item['deskripsi']) ?></td>
+                            <td><?php if(!empty($item['judul_penelitian'])):?>
+                                    <button 
+                                        type="button"
+                                        title="Detail Penelitian"
+                                        class="btn btn-sm btn-info btn-view-penelitian"
+                                        data-penelitian="<?= esc($item['judul_penelitian']); ?>"
+                                        data-deskripsi="<?= esc($item['deskripsi']); ?>"
+                                        data-judul="Detail Penelitian"
+                                        data-dosen="<?= esc($item['dosen_pembimbing']); ?>"
+                                    >
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                <?php else: ?>
+                                -
+                                <?php endif; ?>
+                            </td>
+                            <!-- <td><?= esc($item['judul_penelitian']) ?></td> 
+                            <td><?= esc($item['deskripsi']) ?></td> -->
                             <td>
                                 <?php if (empty($item['nama_pembimbing'])): ?>
                                     Belum Ada
@@ -78,34 +96,44 @@
                             <td><?= format_tanggal_indonesia($item['tanggal_masuk']) ?></td>
                             <td><?= format_tanggal_indonesia($item['tanggal_selesai']) ?></td>
                             <td>
-                                <?php if (!empty($item['formulir_penelitian'])): ?>
-                                    <a href="<?= base_url('uploads/formPenelitian/' . $item['formulir_penelitian']) ?>" target="_blank">
-                                        Lihat Form
-                                    </a>
-                                    <?php if ($item['status_pembimbing'] == NULL): ?>
-                                        <button class="btn btn-sm btn-success btn-approve" data-id="<?= $item['penelitian_id'] ?>">
-                                            <i class="fas fa-check"></i> Terima
-                                        </button>
-                                        <button class="btn btn-sm btn-danger btn-reject" data-id="<?= $item['penelitian_id'] ?>">
-                                            <i class="fas fa-times"></i> Tolak
-                                        </button>
+                                <div class="aksi-wrapper">
+                                    <?php if (!empty($item['formulir_penelitian'])): ?>
+                                        <a href="<?= base_url('uploads/form-penelitian/' . $item['formulir_penelitian']) ?>" target="_blank" class="btn btn-sm btn-info">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <?php if ($item['status_pembimbing'] == NULL): ?>
+                                            <button class="btn btn-sm btn-success btn-approve" data-id="<?= $item['penelitian_id'] ?>" title="Terima">
+                                                <i class="fas fa-check"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-danger btn-reject" data-id="<?= $item['penelitian_id'] ?>" title="Tolak">
+                                                <i class="fas fa-times"></i> 
+                                            </button>
 
-                                    <?php elseif ($item['status_pembimbing'] == 'Disetujui'): ?>
-                                        <span class="badge bg-success text-light">Disetujui</span>
+                                        <?php elseif ($item['status_pembimbing'] == 'Disetujui'): ?>
+                                            <span class="btn btn-sm btn-success text-light" title="Disetujui"><i class="fas fa-check"></i></span>
 
-                                    <?php elseif ($item['status_pembimbing'] == 'Ditolak'): ?>
-                                        <span class="badge bg-danger text-light">Ditolak</span>
-                                        <?php if (!empty($item['catatan_pembimbing'])): ?>
-                                            <br><small><b>Catatan:</b> <?= esc($item['catatan_pembimbing']); ?></small>
+                                        <?php elseif ($item['status_pembimbing'] == 'Ditolak'): ?>
+                                            <span class="btn btn-sm btn-danger text-light"><i class="fas fa-times"></i></span>
+                                            <?php if (!empty($item['catatan_pembimbing'])): ?>
+                                                <br><small><b>Catatan:</b> <?= esc($item['catatan_pembimbing']); ?></small>
+                                            <?php endif; ?>
                                         <?php endif; ?>
+                                    <?php else: ?>
+                                        <span class="text-muted">Belum ada</span>
                                     <?php endif; ?>
+                                </div>
+                            </td>     
+                            <td>
+                                <?php if (!empty($item['absensi'])): ?>
+                                    <a href="<?= base_url('uploads/absensi-penelitian/' . $item['absensi']) ?>" target="_blank" class="btn btn-info btn-sm">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
                                 <?php else: ?>
-                                    <span class="text-muted">Belum ada</span>
+                                    <span class="btn btn-sm btn-danger"><i class="fas fa-times-circle" title="Belum Setuju"></i></span>
                                 <?php endif; ?>
-                            </td>                                   
+                            </td>                              
                             <td>       
-                            <button class="btn btn-sm btn-primary btn-detail-peserta" data-id="<?= $item['penelitian_id'] ?>" >Detail</button>
-                                  
+                            <button title="Detail" class="btn btn-sm btn-info btn-detail-penelitian-pembimbing" data-id="<?= $item['penelitian_id'] ?>" ><i class="fas fa-eye"></i></button>
                             </td>
                                                     
                         </tr>
@@ -250,14 +278,57 @@
                 <p class="text-center text-muted">Memuat data peserta...</p>
             </div>
             <div class="modal-footer">
-                <button id="btnEditMagang" class="btn btn-sm btn-warning d-none">Edit</button>
-                <button id="btnBatalkanMagang" class="btn btn-sm btn-danger d-none">Batalkan</button>
+                <!-- <button id="btnEditMagang" class="btn btn-sm btn-warning d-none">Edit</button>
+                <button id="btnBatalkanMagang" class="btn btn-sm btn-danger d-none">Batalkan</button> -->
                 <button class="btn btn-secondary" data-dismiss="modal">Tutup</button>
             </div>
         </div>
     </div>
 </div>
 
+</div>
+<!-- Modal Penelitian -->
+<div class="modal fade" id="modalPenelitian" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+
+            <!-- Header -->
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="modalJudul">
+                    Detail Penelitian
+                </h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+
+            <!-- Body -->
+            <div class="modal-body">
+
+                <!-- Info -->
+                <div class="mb-3">
+                    <table class="table table-borderless table-sm mb-0">
+                        <tr>
+                            <th width="25%">Judul Penelitian</th>
+                            <td id="modalJudulP"></td>
+                        </tr>
+                        <tr>
+                            <th>Dosen Pembimbing</th>
+                            <td id="modalDosen"></td>
+                        </tr>
+                    </table>
+                </div>
+
+                <hr class="mt-1">
+
+                <div class="p-3 bg-light rounded">
+                    <label for="modalDeskripsi"><strong>Deskripsi:</strong></label>
+                    <p id="modalDeskripsi" class="mb-0 text-justify"></p>
+                </div>
+
+            </div>
+        </div>
+    </div>
 </div>
 
 <?= $this->endSection() ?>
@@ -297,6 +368,20 @@
         }, 'json');
     });
 });
+</script>
+<script>
+document.addEventListener('click', function (e) {
+    const btn = e.target.closest('.btn-view-penelitian');
+    if (!btn) return;
 
+    e.preventDefault(); 
+
+    document.getElementById('modalJudul').innerText     = btn.dataset.judul;
+    document.getElementById('modalJudulP').innerText    = btn.dataset.penelitian;
+    document.getElementById('modalDeskripsi').innerText = btn.dataset.deskripsi;
+    document.getElementById('modalDosen').innerText  = btn.dataset.dosen;
+
+    $('#modalPenelitian').modal('show');
+});
 </script>
 <?= $this->endSection() ?>

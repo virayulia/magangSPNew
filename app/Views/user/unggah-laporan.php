@@ -153,7 +153,7 @@ Swal.fire({
                                 </div>
 
                                 <div class="mb-3">
-                                    <label class="form-label">📄 Laporan (PDF)</label>
+                                    <label class="form-label">📄 Laporan (PDF) <small class="text-danger">*minimal ditandatangani Ka Unit (Band 3)</small></label>
                                     <input type="file" name="laporan" class="form-control" accept="application/pdf">
                                     <small>Atau URL Laporan</small>
                                     <input type="text" name="url_laporan" class="form-control">

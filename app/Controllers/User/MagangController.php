@@ -907,7 +907,7 @@ class MagangController extends BaseController
                 ->setHeader('Content-Type', 'application/pdf')
                 ->setBody(file_get_contents($filePath));
         }
-
+        // =================    DATA KEPALA UNIT  =================
         $kepala = $this->unitUserModel
             ->select('users.fullname, unit_kerja.unit_kerja, users.eselon, users.tanda_tangan')
             ->join('users', 'users.id = unit_user.user_id')
@@ -949,9 +949,9 @@ class MagangController extends BaseController
         $noSertifikat = "{$noUrut}/MAGANG/SP/{$bulan}.{$tahun}";
 
         // ================= GENERATE QR =================
-        // $qrUrl  = base_url('sertifikat/verify/' . $sertifikat['qr_token']);
-        $localIp = '192.168.229.8';
-        $qrUrl = "http://{$localIp}/magangSPNew/public/sertifikat/verify/" . $sertifikat['qr_token'];
+        $qrUrl  = base_url('sertifikat/verify/' . $sertifikat['qr_token']);
+        // $localIp = '192.168.229.8';
+        // $qrUrl = "http://{$localIp}/magangSPNew/public/sertifikat/verify/" . $sertifikat['qr_token'];
         $qrPath = FCPATH . 'uploads/sertifikat/qr/' . $sertifikat['qr_token'] . '.png';
         $logoPath = FCPATH . 'assets/img/SP_logo.png';
 
@@ -1171,7 +1171,7 @@ class MagangController extends BaseController
 
             
             // Tambahkan tanda tangan (PNG/JPG transparan lebih bagus)
-            $ttdPath = FCPATH . 'uploads/tanda-tangan/'.$kepala['tanda_tangan']; // ganti dengan path tanda tanganmu
+            $ttdPath = FCPATH . 'uploads/tanda-tangan/'.$kepala['tanda_tangan']; 
             if (file_exists($ttdPath)) {
                 $pdf->Image($ttdPath, 105, 228, 45, 0, '', '', '', false, 300);
 
@@ -1186,20 +1186,20 @@ class MagangController extends BaseController
             $pdf->SetX(105);
             $pdf->Cell(0, 8, "Kepala", 0, 1, 'L');
 
-        // ================= SIMPAN PDF =================
-        if (!is_dir(dirname($filePath))) {
-            mkdir(dirname($filePath), 0775, true);
-        }
+            // ================= SIMPAN PDF =================
+            if (!is_dir(dirname($filePath))) {
+                mkdir(dirname($filePath), 0775, true);
+            }
 
-        $pdf->Output($filePath, 'F');
+            $pdf->Output($filePath, 'F');
 
-        $this->sertifikatModel->update($sertifikat['sertifikat_id'], [
-            'file_sertifikat' => $fileName
-        ]);
+            $this->sertifikatModel->update($sertifikat['sertifikat_id'], [
+                'file_sertifikat' => $fileName
+            ]);
 
-        return $this->response
-            ->setHeader('Content-Type', 'application/pdf')
-            ->setBody(file_get_contents($filePath));
+            return $this->response
+                ->setHeader('Content-Type', 'application/pdf')
+                ->setBody(file_get_contents($filePath));
     }
 
 

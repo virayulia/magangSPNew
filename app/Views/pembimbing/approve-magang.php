@@ -113,17 +113,47 @@
                         <td><?= format_tanggal_indonesia($item['tanggal_selesai']) ?></td>
                         <td><?= esc($item['rfid_no']) ?: '-' ?></td>
                         <td>
-                            <?php if (!empty($item['laporan'])): ?>
-                                <a href="<?= base_url('uploads/laporan/' . $item['laporan']) ?>" target="_blank">Lihat Laporan</a>
+                            <?php if (!empty($item['laporan']) || !empty($item['url_laporan'])): ?>
+                                <?php if(!empty($item['laporan'])):?>
+                                    <a href="<?= base_url('uploads/laporan/' . $item['laporan']) ?>" target="_blank" class="btn btn-info btn-sm">
+                                        <i class="fas fa-eye" title="Lihat Laporan"></i>
+                                    </a>
+                                <?php elseif(!empty($item['url_laporan'])): ?>
+                                    <a href="<?= $item['url_laporan'] ?>" target="_blank" class="btn btn-info btn-sm">
+                                        <i class="fas fa-eye" title="Lihat Laporan"></i>
+                                    </a>
+                                <?php endif; ?>
+                                <button type="button" class="btn btn-danger btn-sm btn-tolak-laporan" 
+                                    data-id="<?= $item['magang_id'] ?>" 
+                                    data-nama="<?= $item['fullname'] ?>"
+                                    title="Tolak Laporan">
+                                    <i class="fas fa-times-circle"></i>
+                                </button>
                             <?php else: ?>
-                                <span class="text-muted">Belum ada</span>
+                                <button class="btn btn-sm btn-secondary"> <i class="fas fa-times-circle" title="Belum Ada"></i></button>
                             <?php endif; ?>
                         </td>
+
                         <td>
-                            <?php if (!empty($item['absensi'])): ?>
-                                <a href="<?= base_url('uploads/absensi/' . $item['absensi']) ?>" target="_blank">Lihat Absensi</a>
+                            <?php if (!empty($item['absensi']) || !empty($item['url_absensi'])): ?>
+                                <?php if(!empty($item['absensi'])):?>
+                                    <a href="<?= base_url('uploads/absensi/' . $item['absensi']) ?>" target="_blank" class="btn btn-info btn-sm">
+                                        <i class="fas fa-eye" title="Lihat Absensi"></i>
+                                    </a>
+                                <?php elseif(!empty($item['url_absensi'])): ?>
+                                    <a href="<?= $item['url_absensi'] ?>" target="_blank" class="btn btn-info btn-sm">
+                                        <i class="fas fa-eye" title="Lihat Absensi"></i>
+                                    </a>
+                                <?php endif; ?>
+
+                                <button type="button" class="btn btn-danger btn-sm btn-tolak-absensi" 
+                                    title="Tolak Absensi"
+                                    data-id="<?= $item['magang_id'] ?>" 
+                                    data-nama="<?= $item['fullname'] ?>">
+                                    <i class="fas fa-times-circle"></i>
+                                </button>
                             <?php else: ?>
-                                <span class="text-muted">Belum ada</span>
+                                <button class="btn btn-sm btn-secondary"> <i class="fas fa-times-circle" title="Belum Ada"></i></button>
                             <?php endif; ?>
                         </td>
                         <td>
@@ -133,15 +163,12 @@
                                     $item['nilai_tanggungjawab'] + $item['nilai_penyerapan'];
                             $rata = round($total / 8, 2);
                         ?>
-                                <span class="badge bg-success text-light">
-                                    <strong><?= $rata ?></strong>
-                                </span>
                         <button type="button" 
                                 class="btn btn-sm btn-info mt-1" 
                                 title="Detail Nilai"
                                 data-toggle="modal" 
                                 data-target="#modalDetail-<?= $item['magang_id'] ?>">
-                            <i class="fas fa-info-circle"></i>
+                            <strong><?= $rata ?></strong>
                         </button>
                         <!-- Modal detail -->
                         <div class="modal fade" id="modalDetail-<?= $item['magang_id'] ?>" tabindex="-1" aria-labelledby="modalDetailLabel-<?= $item['magang_id'] ?>" aria-hidden="true">
@@ -225,22 +252,21 @@
                         </div>
 
                     </td>
-                        <td>
-                            <?php if($item['status_rfid'] === 'returned'): ?>
-                                <span class="badge bg-success text-light">Dikembalikan</span>
-                            <?php elseif($item['status_rfid'] === 'lost') : ?>
-                                <span class="badge bg-danger text-light">Denda</span>
-                            <?php elseif($item['status_rfid'] === 'aktif') :?>
-                                <span class="badge bg-primary text-light">Digunakan</span>
-                            <?php else : ?>
-                                -
-                            <?php endif; ?>
-                        </td>
+                    <td><?php if($item['status_rfid'] === 'returned'): ?>
+                        <span class="btn btn-sm btn-success text-light" title="Dikembalikan"><strong><i class="fas fa-check-circle"></i></strong></span>
+                        <?php elseif($item['status_rfid'] === 'lost') : ?>
+                        <span class="btn btn-sm btn-danger text-light" title="Denda"><strong><i class="fas fa-money-bill-alt"></i></strong></span>
+                        <?php elseif($item['status_rfid'] === 'aktif') :?>
+                        <span class="btn btn-sm btn-primary text-light" title="Digunakan"><strong><i class="fas fa-check-circle"></i></strong></span>
+                        <?php else : ?>
+                        -
+                        <?php endif; ?>
+                    </td>
                         <td>
                             <?php if (!empty($item['feedback_id'])): ?>
-                                <i class="bi bi-check-circle-fill text-success" title="Sudah isi feedback"></i>
+                                <span class="btn btn-sm btn-success"><i class="bi bi-check-circle-fill" title="Sudah isi feedback"></i></span>
                             <?php else: ?>
-                                <i class="bi bi-x-circle-fill text-danger" title="Belum isi feedback"></i>
+                                <span class="btn btn-sm btn-success"><i class="bi bi-x-circle-fill" title="Belum isi feedback"></i></span>
                             <?php endif; ?>
                         </td>
                         <!-- <td>
@@ -251,7 +277,7 @@
                             <?php endif; ?>
                         </td> -->
                         <td>
-                            <button class="btn btn-sm btn-primary" data-toggle="modal" data-target="#detailModal<?= $item['magang_id'] ?>">Detail</button>
+                            <button type="button" class="btn btn-sm btn-info" data-toggle="modal" data-target="#detailModal<?= $item['magang_id'] ?>"><i class="fas fa-eye"></i></button>
                         </td>
                     </tr>
                 <?php endforeach; ?>

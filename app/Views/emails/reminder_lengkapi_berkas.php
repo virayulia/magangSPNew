@@ -8,7 +8,7 @@
     <p>Yth. <?= esc($nama) ?>,</p>
 
     <p>Anda telah diterima untuk melaksanakan program magang/penelitian di PT Semen Padang, khususnya di 
-    <strong><?= esc($unit) ?></strong>. Rencana tanggal mulai magang/penelitian Anda adalah <strong><?= esc($tanggal_masuk) ?></strong>.</p>
+    <strong><?= esc($unit) ?></strong>. Rencana tanggal mulai magang/penelitian Anda adalah <strong><?= esc(format_tanggal_indonesia($tanggal_masuk)) ?></strong>.</p>
 
     <p>Sehubungan dengan persiapan magang/penelitian, kami mencatat bahwa masih terdapat dokumen yang belum lengkap pada akun Anda, yaitu:</p>
 

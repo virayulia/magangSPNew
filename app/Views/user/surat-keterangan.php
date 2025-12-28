@@ -41,7 +41,7 @@ Swal.fire({
                         <?php if (date('Y-m-d') >= $pendaftaran['tanggal_selesai']): ?>
                             <?php if (!$feedback): ?>
                                 <div class="alert alert-warning">
-                                    Sebelum mengunduh sertifikat, silakan isi feedback terlebih dahulu.
+                                    Sebelum mengunduh Surat Keterangan, silakan isi feedback terlebih dahulu.
                                 </div>
                                 <button class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#feedbackModal">
                                     Isi Feedback
