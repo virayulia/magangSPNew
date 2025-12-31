@@ -349,7 +349,7 @@ $routes->group('', ['namespace' => 'App\Controllers\User','filter' => 'user'], f
     $routes->post('magang/setujui-surat-pernyataan', 'MagangController::setujuiPernyataan');
     $routes->get('safety-tes', 'MagangController::safetyTes');
     $routes->post('safety/submit', 'MagangController::submitTes');
-    $routes->get('magang/cetak-absensi/(:num)', 'MagangController::cetak_absensi/$1');
+    $routes->get('magang/cetak-presensi/(:num)', 'MagangController::cetak_absensi/$1');
 
     $routes->get('sertifikat-magang', 'MagangController::sertifikatIndex');
     $routes->get('unggah-laporan', 'MagangController::unggahIndex');
@@ -376,7 +376,7 @@ $routes->group('', ['namespace' => 'App\Controllers\User','filter' => 'user'], f
     $routes->get('surat-keterangan', 'PenelitianController::suratKeterangan');
     $routes->post('penelitian/saveFeedback', 'PenelitianController::saveFeedback');
     $routes->get('cetak-surat-keterangan', 'PenelitianController::cetakSuratKeterangan');
-    $routes->get('penelitian/cetak-absensi/(:num)', 'PenelitianController::cetak_absensi/$1');
+    $routes->get('penelitian/cetak-presensi/(:num)', 'PenelitianController::cetak_absensi/$1');
     $routes->get('penelitian/cetak-formulir/(:num)', 'PenelitianController::cetak_formulir_data/$1');
 
 

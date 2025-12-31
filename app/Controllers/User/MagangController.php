@@ -473,7 +473,7 @@ class MagangController extends BaseController
 
         // ==================== MULAI PDF ====================
         $pdf = new \TCPDF('P', PDF_UNIT, 'A4', true, 'UTF-8', false);
-        $pdf->SetTitle('Lembar Absensi');
+        $pdf->SetTitle('Lembar Presensi');
         $pdf->SetMargins(25, 15, 25); // margin kiri-kanan lebih lebar sedikit
         $pdf->setPrintHeader(false); // ⬅️ tambahkan baris ini
         $pdf->setPrintFooter(false); // ⬅️ tambahkan baris ini (opsional)
@@ -492,7 +492,7 @@ class MagangController extends BaseController
 
         // ==================== JUDUL ====================
         $pdf->SetFont('times', 'B', 12);
-        $pdf->Cell(0, 8, 'LEMBAR ABSENSI', 0, 1, 'C');
+        $pdf->Cell(0, 8, 'LEMBAR PRESENSI', 0, 1, 'C');
         $pdf->Ln(4);
 
         // ==================== DATA PESERTA ====================

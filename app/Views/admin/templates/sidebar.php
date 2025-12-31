@@ -62,15 +62,19 @@
 
 
     <!-- Divider -->
-    <hr class="sidebar-divider my-0">
+    <hr class="sidebar-divider">
 
-    <!-- Collapse Kelola -->
+
+    <!-- Heading -->
+    <div class="sidebar-heading">Setting</div>
+
+    <!-- Konfigurasi Program -->
     <li class="nav-item">
-        <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#menuKelola" aria-expanded="false">
-            <i class="fas fa-fw fa-tasks"></i>
-            <span>Kelola</span>
+        <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#menuProgram">
+            <i class="fas fa-fw fa-sliders-h"></i>
+            <span>Konfigurasi Program</span>
         </a>
-        <div id="menuKelola" class="collapse">
+        <div id="menuProgram" class="collapse">
             <div class="bg-white py-2 collapse-inner rounded">
                 <a class="collapse-item" href="<?= base_url('admin/kelola-lowongan'); ?>">Lowongan</a>
                 <a class="collapse-item" href="<?= base_url('admin/kuota-unit'); ?>">Kuota Magang</a>
@@ -79,9 +83,9 @@
         </div>
     </li>
 
-    <!-- Collapse Pengguna -->
+    <!-- Pengguna -->
     <li class="nav-item">
-        <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#menuPengguna" aria-expanded="false">
+        <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#menuPengguna">
             <i class="fas fa-fw fa-users-cog"></i>
             <span>Pengguna</span>
         </a>
@@ -94,9 +98,9 @@
         </div>
     </li>
 
-    <!-- Collapse Data Master -->
+    <!-- Data Master -->
     <li class="nav-item">
-        <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#menuMaster" aria-expanded="false">
+        <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#menuMaster">
             <i class="fas fa-fw fa-database"></i>
             <span>Data Master</span>
         </a>
@@ -111,8 +115,86 @@
         </div>
     </li>
 
+    <!-- Logs & Bantuan -->
+    <li class="nav-item">
+        <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#menuLogs">
+            <i class="fas fa-fw fa-clipboard-list"></i>
+            <span>Logs</span>
+        </a>
+        <div id="menuLogs" class="collapse">
+            <div class="bg-white py-2 collapse-inner rounded">
+                <a class="collapse-item" href="<?= base_url('admin/access-log'); ?>">Access Log</a>
+                <a class="collapse-item" href="<?= base_url('admin/change-log'); ?>">Change Log</a>
+                <!-- <a class="collapse-item" href="<?= base_url('admin/user-manual'); ?>">User Manual</a> -->
+            </div>
+        </div>
+    </li>
+
+    <!-- Logs & Bantuan -->
+    <li class="nav-item">
+        <a class="nav-link" href="#" >
+            <i class="fas fa-fw fa-clipboard-list"></i>
+            <span>User Manual</span>
+        </a>
+        <!-- <div id="menuLogs" class="collapse">
+            <div class="bg-white py-2 collapse-inner rounded">
+                <a class="collapse-item" href="<?= base_url('admin/access-log'); ?>">Access Log</a>
+                <a class="collapse-item" href="<?= base_url('admin/change-log'); ?>">Change Log</a>
+                <a class="collapse-item" href="<?= base_url('admin/user-manual'); ?>">User Manual</a>
+            </div>
+        </div> -->
+    </li>
+
+
+    <!-- Collapse Kelola -->
+    <!-- <li class="nav-item">
+        <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#menuKelola" aria-expanded="false">
+            <i class="fas fa-fw fa-tasks"></i>
+            <span>Kelola</span>
+        </a>
+        <div id="menuKelola" class="collapse">
+            <div class="bg-white py-2 collapse-inner rounded">
+                <a class="collapse-item" href="<?= base_url('admin/kelola-lowongan'); ?>">Lowongan</a>
+                <a class="collapse-item" href="<?= base_url('admin/kuota-unit'); ?>">Kuota Magang</a>
+                <a class="collapse-item" href="<?= base_url('admin/jurusan-unit'); ?>">Jurusan Unit</a>
+            </div>
+        </div>
+    </li> -->
+
+    <!-- Collapse Pengguna -->
+    <!-- <li class="nav-item">
+        <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#menuPengguna" aria-expanded="false">
+            <i class="fas fa-fw fa-users-cog"></i>
+            <span>Pengguna</span>
+        </a>
+        <div id="menuPengguna" class="collapse">
+            <div class="bg-white py-2 collapse-inner rounded">
+                <a class="collapse-item" href="<?= base_url('admin/manage-user'); ?>">Data User</a>
+                <a class="collapse-item" href="<?= base_url('admin/manage-user-admin'); ?>">Data Admin</a>
+                <a class="collapse-item" href="<?= base_url('admin/manage-user-pembimbing'); ?>">Data Pembimbing</a>
+            </div>
+        </div>
+    </li> -->
+
+    <!-- Collapse Data Master -->
+    <!-- <li class="nav-item">
+        <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#menuMaster" aria-expanded="false">
+            <i class="fas fa-fw fa-database"></i>
+            <span>Data Master</span>
+        </a>
+        <div id="menuMaster" class="collapse">
+            <div class="bg-white py-2 collapse-inner rounded">
+                <a class="collapse-item" href="<?= base_url('admin/kelola-unit'); ?>">Unit Kerja</a>
+                <a class="collapse-item" href="<?= base_url('admin/kelola-instansi'); ?>">Perguruan Tinggi / Sekolah</a>
+                <a class="collapse-item" href="<?= base_url('admin/kelola-jurusan'); ?>">Jurusan</a>
+                <a class="collapse-item" href="<?= base_url('admin/kelola-rfid'); ?>">RFID</a>
+                <a class="collapse-item" href="<?= base_url('admin/kelola-keyword'); ?>">Keyword</a>
+            </div>
+        </div>
+    </li> -->
+
     <!-- Collapse Logs -->
-    <li class="nav-item mb-2">
+    <!-- <li class="nav-item mb-2">
         <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#menuLogs" aria-expanded="false">
             <i class="fas fa-fw fa-database"></i>
             <span>Logs</span>
@@ -124,7 +206,7 @@
                 <a class="collapse-item" href="<?= base_url('admin/user-manual'); ?>">User Manual</a>
             </div>
         </div>
-    </li>
+    </li> -->
 
 <?php elseif(in_groups('pembimbing')): ?>
     <?php 

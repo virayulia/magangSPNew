@@ -246,11 +246,11 @@ Swal.fire({
                     </div>
                 </div>
 
-                <!-- Cetak Lembar Absensi -->
+                <!-- Cetak Lembar Presensi -->
                 <div class="card shadow-sm mb-4">
                     <div class="card-body">
 
-                        <h5 class="card-title">📄 Cetak Lembar Absensi</h5>
+                        <h5 class="card-title">📄 Cetak Lembar Presensi</h5>
 
                         <p class="text-muted mb-3">
                             Silakan cetak dokumen berikut setelah seluruh berkas dinyatakan lengkap oleh Admin.
@@ -268,10 +268,10 @@ Swal.fire({
                             <?php if ($berkasLengkap): ?>
 
                                 <div class="d-flex flex-column gap-2 mt-3">
-                                    <a href="<?= base_url('magang/cetak-absensi/' . $pendaftaran['magang_id']) ?>" 
+                                    <a href="<?= base_url('magang/cetak-presensi/' . $pendaftaran['magang_id']) ?>" 
                                     target="_blank" 
                                     class="btn btn-danger d-flex align-items-center justify-content-center">
-                                        <i class="fas fa-print me-2"></i> Cetak Lembar Absensi
+                                        <i class="fas fa-print me-2"></i> Cetak Lembar Presensi
                                     </a>
                                 </div>
 
@@ -280,7 +280,7 @@ Swal.fire({
                                 <div class="alert alert-secondary">⚠️ Menunggu validasi berkas oleh Admin.</div>
 
                                 <button class="btn btn-secondary w-100" disabled>
-                                    Cetak Lembar Absensi
+                                    Cetak Lembar Presensi
                                 </button>
 
                             <?php endif; ?>
@@ -289,7 +289,7 @@ Swal.fire({
                             <div class="alert alert-secondary">⚠️ Lengkapi berkas terlebih dahulu.</div>
 
                             <button class="btn btn-secondary w-100" disabled>
-                                Cetak Lembar Absensi
+                                Cetak Lembar Presensi
                             </button>
 
                         <?php endif; ?>
