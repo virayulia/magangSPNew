@@ -35,8 +35,6 @@ Swal.fire({
     <?php
         $validStatus = !empty($pendaftaran)
             && in_array($pendaftaran['status_akhir'], ['magang', 'lulus']);
-
-
     ?>
 
     <?php if ($validStatus): ?>
@@ -117,10 +115,11 @@ Swal.fire({
                     <?php endif; ?>
 
                 </div>
-            </div>
+            </div>   
         <?php endif; ?>
 
         <?php if ($bolehUpload): ?>
+            <p>Klik tombol 'Upload Berkas' untuk mengupload Laporan Magang dan Absensi.</p>
             <div class="d-flex justify-content-end mb-2">
                 <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#modalUpload">
                     <?php if ($sudahUpload): ?>
