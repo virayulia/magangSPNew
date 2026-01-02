@@ -46,7 +46,7 @@ Swal.fire({
             $selisihHari = $tglSelesai->diff($today)->days;
             $lewat15Hari = ($today > $tglSelesai && $selisihHari > 15);
 
-            $allowUploadAdmin = $pendaftaran['allow_upload_laporan'] ?? 0;
+            $allowUploadAdmin = $pendaftaran['allow_upload'] ?? 0;
 
             $sudahUpload =
                 !empty($pendaftaran['judul_laporan']) ||
