@@ -271,7 +271,7 @@ class MagangController extends BaseController
         ]);
     }
 
-    public function assignPembimbing($magang_id)
+    public function assignPembimbingOLD($magang_id)
     {
         $db = \Config\Database::connect();
         $builder = $db->table('magang');
@@ -293,6 +293,84 @@ class MagangController extends BaseController
         }
     }
 
+    public function assignPembimbing($magang_id)
+    {
+        $pembimbing_id = $this->request->getPost('pembimbing_id');
+
+        if (empty($pembimbing_id)) {
+            return redirect()->back()->with('error', 'Silakan pilih pembimbing.');
+        }
+
+        $db = \Config\Database::connect();
+        $db->transStart();
+        $db->table('magang')
+            ->where('magang_id', $magang_id)
+            ->update([
+                'pembimbing_id' => $pembimbing_id
+            ]);
+        
+        $magang = $db->table('magang')
+                ->select('magang.*, users.fullname AS nama_mhs, jurusan.nama_jurusan, instansi.nama_instansi')
+                ->join('users', 'users.id = magang.user_id')
+                ->join('jurusan', 'jurusan.jurusan_id = users.jurusan_id', 'left')
+                ->join('instansi', 'instansi.instansi_id = users.instansi_id', 'left')
+                ->where('magang.magang_id', $magang_id)
+                ->get()
+                ->getRowArray();
+
+        $pembimbing = $db->table('users')
+                ->select('id, email, fullname')
+                ->where('id', $pembimbing_id)
+                ->get()
+                ->getRowArray();
+        
+        $assigner = $db->table('users')
+                ->select('email, fullname')
+                ->where('id', user_id())
+                ->get()
+                ->getRowArray();
+
+        $db->transComplete();
+
+        if ($db->transStatus() === false) {
+            return redirect()->back()->with('error', 'Gagal menetapkan pembimbing.');
+        }
+
+        $email = \Config\Services::email();
+        $email->setMailType('html');
+        $unit_id = 44;
+        $signature = getSignature($unit_id);
+        if (!empty($assigner['email'])) {
+
+            $email->clear();
+            $email->setTo($assigner['email']);
+            
+            $email->setSubject('Pembimbing Magang Berhasil Ditetapkan');
+            $email->setMessage(view('emails/assign_pembimbing_assigner', [
+                'assigner'   => $assigner,
+                'pembimbing' => $pembimbing,
+                'magang'     => $magang,
+                'signature' => $signature,
+            ]));
+            $email->send();
+        }
+
+        if (!empty($pembimbing['email'])) {
+
+            $email->clear();
+            $email->setTo($pembimbing['email']);
+            $email->setSubject('Penetapan Sebagai Pembimbing Magang');
+            $email->setMessage(view('emails/assign_pembimbing_pembimbing', [
+                'pembimbing' => $pembimbing,
+                'magang'     => $magang,
+                'signature' => $signature,
+            ]));
+            $email->send();
+        }
+
+        return redirect()->back()->with('success', 'Pembimbing berhasil ditetapkan & email terkirim.');
+    }
+
     public function updatePembimbing($magang_id)
     {
         $pembimbing_id = $this->request->getPost('pembimbing_id');
@@ -304,10 +382,125 @@ class MagangController extends BaseController
         return redirect()->back()->with('success', 'Pembimbing berhasil diperbarui.');
     }
 
+    // public function save()
+    // {
+    //     helper(['form']);
+
+    //     $validation = \Config\Services::validation();
+    //     $validation->setRules([
+    //         'magang_id'        => 'required|is_natural_no_zero',
+    //         'disiplin'         => 'required|in_list[60,70,80,90,100]',
+    //         'kerajinan'        => 'required|in_list[60,70,80,90,100]',
+    //         'tingkahlaku'      => 'required|in_list[60,70,80,90,100]',
+    //         'kerjasama'        => 'required|in_list[60,70,80,90,100]',
+    //         'kreativitas'      => 'required|in_list[60,70,80,90,100]',
+    //         'kemampuankerja'   => 'required|in_list[60,70,80,90,100]',
+    //         'tanggungjawab'    => 'required|in_list[60,70,80,90,100]',
+    //         'penyerapan'       => 'required|in_list[60,70,80,90,100]',
+    //         'catatan'          => 'permit_empty|string|max_length[1000]'
+    //     ]);
+
+    //     // Jalankan validasi
+    //     if (! $validation->withRequest($this->request)->run()) {
+    //         return redirect()->back()
+    //             ->with('error', implode('<br>', $validation->getErrors()))
+    //             ->withInput();
+    //     }
+
+    //     // Pastikan pembimbing login
+    //     $pembimbingId = user_id();
+    //     if (! $pembimbingId) {
+    //         return redirect()->back()->with('error', 'Anda belum login sebagai pembimbing.');
+    //     }
+
+    //     // Ambil data dari form
+    //     $data = [
+    //         'magang_id'            => (int) $this->request->getPost('magang_id'),
+    //         'pembimbing_id'        => $pembimbingId,
+    //         'nilai_disiplin'       => (int) $this->request->getPost('disiplin'),
+    //         'nilai_kerajinan'      => (int) $this->request->getPost('kerajinan'),
+    //         'nilai_tingkahlaku'    => (int) $this->request->getPost('tingkahlaku'),
+    //         'nilai_kerjasama'      => (int) $this->request->getPost('kerjasama'),
+    //         'nilai_kreativitas'    => (int) $this->request->getPost('kreativitas'),
+    //         'nilai_kemampuankerja' => (int) $this->request->getPost('kemampuankerja'),
+    //         'nilai_tanggungjawab'  => (int) $this->request->getPost('tanggungjawab'),
+    //         'nilai_penyerapan'     => (int) $this->request->getPost('penyerapan'),
+    //         'catatan'              => $this->request->getPost('catatan'),
+    //     ];
+
+    //     // Hitung rata-rata otomatis
+    //     $total = $data['nilai_disiplin'] + $data['nilai_kerajinan'] + $data['nilai_tingkahlaku'] +
+    //             $data['nilai_kerjasama'] + $data['nilai_kreativitas'] + $data['nilai_kemampuankerja'] +
+    //             $data['nilai_tanggungjawab'] + $data['nilai_penyerapan'];
+    //     $data['nilai_rata2'] = $total / 8;
+
+    //     $db = \Config\Database::connect();
+    //     $db->transStart();
+
+    //     // Cek apakah sudah ada penilaian untuk magang ini
+    //     $penilaian = $this->penilaianModel
+    //         ->where('magang_id', $data['magang_id'])
+    //         ->first();
+
+    //     if ($penilaian) {
+    //         // Update penilaian
+    //         $this->penilaianModel->update($penilaian['penilaian_id'], $data);
+    //     } else {
+    //         // Insert penilaian baru
+    //         $data['tgl_penilaian'] = date('Y-m-d H:i:s');
+    //         $this->penilaianModel->insert($data);
+    //     }
+
+    //     $db->transComplete();
+
+    //     if ($db->transStatus() === false) {
+    //         return redirect()->back()->with('error', 'Gagal menyimpan penilaian.');
+    //     }
+
+    //     $email = \Config\Services::email();
+    //     $email->setMailType('html');
+    //     $unit_id = 44;
+    //     $signature = getSignature($unit_id);
+    //     if (!empty($assigner['email'])) {
+
+    //         $email->clear();
+    //         $email->setTo($assigner['email']);
+            
+    //         $email->setSubject('Pembimbing Magang Berhasil Ditetapkan');
+    //         $email->setMessage(view('email/assign_pembimbing_assigner', [
+    //             'assigner'   => $assigner,
+    //             'pembimbing' => $pembimbing,
+    //             'magang'     => $magang,
+    //             'signature' => $signature,
+    //         ]));
+    //         $email->send();
+    //     }
+
+    //     if (!empty($pembimbing['email'])) {
+
+    //         $email->clear();
+    //         $email->setTo($pembimbing['email']);
+    //         $email->setSubject('Penetapan Sebagai Pembimbing Magang');
+    //         $email->setMessage(view('email/assign_pembimbing_pembimbing', [
+    //             'pembimbing' => $pembimbing,
+    //             'magang'     => $magang,
+    //             'signature' => $signature,
+    //         ]));
+    //         $email->send();
+    //     }
+
+    //     return redirect()->back()->with('success', 'Pembimbing berhasil ditetapkan & email terkirim.');
+
+    //     return redirect()->back()->with('success', 'Penilaian berhasil disimpan.');
+    // }
+
     public function save()
     {
         helper(['form']);
 
+        /* =========================
+        VALIDASI
+        ========================== */
         $validation = \Config\Services::validation();
         $validation->setRules([
             'magang_id'        => 'required|is_natural_no_zero',
@@ -322,20 +515,23 @@ class MagangController extends BaseController
             'catatan'          => 'permit_empty|string|max_length[1000]'
         ]);
 
-        // Jalankan validasi
         if (! $validation->withRequest($this->request)->run()) {
             return redirect()->back()
                 ->with('error', implode('<br>', $validation->getErrors()))
                 ->withInput();
         }
 
-        // Pastikan pembimbing login
+        /* =========================
+        CEK LOGIN PEMBIMBING
+        ========================== */
         $pembimbingId = user_id();
         if (! $pembimbingId) {
-            return redirect()->back()->with('error', 'Anda belum login sebagai pembimbing.');
+            return redirect()->back()->with('error', 'Anda belum login.');
         }
 
-        // Ambil data dari form
+        /* =========================
+        DATA PENILAIAN
+        ========================== */
         $data = [
             'magang_id'            => (int) $this->request->getPost('magang_id'),
             'pembimbing_id'        => $pembimbingId,
@@ -350,25 +546,31 @@ class MagangController extends BaseController
             'catatan'              => $this->request->getPost('catatan'),
         ];
 
-        // Hitung rata-rata otomatis
-        $total = $data['nilai_disiplin'] + $data['nilai_kerajinan'] + $data['nilai_tingkahlaku'] +
-                $data['nilai_kerjasama'] + $data['nilai_kreativitas'] + $data['nilai_kemampuankerja'] +
-                $data['nilai_tanggungjawab'] + $data['nilai_penyerapan'];
+        $total = array_sum([
+            $data['nilai_disiplin'],
+            $data['nilai_kerajinan'],
+            $data['nilai_tingkahlaku'],
+            $data['nilai_kerjasama'],
+            $data['nilai_kreativitas'],
+            $data['nilai_kemampuankerja'],
+            $data['nilai_tanggungjawab'],
+            $data['nilai_penyerapan'],
+        ]);
         $data['nilai_rata2'] = $total / 8;
 
+        /* =========================
+        SIMPAN KE DB
+        ========================== */
         $db = \Config\Database::connect();
         $db->transStart();
 
-        // Cek apakah sudah ada penilaian untuk magang ini
         $penilaian = $this->penilaianModel
             ->where('magang_id', $data['magang_id'])
             ->first();
 
         if ($penilaian) {
-            // Update penilaian
             $this->penilaianModel->update($penilaian['penilaian_id'], $data);
         } else {
-            // Insert penilaian baru
             $data['tgl_penilaian'] = date('Y-m-d H:i:s');
             $this->penilaianModel->insert($data);
         }
@@ -379,8 +581,73 @@ class MagangController extends BaseController
             return redirect()->back()->with('error', 'Gagal menyimpan penilaian.');
         }
 
-        return redirect()->back()->with('success', 'Penilaian berhasil disimpan.');
+        /* =========================
+        DATA UNTUK EMAIL
+        ========================== */
+
+        // Data pembimbing (login)
+        $pembimbing = $db->table('users')
+            ->select('users.email, users.fullname, unit_user.unit_id')
+            ->join('unit_user', 'unit_user.user_id = users.id', 'left')
+            ->where('users.id', $pembimbingId)
+            ->get()->getRowArray();
+
+        // KA Unit (eselon 2 di unit yang sama)
+        $kaUnit = $db->table('unit_user')
+            ->select('users.email, users.fullname')
+            ->join('users', 'users.id = unit_user.user_id')
+            ->where('unit_user.unit_id', $pembimbing['unit_id'])
+            ->where('users.eselon', 2)
+            ->get()->getRowArray();
+
+        // Data magang
+        $magang = $db->table('magang')
+            ->select('magang.*, users.fullname AS nama_mhs, jurusan.nama_jurusan, instansi.nama_instansi')
+            ->join('users', 'users.id = magang.user_id')
+            ->join('jurusan', 'jurusan.jurusan_id = users.jurusan_id', 'left')
+            ->join('instansi', 'instansi.instansi_id = users.instansi_id', 'left')
+            ->where('magang.magang_id', $data['magang_id'])
+            ->get()
+            ->getRowArray();
+            
+        $unit_id = 44;
+        $signature = getSignature($unit_id);
+
+        /* =========================
+        KIRIM EMAIL
+        ========================== */
+        $email = \Config\Services::email();
+        $email->setMailType('html');
+
+        // 1️⃣ Email ke PEMBIMBING (self)
+        if (!empty($pembimbing['email'])) {
+            $email->clear();
+            $email->setTo($pembimbing['email']);
+            $email->setSubject('Penilaian Magang Berhasil Disimpan');
+            $email->setMessage(view('emails/penilaian_sukses_pembimbing', [
+                'pembimbing' => $pembimbing,
+                'magang'     => $magang,
+                'signature'  => $signature
+            ]));
+            $email->send();
+        }
+
+        // 2️⃣ Email ke KA UNIT (approval)
+        if (!empty($kaUnit['email'])) {
+            $email->clear();
+            $email->setTo($kaUnit['email']);
+            $email->setSubject('Penilaian Magang Menunggu Approval');
+            $email->setMessage(view('emails/penilaian_approval_kaunit', [
+                'kaUnit'    => $kaUnit,
+                'magang'    => $magang,
+                'signature' => $signature
+            ]));
+            $email->send();
+        }
+
+        return redirect()->back()->with('success', 'Penilaian berhasil disimpan & email terkirim.');
     }
+
 
     public function bulkApprove()
     {
@@ -414,8 +681,6 @@ class MagangController extends BaseController
 
         return redirect()->back()->with('success', 'Penilaian berhasil diproses untuk '.count($magangIds).' peserta.');
     }
-
-
 
     public function approve()
     {
@@ -485,7 +750,7 @@ class MagangController extends BaseController
                     'approve_kaunit' => 1,
                     'tgl_disetujui'  => date('Y-m-d H:i:s'),
                     'approve_by'     => user_id(),
-                    'catatan_approval' => null, // reset jika sebelumnya ada
+                    'catatan_approval' => null, 
                 ]);
             return redirect()->back()->with('success', 'Penilaian berhasil diapprove.');
         } elseif ($status === 'reject') {

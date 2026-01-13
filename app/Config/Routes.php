@@ -157,6 +157,8 @@ $routes->group('admin', ['namespace' => 'App\Controllers\Admin','filter' => ['ad
     $routes->post('change-log/save', 'ChangeLogsController::save');
     $routes->post('change-log/update/(:num)', 'ChangeLogsController::update/$1');
     $routes->post('change-log/delete/(:num)', 'ChangeLogsController::delete/$1');
+    $routes->get('user-manual', 'ChangeLogsController::userManual');
+
 
 
 

@@ -132,7 +132,7 @@
 
     <!-- Logs & Bantuan -->
     <li class="nav-item">
-        <a class="nav-link" href="#" >
+        <a class="nav-link" href="<?= base_url('admin/user-manual'); ?>" >
             <i class="fas fa-fw fa-clipboard-list"></i>
             <span>User Manual</span>
         </a>

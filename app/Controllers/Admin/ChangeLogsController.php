@@ -54,4 +54,13 @@ class ChangeLogsController extends BaseController
         $this->changeLogsModel->delete($id);
         return redirect()->back()->with('success', 'Change log berhasil dihapus');
     }
+
+    public function userManual()
+    {
+        $data['changeLogs'] = $this->changeLogsModel
+            ->orderBy('created_at', 'DESC')
+            ->findAll();
+
+        return view('admin/user_manual');
+    }
 }

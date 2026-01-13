@@ -509,60 +509,123 @@ class CronController extends BaseController
             ->join('jurusan', 'jurusan.jurusan_id = users.jurusan_id', 'left')
             ->join('unit_kerja', "unit_kerja.unit_id = $table.unit_id", 'left');
     }
-    
+
     private function sendGroupedUnitEmail($data, $subject, $view, $extraData = [])
     {
         $grouped = [];
-        $sentUnits = [];
         $sent = 0;
 
+        // ===============================
+        // 1. GROUP DATA BERDASARKAN EMAIL UNIT
+        // ===============================
         foreach ($data as $d) {
-            if (!$d->email_unit) continue;
+            if (empty($d->email_unit)) continue;
 
-            $grouped[$d->email_unit]['unit'] = $d->unit_kerja;
+            if (!isset($grouped[$d->email_unit])) {
+                $grouped[$d->email_unit] = [
+                    'unit' => $d->unit_kerja,
+                    'list' => []
+                ];
+            }
+
             $grouped[$d->email_unit]['list'][] = [
                 'nama'     => $d->fullname,
                 'jurusan'  => $d->nama_jurusan,
                 'instansi' => $d->nama_instansi,
-                'tanggal'  => $d->tanggal_masuk
+                'tanggal'  => $d->tanggal_masuk,
+                'selesai'  => $d->tanggal_selesai,
+                'durasi'   => $d->durasi
             ];
         }
 
-        $email = \Config\Services::email();
+        // ===============================
+        // 2. KIRIM EMAIL PER UNIT (BCC ADMIN)
+        // ===============================
+        foreach ($grouped as $emailUnit => $g) {
 
-        foreach ($grouped as $email => $g) {
             $this->email->clear();
-            $this->email->setTo($email);
+            $this->email->setTo($emailUnit);
+
+            // ✅ SALINAN EMAIL YANG SAMA KE ADMIN
+            $this->email->setBCC('virayukia1234@gmail.com');
+
             $this->email->setSubject($subject);
             $this->email->setMailType('html');
 
-            $this->email->setMessage(view($view, array_merge([
-                'unit' => $g['unit'],
-                'list' => $g['list'],
+            $message = view($view, array_merge([
+                'unit'      => $g['unit'],
+                'list'      => $g['list'],
                 'signature' => getSignature($this->unitId)
-            ], $extraData)));
+            ], $extraData));
 
-            if ($this->email->send()) $sent++;
+            $this->email->setMessage($message);
+
+            if ($this->email->send()) {
+                $sent++;
+            }
         }
 
-        // ✅ CC laporan ke admin (SAMA seperti kode lama)
-        if (!empty($sentUnits)) {
-            $email->clear();
-            $email->setTo('musmardi@sig.id');
-            $email->setSubject("Laporan $subject");
-            $email->setMailType('html');
-
-            $email->setMessage("
-                <p>Berikut unit yang sudah dikirim email pemberitahuan magang tanggal <b>{$extraData}</b>:</p>
-                <ul>" . implode('', array_map(fn($u) => "<li>{$u}</li>", $sentUnits)) . "</ul>
-                <p>Total: {$sent} unit.</p>
-            ");
-
-            $email->send();
-        }
-
-        return ['terkirim' => $sent];
+        return [
+            'terkirim' => $sent
+        ];
     }
+
+    
+    // private function sendGroupedUnitEmail($data, $subject, $view, $extraData = [])
+    // {
+    //     $grouped = [];
+    //     $sentUnits = [];
+    //     $sent = 0;
+
+    //     foreach ($data as $d) {
+    //         if (!$d->email_unit) continue;
+
+    //         $grouped[$d->email_unit]['unit'] = $d->unit_kerja;
+    //         $grouped[$d->email_unit]['list'][] = [
+    //             'nama'     => $d->fullname,
+    //             'jurusan'  => $d->nama_jurusan,
+    //             'instansi' => $d->nama_instansi,
+    //             'tanggal'  => $d->tanggal_masuk,
+    //             'selesai'  => $d->tanggal_selesai,
+    //             'durasi'   => $d->durasi  
+    //         ];
+    //     }
+
+    //     $email = \Config\Services::email();
+
+    //     foreach ($grouped as $email => $g) {
+    //         $this->email->clear();
+    //         $this->email->setTo($email);
+    //         $this->email->setSubject($subject);
+    //         $this->email->setMailType('html');
+
+    //         $this->email->setMessage(view($view, array_merge([
+    //             'unit' => $g['unit'],
+    //             'list' => $g['list'],
+    //             'signature' => getSignature($this->unitId)
+    //         ], $extraData)));
+
+    //         if ($this->email->send()) $sent++;
+    //     }
+
+    //     // ✅ CC laporan ke admin (SAMA seperti kode lama)
+    //     if (!empty($sentUnits)) {
+    //         $email->clear();
+    //         $email->setTo('musmardi@sig.id');
+    //         $email->setSubject("Laporan $subject");
+    //         $email->setMailType('html');
+
+    //         $email->setMessage("
+    //             <p>Berikut unit yang sudah dikirim email pemberitahuan magang tanggal <b>{$extraData}</b>:</p>
+    //             <ul>" . implode('', array_map(fn($u) => "<li>{$u}</li>", $sentUnits)) . "</ul>
+    //             <p>Total: {$sent} unit.</p>
+    //         ");
+
+    //         $email->send();
+    //     }
+
+    //     return ['terkirim' => $sent];
+    // }
 
     // private function sendGroupedUnitEmail($data, $subject, $view)
     // {

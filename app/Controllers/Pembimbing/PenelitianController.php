@@ -394,6 +394,19 @@ class PenelitianController extends BaseController
         $bulanKeluar = $this->request->getGet('bulan_keluar');
         $tahun       = $this->request->getGet('tahun');
 
+        $db = \Config\Database::connect();
+        $userId = user_id();
+
+        $unitPembimbing = $db->table('unit_user')
+            ->select('unit_kerja.unit_id, unit_kerja.unit_kerja')
+            ->join('unit_kerja', 'unit_kerja.unit_id = unit_user.unit_id')
+            ->where('unit_user.user_id', $userId)
+            ->get()
+            ->getResultArray();
+        
+
+        $unitIds = array_column($unitPembimbing, 'unit_id');
+
         $builder = $this->penelitianModel->select('
                 penelitian.*, 
                 unit_kerja.unit_kerja,
@@ -406,7 +419,8 @@ class PenelitianController extends BaseController
             ->join('jurusan', 'jurusan.jurusan_id = peserta.jurusan_id')
             ->join('instansi', 'instansi.instansi_id = peserta.instansi_id')
             ->join('unit_kerja', 'penelitian.unit_id = unit_kerja.unit_id')
-            ->where('penelitian.status_akhir', 'penelitian');
+            ->where('penelitian.status_akhir', 'penelitian')
+            ->whereIn('penelitian.unit_id', $unitIds);
 
         if (!empty($bulanMasuk)) {
             $builder->where('MONTH(penelitian.tanggal_masuk)', $bulanMasuk);
@@ -427,25 +441,16 @@ class PenelitianController extends BaseController
        
         $unitList = $this->unitKerjaModel->findAll();
 
-        $db = \Config\Database::connect();
 
         // Ambil semua unit yang dipegang oleh pembimbing yang login
-        $userId = user_id();
+       
         // $unitPembimbing = $db->table('unit_user')
         //     ->select('unit_id')
         //     ->where('user_id', $userId)
         //     ->get()
         //     ->getResultArray();
 
-        $unitPembimbing = $db->table('unit_user')
-            ->select('unit_kerja.unit_id, unit_kerja.unit_kerja')
-            ->join('unit_kerja', 'unit_kerja.unit_id = unit_user.unit_id')
-            ->where('unit_user.user_id', $userId)
-            ->get()
-            ->getResultArray();
         
-
-        $unitIds = array_column($unitPembimbing, 'unit_id');
 
         // Ambil eselon user login
         $userLogin = $db->table('users')

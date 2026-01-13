@@ -283,7 +283,7 @@
 
           <div class="form-group">
             <label>Unit Kerja</label>
-            <select name="unit_id" id="editUnit" class="form-control">
+            <select name="unit_id" id="editUnit" class="form-control select2">
               <?php foreach ($units as $unit): ?>
               <option value="<?= $unit['unit_id'] ?>"><?= esc($unit['unit_kerja']) ?></option>
               <?php endforeach; ?>
@@ -313,27 +313,28 @@
 $(document).on('click', '.btn-edit-pembimbing', function () {
     const btn = $(this);
 
-    const id        = btn.data('id');
-    const fullname  = btn.data('fullname');
-    const username  = btn.data('username');
-    const email     = btn.data('email');
-    const eselon    = btn.data('eselon');
-    const unit      = btn.data('unit');
+    const id       = btn.data('id');
+    const fullname = btn.data('fullname');
+    const username = btn.data('username');
+    const email    = btn.data('email');
+    const eselon   = btn.data('eselon');
+    const unit     = btn.data('unit'); // unit_id
 
     $('#editId').val(id);
     $('#editFullname').val(fullname);
     $('#editUsername').val(username);
     $('#editEmail').val(email);
     $('#editEselon').val(eselon);
-    $('#editUnit').val(unit);
 
-    // set action form
+    // SET select2 value (WAJIB trigger change)
+    $('#editUnit').val(unit).trigger('change');
+
+    // Set action form
     $('#formEditPembimbing').attr(
         'action',
         "<?= base_url('admin/manage-user-pembimbing/update') ?>/" + id
     );
 
-    // tampilkan modal
     $('#modalEditPembimbing').modal('show');
 });
 </script>

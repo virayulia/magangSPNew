@@ -4,7 +4,7 @@
 <div class="container-fluid">
 
     <h1 class="h3 mb-2 text-gray-800">Access Log</h1>
-    <p class="mb-4">Statistik login harian (<?= date('F Y'); ?>)</p>
+    <p class="mb-4">Statistik login harian Aplikasi.</p>
 
     <div class="row mb-3">
         <div class="col-md-3">

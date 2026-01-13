@@ -20,6 +20,10 @@
                 <th>Nama Lengkap</th>
                 <th>Jurusan</th>
                 <th>Perguruan Tinggi</th>
+                <th>Tanggal Masuk</th>
+                <th>Tanggal Selesai</th>
+                <th>Durasi Penelitian</th>
+                
             </tr>
         </thead>
         <tbody>
@@ -29,6 +33,9 @@
                 <td><?= esc($mhs['nama']); ?></td>
                 <td><?= esc($mhs['jurusan']); ?></td>
                 <td><?= esc($mhs['instansi']); ?></td>
+                <td><?= esc(format_tanggal_indonesia($mhs['tanggal'])); ?></td>
+                <td><?= esc(format_tanggal_indonesia($mhs['selesai'])); ?></td>
+                <td><?= esc($mhs['durasi']); ?> bulan</td>
             </tr>
             <?php endforeach; ?>
         </tbody>
