@@ -347,10 +347,12 @@
                                             <span class="btn btn-sm btn-success text-light">
                                                 <strong><?= $rata ?></strong>
                                             </span>
+                                            <?php if($userLogin['eselon'] == 3):?>
                                             <!-- Icon Edit -->
                                             <a href="#" class="btn btn-sm btn-warning ml-2" data-toggle="modal" data-target="#editNilaiModal<?= $item['penilaian_id'] ?>">
                                                 <i class="fas fa-edit"></i>
                                             </a>
+                                            <?php endif; ?>
                                         </div>
 
                                         <!-- Modal Edit Penilaian -->
@@ -451,15 +453,17 @@
                                                 <i class="fas fa-info-circle"></i>
                                             </button>
                                         <?php else: ?>
-                                            <?php if((!empty($item['laporan']) || !empty($item['url_laporan'])) && (!empty($item['absensi']) || !empty($item['url_absensi']))): ?>
-                                            <button type="button" class="btn btn-sm btn-success" data-toggle="modal" data-target="#modalNilai-<?= $item['magang_id'] ?>">
-                                                <i class="bi bi-pencil-square"></i> Nilai
-                                            </button>
-                                            <?php else : ?>
-                                                <button type="button" class="btn btn-sm btn-secondary" title="Laporan & Absensi Belum Diupload">
-                                                <i class="bi bi-pencil-square"></i> Nilai
+                                            <?php if($userLogin['eselon'] == 3):?>
+                                                <?php if((!empty($item['laporan']) || !empty($item['url_laporan'])) && (!empty($item['absensi']) || !empty($item['url_absensi']))): ?>
+                                                <button type="button" class="btn btn-sm btn-success" data-toggle="modal" data-target="#modalNilai-<?= $item['magang_id'] ?>">
+                                                    <i class="bi bi-pencil-square"></i> Nilai
                                                 </button>
-                                            <?php endif;?>
+                                                <?php else : ?>
+                                                    <button type="button" class="btn btn-sm btn-secondary" title="Laporan & Absensi Belum Diupload">
+                                                    <i class="bi bi-pencil-square"></i> Nilai
+                                                    </button>
+                                                <?php endif;?>
+                                            <?php endif; ?>
                                         <?php endif; ?>
                                     <?php else :?>
                                         <button type="button" class="btn btn-sm btn-primary" data-toggle="modal" data-target="#tambahPembimbingModal<?= $item['magang_id'] ?>">

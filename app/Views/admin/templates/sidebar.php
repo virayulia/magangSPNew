@@ -94,6 +94,8 @@
                 <a class="collapse-item" href="<?= base_url('admin/manage-user'); ?>">Data User</a>
                 <a class="collapse-item" href="<?= base_url('admin/manage-user-admin'); ?>">Data Admin</a>
                 <a class="collapse-item" href="<?= base_url('admin/manage-user-pembimbing'); ?>">Data Pembimbing</a>
+                <!-- <a class="collapse-item" href="<?= base_url('admin/manage-struktur'); ?>">Data Struktur</a> -->
+                <a class="collapse-item" href="<?= base_url('admin/manage-struktur'); ?>">Data Struktur Organisasi</a>
             </div>
         </div>
     </li>

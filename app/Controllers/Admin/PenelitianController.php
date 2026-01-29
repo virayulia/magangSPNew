@@ -145,7 +145,7 @@ class PenelitianController extends BaseController
 
         // ================= VIEW =================
         $data = [
-            'title'           => 'Kelola Penelitian',
+            'title'           => 'Data Pendaftaran',
             'penelitian'      => $penelitian,
             'unitKerja'       => $unitKerja,
             'pilihanTanggal'  => $dates,
@@ -161,7 +161,7 @@ class PenelitianController extends BaseController
     {
         $penelitian = $this->penelitianModel
             ->select("penelitian.*, GROUP_CONCAT(k.keyword_nama SEPARATOR ', ') AS keywords,
-                        u.fullname, j.nama_jurusan")
+                        u.fullname, u.surat_permohonan, u.cv, j.nama_jurusan")
             ->join('users u','penelitian.user_id = u.id')
             ->join('jurusan j','j.jurusan_id = u.jurusan_id')
             ->join('penelitian_keyword pk', 'pk.penelitian_id = penelitian.penelitian_id', 'left')
@@ -562,164 +562,288 @@ class PenelitianController extends BaseController
                 : 'Peserta terpilih telah ditandai tidak valid dan email penolakan telah dikirim.'
         );
     }
-
+    
     public function pesertaPenelitian()
-{
-    $unitId       = $this->request->getGet('unit_kerja');
-    $bulanMasuk   = $this->request->getGet('bulan_masuk');   // format: Y-m
-    $bulanKeluar  = $this->request->getGet('bulan_keluar');  // format: Y-m
-    $today        = date('Y-m-d');
+    {
+        $unitId      = $this->request->getGet('unit_kerja');
+        $bulanMasuk  = $this->request->getGet('bulan_masuk');
+        $bulanKeluar = $this->request->getGet('bulan_keluar');
+        $today       = date('Y-m-d');
 
-    // ===============================
-    // SUBQUERY SAFETY – ambil terakhir
-    // ===============================
-    $subSafety = "
-        (
-            SELECT js1.*
-            FROM jawaban_safety js1
-            JOIN (
-                SELECT relasi_id, tipe, MAX(created_at) AS max_created
-                FROM jawaban_safety
-                WHERE tipe = 'penelitian'
-                GROUP BY relasi_id, tipe
-            ) js2 
-            ON js1.relasi_id = js2.relasi_id
-            AND js1.tipe = js2.tipe
-            AND js1.created_at = js2.max_created
-        ) AS js
-    ";
+        // ===============================
+        // SUBQUERY SAFETY (terakhir)
+        // ===============================
+        $subSafety = "
+            (
+                SELECT js1.*
+                FROM jawaban_safety js1
+                JOIN (
+                    SELECT relasi_id, MAX(created_at) AS max_created
+                    FROM jawaban_safety
+                    WHERE tipe = 'penelitian'
+                    GROUP BY relasi_id
+                ) js2
+                ON js1.relasi_id = js2.relasi_id
+                AND js1.created_at = js2.max_created
+            ) AS js
+        ";
 
-    // ===============================
-    // SUBQUERY RFID – assignment terakhir
-    // ===============================
-    $subRfid = "
-        (
-            SELECT r1.*
-            FROM rfid_assignment r1
-            JOIN (
-                SELECT relasi_id, tipe, MAX(assignment_id) AS max_assign
-                FROM rfid_assignment
-                WHERE tipe = 'penelitian'
-                GROUP BY relasi_id, tipe
-            ) r2 
-            ON r1.relasi_id = r2.relasi_id
-            AND r1.tipe = r2.tipe
-            AND r1.assignment_id = r2.max_assign
-        ) AS ra
-    ";
+        // ===============================
+        // SUBQUERY RFID (terakhir)
+        // ===============================
+        $subRfid = "
+            (
+                SELECT r1.*
+                FROM rfid_assignment r1
+                JOIN (
+                    SELECT relasi_id, MAX(assignment_id) AS max_assign
+                    FROM rfid_assignment
+                    WHERE tipe = 'penelitian'
+                    GROUP BY relasi_id
+                ) r2
+                ON r1.relasi_id = r2.relasi_id
+                AND r1.assignment_id = r2.max_assign
+            ) AS ra
+        ";
 
-    // ===============================
-    // QUERY UTAMA
-    // ===============================
-    $builder = $this->penelitianModel
-        ->select('
-            penelitian.*,
+        // ===============================
+        // QUERY UTAMA (TANPA GROUP BY)
+        // ===============================
+        $builder = $this->penelitianModel
+            ->select('
+                penelitian.*,
+                unit_kerja.unit_id,
+                unit_kerja.unit_kerja,
+                users.id AS user_id,
+                users.fullname,
+                users.nisn_nim,
+                js.nilai AS nilai_maksimal,
+                rfid.rfid_no,
+                rfid.id_rfid,
+                ra.assignment_id,
+                ra.status AS status_rfid,
+                ra.tanggal_kembali,
+                ra.tanggal_bayar,
+                feedback_penelitian.feedbackp_id,
+                pembimbing.fullname AS nama_pembimbing,
+                pembimbing.id AS pembimbing_id
+            ')
+            ->select("
+                CASE 
+                    WHEN js.nilai IS NULL THEN '-'
+                    WHEN js.nilai >= 70 THEN 'Lulus'
+                    ELSE 'Belum Lulus'
+                END AS status_tes
+            ", false)
+            ->join('users', 'users.id = penelitian.user_id', 'left')
+            ->join('users pembimbing', 'pembimbing.id = penelitian.pembimbing_id', 'left')
+            ->join('unit_kerja', 'unit_kerja.unit_id = penelitian.unit_id', 'left')
+            ->join($subSafety, 'js.relasi_id = penelitian.penelitian_id', 'left')
+            ->join('feedback_penelitian', 'feedback_penelitian.penelitian_id = penelitian.penelitian_id', 'left')
+            ->join($subRfid, 'ra.relasi_id = penelitian.penelitian_id', 'left')
+            ->join('rfid', 'rfid.id_rfid = ra.rfid_id', 'left')
+            ->where('penelitian.status_akhir', 'penelitian');
 
-            unit_kerja.unit_id,
-            unit_kerja.unit_kerja,
-
-            users.id AS user_id,
-            users.fullname,
-            users.nisn_nim,
-
-            js.nilai AS nilai_maksimal,
-
-            rfid.rfid_no,
-            rfid.id_rfid,
-            ra.assignment_id,
-            ra.status AS status_rfid,
-            ra.tanggal_kembali,
-            ra.tanggal_bayar,
-
-            feedback_penelitian.feedbackp_id,
-            pembimbing.fullname AS nama_pembimbing, pembimbing.id AS pembimbing_id
-        ')
-        ->select("
-            CASE 
-                WHEN js.nilai IS NULL THEN '-'
-                WHEN js.nilai >= 70 THEN 'Lulus'
-                ELSE 'Belum Lulus'
-            END AS status_tes
-        ", false)
-        ->join('users', 'users.id = penelitian.user_id', 'left')
-        ->join('users pembimbing', 'pembimbing.id = penelitian.pembimbing_id', 'left')
-        ->join('unit_kerja', 'unit_kerja.unit_id = penelitian.unit_id', 'left')
-        ->join($subSafety, 'js.relasi_id = penelitian.penelitian_id', 'left')
-        ->join('feedback_penelitian', 'feedback_penelitian.penelitian_id = penelitian.penelitian_id', 'left')
-        ->join($subRfid, 'ra.relasi_id = penelitian.penelitian_id', 'left')
-        ->join('rfid', 'rfid.id_rfid = ra.rfid_id', 'left')
-        ->where('penelitian.status_akhir', 'penelitian')
-        ->groupBy('penelitian.penelitian_id');
-
-    // ===============================
-    // FILTER BULAN MASUK (Y-m)
-    // ===============================
-    if ($bulanMasuk) {
-        $builder->where('penelitian.tanggal_masuk >=', $bulanMasuk . '-01');
-        $builder->where(
-            'penelitian.tanggal_masuk <',
-            date('Y-m-01', strtotime($bulanMasuk . ' +1 month'))
-        );
-    }
-
-    // ===============================
-    // FILTER BULAN KELUAR (Y-m)
-    // ===============================
-    if ($bulanKeluar) {
-        $builder->where('penelitian.tanggal_selesai >=', $bulanKeluar . '-01');
-        $builder->where(
-            'penelitian.tanggal_selesai <',
-            date('Y-m-01', strtotime($bulanKeluar . ' +1 month'))
-        );
-    }
-
-    // ===============================
-    // FILTER UNIT KERJA
-    // ===============================
-    if (!empty($unitId)) {
-        $builder->where('penelitian.unit_id', $unitId);
-    }
-
-    // ===============================
-    // AMBIL DATA
-    // ===============================
-    $data = $builder->asArray()->findAll();
-
-    // ===============================
-    // CHART DATA
-    // ===============================
-    $chartData = [
-        'aktif'        => 0,
-        'akan_masuk'  => 0,
-        'belum_selesai' => 0,
-    ];
-
-    foreach ($data as $row) {
-
-        // AKTIF
-        if ($row['tanggal_masuk'] <= $today && $row['tanggal_selesai'] >= $today) {
-            $chartData['aktif']++;
+        // Filter bulan masuk
+        if ($bulanMasuk) {
+            $builder->where('penelitian.tanggal_masuk >=', $bulanMasuk . '-01')
+                    ->where('penelitian.tanggal_masuk <', date('Y-m-01', strtotime($bulanMasuk . ' +1 month')));
         }
 
-        // AKAN MASUK
-        if ($row['tanggal_masuk'] > $today) {
-            $chartData['akan_masuk']++;
+        // Filter bulan keluar
+        if ($bulanKeluar) {
+            $builder->where('penelitian.tanggal_selesai >=', $bulanKeluar . '-01')
+                    ->where('penelitian.tanggal_selesai <', date('Y-m-01', strtotime($bulanKeluar . ' +1 month')));
         }
 
-        // BELUM SELESAI (sudah lewat tapi status masih penelitian)
-        if ($row['tanggal_selesai'] < $today && $row['status_akhir'] === 'penelitian') {
-            $chartData['belum_selesai']++;
+        if ($unitId) {
+            $builder->where('penelitian.unit_id', $unitId);
         }
+
+        $data = $builder->get()->getResultArray();
+
+        // Chart
+        $chartData = ['aktif' => 0, 'akan_masuk' => 0, 'belum_selesai' => 0];
+
+        foreach ($data as $row) {
+            if ($row['tanggal_masuk'] <= $today && $row['tanggal_selesai'] >= $today)
+                $chartData['aktif']++;
+
+            if ($row['tanggal_masuk'] > $today)
+                $chartData['akan_masuk']++;
+
+            if ($row['tanggal_selesai'] < $today && $row['status_akhir'] === 'penelitian')
+                $chartData['belum_selesai']++;
+        }
+
+        return view('admin/kelola_peserta_penelitian', [
+            'data'      => $data,
+            'unitList'  => $this->unitKerjaModel->findAll(),
+            'rfidList'  => $this->rfidModel->findAll(),
+            'chartData' => $chartData,
+            'unitGet'   => $unitId ?? '',
+        ]);
     }
 
-    return view('admin/kelola_peserta_penelitian', [
-        'data'       => $data,
-        'unitList'   => $this->unitKerjaModel->findAll(),
-        'rfidList'   => $this->rfidModel->findAll(),
-        'chartData'  => $chartData,
-        'unitGet'    => $unitId ?? '',
-    ]);
-}
+
+    //error only_full_group_by
+    public function pesertaPenelitianold()
+    {
+        $unitId       = $this->request->getGet('unit_kerja');
+        $bulanMasuk   = $this->request->getGet('bulan_masuk');   // format: Y-m
+        $bulanKeluar  = $this->request->getGet('bulan_keluar');  // format: Y-m
+        $today        = date('Y-m-d');
+
+        // ===============================
+        // SUBQUERY SAFETY – ambil terakhir
+        // ===============================
+        $subSafety = "
+            (
+                SELECT js1.*
+                FROM jawaban_safety js1
+                JOIN (
+                    SELECT relasi_id, tipe, MAX(created_at) AS max_created
+                    FROM jawaban_safety
+                    WHERE tipe = 'penelitian'
+                    GROUP BY relasi_id, tipe
+                ) js2 
+                ON js1.relasi_id = js2.relasi_id
+                AND js1.tipe = js2.tipe
+                AND js1.created_at = js2.max_created
+            ) AS js
+        ";
+
+        // ===============================
+        // SUBQUERY RFID – assignment terakhir
+        // ===============================
+        $subRfid = "
+            (
+                SELECT r1.*
+                FROM rfid_assignment r1
+                JOIN (
+                    SELECT relasi_id, tipe, MAX(assignment_id) AS max_assign
+                    FROM rfid_assignment
+                    WHERE tipe = 'penelitian'
+                    GROUP BY relasi_id, tipe
+                ) r2 
+                ON r1.relasi_id = r2.relasi_id
+                AND r1.tipe = r2.tipe
+                AND r1.assignment_id = r2.max_assign
+            ) AS ra
+        ";
+
+        // ===============================
+        // QUERY UTAMA
+        // ===============================
+        $builder = $this->penelitianModel
+            ->select('
+                penelitian.*,
+
+                unit_kerja.unit_id,
+                unit_kerja.unit_kerja,
+
+                users.id AS user_id,
+                users.fullname,
+                users.nisn_nim,
+
+                js.nilai AS nilai_maksimal,
+
+                rfid.rfid_no,
+                rfid.id_rfid,
+                ra.assignment_id,
+                ra.status AS status_rfid,
+                ra.tanggal_kembali,
+                ra.tanggal_bayar,
+
+                feedback_penelitian.feedbackp_id,
+                pembimbing.fullname AS nama_pembimbing, pembimbing.id AS pembimbing_id
+            ')
+            ->select("
+                CASE 
+                    WHEN js.nilai IS NULL THEN '-'
+                    WHEN js.nilai >= 70 THEN 'Lulus'
+                    ELSE 'Belum Lulus'
+                END AS status_tes
+            ", false)
+            ->join('users', 'users.id = penelitian.user_id', 'left')
+            ->join('users pembimbing', 'pembimbing.id = penelitian.pembimbing_id', 'left')
+            ->join('unit_kerja', 'unit_kerja.unit_id = penelitian.unit_id', 'left')
+            ->join($subSafety, 'js.relasi_id = penelitian.penelitian_id', 'left')
+            ->join('feedback_penelitian', 'feedback_penelitian.penelitian_id = penelitian.penelitian_id', 'left')
+            ->join($subRfid, 'ra.relasi_id = penelitian.penelitian_id', 'left')
+            ->join('rfid', 'rfid.id_rfid = ra.rfid_id', 'left')
+            ->where('penelitian.status_akhir', 'penelitian')
+            ->groupBy('penelitian.penelitian_id');
+
+        // ===============================
+        // FILTER BULAN MASUK (Y-m)
+        // ===============================
+        if ($bulanMasuk) {
+            $builder->where('penelitian.tanggal_masuk >=', $bulanMasuk . '-01');
+            $builder->where(
+                'penelitian.tanggal_masuk <',
+                date('Y-m-01', strtotime($bulanMasuk . ' +1 month'))
+            );
+        }
+
+        // ===============================
+        // FILTER BULAN KELUAR (Y-m)
+        // ===============================
+        if ($bulanKeluar) {
+            $builder->where('penelitian.tanggal_selesai >=', $bulanKeluar . '-01');
+            $builder->where(
+                'penelitian.tanggal_selesai <',
+                date('Y-m-01', strtotime($bulanKeluar . ' +1 month'))
+            );
+        }
+
+        // ===============================
+        // FILTER UNIT KERJA
+        // ===============================
+        if (!empty($unitId)) {
+            $builder->where('penelitian.unit_id', $unitId);
+        }
+
+        // ===============================
+        // AMBIL DATA
+        // ===============================
+        $data = $builder->asArray()->findAll();
+
+        // ===============================
+        // CHART DATA
+        // ===============================
+        $chartData = [
+            'aktif'        => 0,
+            'akan_masuk'  => 0,
+            'belum_selesai' => 0,
+        ];
+
+        foreach ($data as $row) {
+
+            // AKTIF
+            if ($row['tanggal_masuk'] <= $today && $row['tanggal_selesai'] >= $today) {
+                $chartData['aktif']++;
+            }
+
+            // AKAN MASUK
+            if ($row['tanggal_masuk'] > $today) {
+                $chartData['akan_masuk']++;
+            }
+
+            // BELUM SELESAI (sudah lewat tapi status masih penelitian)
+            if ($row['tanggal_selesai'] < $today && $row['status_akhir'] === 'penelitian') {
+                $chartData['belum_selesai']++;
+            }
+        }
+
+        return view('admin/kelola_peserta_penelitian', [
+            'data'       => $data,
+            'unitList'   => $this->unitKerjaModel->findAll(),
+            'rfidList'   => $this->rfidModel->findAll(),
+            'chartData'  => $chartData,
+            'unitGet'    => $unitId ?? '',
+        ]);
+    }
 
 
 // public function pesertaPenelitian()

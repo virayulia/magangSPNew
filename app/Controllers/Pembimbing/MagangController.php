@@ -771,14 +771,9 @@ class MagangController extends BaseController
     public function approveMagang()
     {
         $db = \Config\Database::connect();
-
-        // Ambil semua unit yang dipegang oleh pembimbing yang login
         $userId = user_id();
-        // $unitPembimbing = $db->table('unit_user')
-        //     ->select('unit_id')
-        //     ->where('user_id', $userId)
-        //     ->get()
-        //     ->getResultArray();
+
+        // Ambil unit yang dipegang pembimbing
         $unitPembimbing = $db->table('unit_user')
             ->select('unit_kerja.unit_id, unit_kerja.unit_kerja')
             ->join('unit_kerja', 'unit_kerja.unit_id = unit_user.unit_id')
@@ -788,68 +783,187 @@ class MagangController extends BaseController
 
         $unitIds = array_column($unitPembimbing, 'unit_id');
 
-        // Jika tidak ada unit, tampilkan kosong
+        // Jika tidak pegang unit
         if (empty($unitIds)) {
-            return view('pembimbing/approve_nilai', ['peserta' => []]);
+            return view('pembimbing/approve-magang', [
+                'peserta' => [],
+                'unitPembimbing' => []
+            ]);
         }
 
-        // Ambil peserta magang dari semua unit tersebut yang sudah dinilai, tapi belum approve
-        $builder = $this->magangModel->select('
-                            magang.*,
-                            unit_kerja.unit_kerja,
-                            users.*,
-                            jurusan.nama_jurusan,
-                            instansi.nama_instansi,
-                            penilaian.*,
-                            province_ktp.province AS provinsi_ktp,
-                            province_dom.province AS provinsi_domisili,
-                            city_ktp.regency AS kota_ktp, 
-                            city_ktp.type AS tipe_kota_ktp,
-                            city_dom.regency AS kota_domisili,
-                            city_dom.type AS tipe_kota_domisili,
-                            MAX(jawaban_safety.nilai) as nilai_maksimal,
-                            MAX(jawaban_safety.created_at) as tanggal_terakhir,
-                            MAX(jawaban_safety.percobaan_ke) as percobaan_terakhir,
-                            CASE 
-                                WHEN MAX(jawaban_safety.nilai) IS NULL THEN "Belum Tes"
-                                WHEN MAX(jawaban_safety.nilai) >= 70 THEN "Lulus"
-                                ELSE "Belum Lulus"
-                            END as status_tes,
-                            rfid.rfid_no, rfid.id_rfid, 
-                            ra.assignment_id, ra.status as status_rfid, ra.tanggal_kembali, ra.tanggal_bayar, 
-                            feedback.feedback_id, 
-                        ')
-                        ->join('users', 'users.id = magang.user_id')
-                        ->join('instansi', 'instansi.instansi_id = users.instansi_id')
-                        ->join('jurusan', 'jurusan.jurusan_id = users.jurusan_id')
-                        ->join('provinces AS province_ktp', 'province_ktp.id = users.province_id', 'left')
-                        ->join('provinces AS province_dom', 'province_dom.id = users.provinceDom_id', 'left')
-                        ->join('regencies AS city_ktp', 'city_ktp.id = users.city_id', 'left')
-                        ->join('regencies AS city_dom', 'city_dom.id = users.cityDom_id', 'left')
-                        ->join('unit_kerja', 'magang.unit_id = unit_kerja.unit_id')
-                        ->join('jawaban_safety', 'magang.magang_id = jawaban_safety.relasi_id AND jawaban_safety.tipe = "magang"', 'left')
-                        ->join('penilaian', 'penilaian.magang_id = magang.magang_id', 'left')
-                        ->join('feedback', 'feedback.magang_id = magang.magang_id', 'left')
-                        ->join("(
-                                SELECT r1.*
-                                FROM rfid_assignment r1
-                                JOIN (
-                                    SELECT relasi_id, MAX(tanggal_pinjam) AS max_created
-                                    FROM rfid_assignment
-                                    WHERE tipe = 'magang'
-                                    GROUP BY relasi_id
-                                ) r2 ON r1.relasi_id = r2.relasi_id AND r1.tanggal_pinjam = r2.max_created
-                            ) AS ra", 'ra.relasi_id = magang.magang_id', 'left')
-                        ->join('rfid', 'rfid.id_rfid = ra.rfid_id', 'left')
-                        ->where('magang.status_akhir', 'magang')
-                        ->where('magang.finalisasi !=', null)
-                        ->groupBy('magang.magang_id');
+        $builder = $this->magangModel
+            ->select('
+                magang.*,
+                unit_kerja.unit_kerja,
+                users.*,
+                jurusan.nama_jurusan,
+                instansi.nama_instansi,
+                penilaian.*,
+
+                province_ktp.province AS provinsi_ktp,
+                province_dom.province AS provinsi_domisili,
+                city_ktp.regency AS kota_ktp,
+                city_ktp.type AS tipe_kota_ktp,
+                city_dom.regency AS kota_domisili,
+                city_dom.type AS tipe_kota_domisili,
+
+                js.nilai_maksimal,
+                js.tanggal_terakhir,
+                js.percobaan_terakhir,
+                CASE 
+                    WHEN js.nilai_maksimal IS NULL THEN "Belum Tes"
+                    WHEN js.nilai_maksimal >= 70 THEN "Lulus"
+                    ELSE "Belum Lulus"
+                END AS status_tes,
+
+                rfid.rfid_no,
+                rfid.id_rfid,
+                ra.assignment_id,
+                ra.status AS status_rfid,
+                ra.tanggal_kembali,
+                ra.tanggal_bayar,
+
+                feedback.feedback_id
+            ')
+            ->join('users', 'users.id = magang.user_id')
+            ->join('instansi', 'instansi.instansi_id = users.instansi_id')
+            ->join('jurusan', 'jurusan.jurusan_id = users.jurusan_id')
+
+            ->join('provinces AS province_ktp', 'province_ktp.id = users.province_id', 'left')
+            ->join('provinces AS province_dom', 'province_dom.id = users.provinceDom_id', 'left')
+            ->join('regencies AS city_ktp', 'city_ktp.id = users.city_id', 'left')
+            ->join('regencies AS city_dom', 'city_dom.id = users.cityDom_id', 'left')
+
+            ->join('unit_kerja', 'magang.unit_id = unit_kerja.unit_id')
+
+            // ===== Subquery: jawaban_safety (nilai maksimal)
+            ->join('(
+                SELECT 
+                    relasi_id,
+                    MAX(nilai) AS nilai_maksimal,
+                    MAX(created_at) AS tanggal_terakhir,
+                    MAX(percobaan_ke) AS percobaan_terakhir
+                FROM jawaban_safety
+                WHERE tipe = "magang"
+                GROUP BY relasi_id
+            ) js', 'js.relasi_id = magang.magang_id', 'left')
+
+            // ===== Penilaian (diasumsikan 1 magang = 1 penilaian)
+            ->join('penilaian', 'penilaian.magang_id = magang.magang_id', 'left')
+
+            ->join('feedback', 'feedback.magang_id = magang.magang_id', 'left')
+
+            // ===== Subquery: RFID terakhir
+            ->join('(
+                SELECT r1.*
+                FROM rfid_assignment r1
+                JOIN (
+                    SELECT relasi_id, MAX(tanggal_pinjam) AS max_tanggal
+                    FROM rfid_assignment
+                    WHERE tipe = "magang"
+                    GROUP BY relasi_id
+                ) r2 
+                    ON r1.relasi_id = r2.relasi_id
+                AND r1.tanggal_pinjam = r2.max_tanggal
+            ) ra', 'ra.relasi_id = magang.magang_id', 'left')
+
+            ->join('rfid', 'rfid.id_rfid = ra.rfid_id', 'left')
+
+            ->where('magang.status_akhir', 'magang')
+            ->where('magang.finalisasi IS NOT NULL', null, false)
+            ->whereIn('magang.unit_id', $unitIds);
 
         $peserta = $builder->get()->getResultArray();
 
-
-        return view('pembimbing/approve-magang', ['peserta' => $peserta,'unitPembimbing' => $unitPembimbing, ]);
+        return view('pembimbing/approve-magang', [
+            'peserta' => $peserta,
+            'unitPembimbing' => $unitPembimbing
+        ]);
     }
+
+    //kemungkinan error agregad
+    // public function approveMagang()
+    // {
+    //     $db = \Config\Database::connect();
+
+    //     // Ambil semua unit yang dipegang oleh pembimbing yang login
+    //     $userId = user_id();
+    //     // $unitPembimbing = $db->table('unit_user')
+    //     //     ->select('unit_id')
+    //     //     ->where('user_id', $userId)
+    //     //     ->get()
+    //     //     ->getResultArray();
+    //     $unitPembimbing = $db->table('unit_user')
+    //         ->select('unit_kerja.unit_id, unit_kerja.unit_kerja')
+    //         ->join('unit_kerja', 'unit_kerja.unit_id = unit_user.unit_id')
+    //         ->where('unit_user.user_id', $userId)
+    //         ->get()
+    //         ->getResultArray();
+
+    //     $unitIds = array_column($unitPembimbing, 'unit_id');
+
+    //     // Jika tidak ada unit, tampilkan kosong
+    //     if (empty($unitIds)) {
+    //         return view('pembimbing/approve_nilai', ['peserta' => []]);
+    //     }
+
+    //     // Ambil peserta magang dari semua unit tersebut yang sudah dinilai, tapi belum approve
+    //     $builder = $this->magangModel->select('
+    //                         magang.*,
+    //                         unit_kerja.unit_kerja,
+    //                         users.*,
+    //                         jurusan.nama_jurusan,
+    //                         instansi.nama_instansi,
+    //                         penilaian.*,
+    //                         province_ktp.province AS provinsi_ktp,
+    //                         province_dom.province AS provinsi_domisili,
+    //                         city_ktp.regency AS kota_ktp, 
+    //                         city_ktp.type AS tipe_kota_ktp,
+    //                         city_dom.regency AS kota_domisili,
+    //                         city_dom.type AS tipe_kota_domisili,
+    //                         MAX(jawaban_safety.nilai) as nilai_maksimal,
+    //                         MAX(jawaban_safety.created_at) as tanggal_terakhir,
+    //                         MAX(jawaban_safety.percobaan_ke) as percobaan_terakhir,
+    //                         CASE 
+    //                             WHEN MAX(jawaban_safety.nilai) IS NULL THEN "Belum Tes"
+    //                             WHEN MAX(jawaban_safety.nilai) >= 70 THEN "Lulus"
+    //                             ELSE "Belum Lulus"
+    //                         END as status_tes,
+    //                         rfid.rfid_no, rfid.id_rfid, 
+    //                         ra.assignment_id, ra.status as status_rfid, ra.tanggal_kembali, ra.tanggal_bayar, 
+    //                         feedback.feedback_id, 
+    //                     ')
+    //                     ->join('users', 'users.id = magang.user_id')
+    //                     ->join('instansi', 'instansi.instansi_id = users.instansi_id')
+    //                     ->join('jurusan', 'jurusan.jurusan_id = users.jurusan_id')
+    //                     ->join('provinces AS province_ktp', 'province_ktp.id = users.province_id', 'left')
+    //                     ->join('provinces AS province_dom', 'province_dom.id = users.provinceDom_id', 'left')
+    //                     ->join('regencies AS city_ktp', 'city_ktp.id = users.city_id', 'left')
+    //                     ->join('regencies AS city_dom', 'city_dom.id = users.cityDom_id', 'left')
+    //                     ->join('unit_kerja', 'magang.unit_id = unit_kerja.unit_id')
+    //                     ->join('jawaban_safety', 'magang.magang_id = jawaban_safety.relasi_id AND jawaban_safety.tipe = "magang"', 'left')
+    //                     ->join('penilaian', 'penilaian.magang_id = magang.magang_id', 'left')
+    //                     ->join('feedback', 'feedback.magang_id = magang.magang_id', 'left')
+    //                     ->join("(
+    //                             SELECT r1.*
+    //                             FROM rfid_assignment r1
+    //                             JOIN (
+    //                                 SELECT relasi_id, MAX(tanggal_pinjam) AS max_created
+    //                                 FROM rfid_assignment
+    //                                 WHERE tipe = 'magang'
+    //                                 GROUP BY relasi_id
+    //                             ) r2 ON r1.relasi_id = r2.relasi_id AND r1.tanggal_pinjam = r2.max_created
+    //                         ) AS ra", 'ra.relasi_id = magang.magang_id', 'left')
+    //                     ->join('rfid', 'rfid.id_rfid = ra.rfid_id', 'left')
+    //                     ->where('magang.status_akhir', 'magang')
+    //                     ->where('magang.finalisasi !=', null)
+    //                     ->groupBy('magang.magang_id');
+
+    //     $peserta = $builder->get()->getResultArray();
+
+
+    //     return view('pembimbing/approve-magang', ['peserta' => $peserta,'unitPembimbing' => $unitPembimbing, ]);
+    // }
 
     // public function setApproveMagang()
     // {
@@ -933,7 +1047,6 @@ class MagangController extends BaseController
         return redirect()->back()->with('success', count($magangIds).' peserta berhasil di-approve dan email sudah dikirim.');
     }
 
-
     public function alumniMagang()
     {
         $bulan = $this->request->getGet('bulan');
@@ -941,74 +1054,95 @@ class MagangController extends BaseController
 
         $db = \Config\Database::connect();
         $userId = user_id();
+
+        // Unit pembimbing
         $unitPembimbing = $db->table('unit_user')
             ->select('unit_kerja.unit_id, unit_kerja.unit_kerja')
             ->join('unit_kerja', 'unit_kerja.unit_id = unit_user.unit_id')
             ->where('unit_user.user_id', $userId)
             ->get()
             ->getResultArray();
-        
 
         $unitIds = array_column($unitPembimbing, 'unit_id');
 
-        // Ambil eselon user login
-        $userLogin = $db->table('users')
-            ->select('id, fullname, eselon')
-            ->where('id', $userId)
-            ->get()
-            ->getRowArray();
+        $builder = $this->magangModel
+            ->select('
+                magang.*,
+                unit_kerja.unit_kerja,
+                users.*,
+                jurusan.nama_jurusan,
+                instansi.nama_instansi,
+                penilaian.*,
 
-        $builder = $this->magangModel->select('
-                            magang.*,
-                            unit_kerja.unit_kerja,
-                            users.*,
-                            jurusan.nama_jurusan,
-                            instansi.nama_instansi,
-                            penilaian.*,
-                            province_ktp.province AS provinsi_ktp,
-                            province_dom.province AS provinsi_domisili,
-                            city_ktp.regency AS kota_ktp, 
-                            city_ktp.type AS tipe_kota_ktp,
-                            city_dom.regency AS kota_domisili,
-                            city_dom.type AS tipe_kota_domisili,
-                            MAX(jawaban_safety.nilai) as nilai_maksimal,
-                            MAX(jawaban_safety.created_at) as tanggal_terakhir,
-                            MAX(jawaban_safety.percobaan_ke) as percobaan_terakhir,
-                            CASE 
-                                WHEN MAX(jawaban_safety.nilai) IS NULL THEN "Belum Tes"
-                                WHEN MAX(jawaban_safety.nilai) >= 70 THEN "Lulus"
-                                ELSE "Belum Lulus"
-                            END as status_tes,
-                            rfid.rfid_no, rfid.id_rfid, 
-                            ra.assignment_id, ra.status as status_rfid, ra.tanggal_kembali, ra.tanggal_bayar, 
-                            feedback.feedback_id, 
-                        ')
-                        ->join('users', 'users.id = magang.user_id')
-                        ->join('instansi', 'instansi.instansi_id = users.instansi_id')
-                        ->join('jurusan', 'jurusan.jurusan_id = users.jurusan_id')
-                        ->join('provinces AS province_ktp', 'province_ktp.id = users.province_id', 'left')
-                        ->join('provinces AS province_dom', 'province_dom.id = users.provinceDom_id', 'left')
-                        ->join('regencies AS city_ktp', 'city_ktp.id = users.city_id', 'left')
-                        ->join('regencies AS city_dom', 'city_dom.id = users.cityDom_id', 'left')
-                        ->join('unit_kerja', 'magang.unit_id = unit_kerja.unit_id')
-                        ->join('jawaban_safety', 'magang.magang_id = jawaban_safety.relasi_id AND jawaban_safety.tipe = "magang"', 'left')
-                        ->join('penilaian', 'penilaian.magang_id = magang.magang_id', 'left')
-                        ->join('feedback', 'feedback.magang_id = magang.magang_id', 'left')
-                        ->join("(
-                                SELECT r1.*
-                                FROM rfid_assignment r1
-                                JOIN (
-                                    SELECT relasi_id, MAX(tanggal_pinjam) AS max_created
-                                    FROM rfid_assignment
-                                    WHERE tipe = 'magang'
-                                    GROUP BY relasi_id
-                                ) r2 ON r1.relasi_id = r2.relasi_id AND r1.tanggal_pinjam = r2.max_created
-                            ) AS ra", 'ra.relasi_id = magang.magang_id', 'left')
-                        ->join('rfid', 'rfid.id_rfid = ra.rfid_id', 'left')
-                        ->where('magang.status_akhir', 'lulus')
-                        ->orderBy('magang.tanggal_approve')
-                        ->groupBy('magang.magang_id');
+                province_ktp.province AS provinsi_ktp,
+                province_dom.province AS provinsi_domisili,
+                city_ktp.regency AS kota_ktp,
+                city_ktp.type AS tipe_kota_ktp,
+                city_dom.regency AS kota_domisili,
+                city_dom.type AS tipe_kota_domisili,
 
+                js.nilai_maksimal,
+                js.tanggal_terakhir,
+                js.percobaan_terakhir,
+                CASE 
+                    WHEN js.nilai_maksimal IS NULL THEN "Belum Tes"
+                    WHEN js.nilai_maksimal >= 70 THEN "Lulus"
+                    ELSE "Belum Lulus"
+                END AS status_tes,
+
+                rfid.rfid_no,
+                rfid.id_rfid,
+                ra.assignment_id,
+                ra.status AS status_rfid,
+                ra.tanggal_kembali,
+                ra.tanggal_bayar,
+
+                feedback.feedback_id
+            ')
+            ->join('users', 'users.id = magang.user_id')
+            ->join('instansi', 'instansi.instansi_id = users.instansi_id')
+            ->join('jurusan', 'jurusan.jurusan_id = users.jurusan_id')
+
+            ->join('provinces AS province_ktp', 'province_ktp.id = users.province_id', 'left')
+            ->join('provinces AS province_dom', 'province_dom.id = users.provinceDom_id', 'left')
+            ->join('regencies AS city_ktp', 'city_ktp.id = users.city_id', 'left')
+            ->join('regencies AS city_dom', 'city_dom.id = users.cityDom_id', 'left')
+
+            ->join('unit_kerja', 'magang.unit_id = unit_kerja.unit_id')
+
+            // ===== Subquery: jawaban_safety (nilai maksimal)
+            ->join('(
+                SELECT 
+                    relasi_id,
+                    MAX(nilai) AS nilai_maksimal,
+                    MAX(created_at) AS tanggal_terakhir,
+                    MAX(percobaan_ke) AS percobaan_terakhir
+                FROM jawaban_safety
+                WHERE tipe = "magang"
+                GROUP BY relasi_id
+            ) js', 'js.relasi_id = magang.magang_id', 'left')
+
+            ->join('penilaian', 'penilaian.magang_id = magang.magang_id', 'left')
+            ->join('feedback', 'feedback.magang_id = magang.magang_id', 'left')
+
+            // ===== Subquery RFID terakhir
+            ->join('(
+                SELECT r1.*
+                FROM rfid_assignment r1
+                JOIN (
+                    SELECT relasi_id, MAX(tanggal_pinjam) AS max_tanggal
+                    FROM rfid_assignment
+                    WHERE tipe = "magang"
+                    GROUP BY relasi_id
+                ) r2 
+                    ON r1.relasi_id = r2.relasi_id
+                AND r1.tanggal_pinjam = r2.max_tanggal
+            ) ra', 'ra.relasi_id = magang.magang_id', 'left')
+
+            ->join('rfid', 'rfid.id_rfid = ra.rfid_id', 'left')
+
+            ->where('magang.status_akhir', 'lulus')
+            ->orderBy('magang.tanggal_approve', 'DESC');
 
         if (!empty($bulan)) {
             $builder->where('MONTH(magang.tanggal_masuk)', $bulan);
@@ -1018,12 +1152,111 @@ class MagangController extends BaseController
             $builder->where('YEAR(magang.tanggal_masuk)', $tahun);
         }
 
-        $data = $builder->findAll();
+        $data = $builder->get()->getResultArray();
+
         $unitList = $this->unitKerjaModel->findAll();
         $rfid = $this->rfidModel->findAll();
 
-        return view('admin/kelola_alumni', ['data' => $data, 'unitList' => $unitList, 'rfidList' => $rfid, 'unitPembimbing' => $unitPembimbing]);
+        return view('admin/kelola_alumni', [
+            'data' => $data,
+            'unitList' => $unitList,
+            'rfidList' => $rfid,
+            'unitPembimbing' => $unitPembimbing
+        ]);
     }
+
+
+    //error agregad groupby
+    // public function alumniMagang()
+    // {
+    //     $bulan = $this->request->getGet('bulan');
+    //     $tahun = $this->request->getGet('tahun');
+
+    //     $db = \Config\Database::connect();
+    //     $userId = user_id();
+    //     $unitPembimbing = $db->table('unit_user')
+    //         ->select('unit_kerja.unit_id, unit_kerja.unit_kerja')
+    //         ->join('unit_kerja', 'unit_kerja.unit_id = unit_user.unit_id')
+    //         ->where('unit_user.user_id', $userId)
+    //         ->get()
+    //         ->getResultArray();
+        
+
+    //     $unitIds = array_column($unitPembimbing, 'unit_id');
+
+    //     // Ambil eselon user login
+    //     $userLogin = $db->table('users')
+    //         ->select('id, fullname, eselon')
+    //         ->where('id', $userId)
+    //         ->get()
+    //         ->getRowArray();
+
+    //     $builder = $this->magangModel->select('
+    //                         magang.*,
+    //                         unit_kerja.unit_kerja,
+    //                         users.*,
+    //                         jurusan.nama_jurusan,
+    //                         instansi.nama_instansi,
+    //                         penilaian.*,
+    //                         province_ktp.province AS provinsi_ktp,
+    //                         province_dom.province AS provinsi_domisili,
+    //                         city_ktp.regency AS kota_ktp, 
+    //                         city_ktp.type AS tipe_kota_ktp,
+    //                         city_dom.regency AS kota_domisili,
+    //                         city_dom.type AS tipe_kota_domisili,
+    //                         MAX(jawaban_safety.nilai) as nilai_maksimal,
+    //                         MAX(jawaban_safety.created_at) as tanggal_terakhir,
+    //                         MAX(jawaban_safety.percobaan_ke) as percobaan_terakhir,
+    //                         CASE 
+    //                             WHEN MAX(jawaban_safety.nilai) IS NULL THEN "Belum Tes"
+    //                             WHEN MAX(jawaban_safety.nilai) >= 70 THEN "Lulus"
+    //                             ELSE "Belum Lulus"
+    //                         END as status_tes,
+    //                         rfid.rfid_no, rfid.id_rfid, 
+    //                         ra.assignment_id, ra.status as status_rfid, ra.tanggal_kembali, ra.tanggal_bayar, 
+    //                         feedback.feedback_id, 
+    //                     ')
+    //                     ->join('users', 'users.id = magang.user_id')
+    //                     ->join('instansi', 'instansi.instansi_id = users.instansi_id')
+    //                     ->join('jurusan', 'jurusan.jurusan_id = users.jurusan_id')
+    //                     ->join('provinces AS province_ktp', 'province_ktp.id = users.province_id', 'left')
+    //                     ->join('provinces AS province_dom', 'province_dom.id = users.provinceDom_id', 'left')
+    //                     ->join('regencies AS city_ktp', 'city_ktp.id = users.city_id', 'left')
+    //                     ->join('regencies AS city_dom', 'city_dom.id = users.cityDom_id', 'left')
+    //                     ->join('unit_kerja', 'magang.unit_id = unit_kerja.unit_id')
+    //                     ->join('jawaban_safety', 'magang.magang_id = jawaban_safety.relasi_id AND jawaban_safety.tipe = "magang"', 'left')
+    //                     ->join('penilaian', 'penilaian.magang_id = magang.magang_id', 'left')
+    //                     ->join('feedback', 'feedback.magang_id = magang.magang_id', 'left')
+    //                     ->join("(
+    //                             SELECT r1.*
+    //                             FROM rfid_assignment r1
+    //                             JOIN (
+    //                                 SELECT relasi_id, MAX(tanggal_pinjam) AS max_created
+    //                                 FROM rfid_assignment
+    //                                 WHERE tipe = 'magang'
+    //                                 GROUP BY relasi_id
+    //                             ) r2 ON r1.relasi_id = r2.relasi_id AND r1.tanggal_pinjam = r2.max_created
+    //                         ) AS ra", 'ra.relasi_id = magang.magang_id', 'left')
+    //                     ->join('rfid', 'rfid.id_rfid = ra.rfid_id', 'left')
+    //                     ->where('magang.status_akhir', 'lulus')
+    //                     ->orderBy('magang.tanggal_approve')
+    //                     ->groupBy('magang.magang_id');
+
+
+    //     if (!empty($bulan)) {
+    //         $builder->where('MONTH(magang.tanggal_masuk)', $bulan);
+    //     }
+
+    //     if (!empty($tahun)) {
+    //         $builder->where('YEAR(magang.tanggal_masuk)', $tahun);
+    //     }
+
+    //     $data = $builder->findAll();
+    //     $unitList = $this->unitKerjaModel->findAll();
+    //     $rfid = $this->rfidModel->findAll();
+
+    //     return view('admin/kelola_alumni', ['data' => $data, 'unitList' => $unitList, 'rfidList' => $rfid, 'unitPembimbing' => $unitPembimbing]);
+    // }
 
     // public function setApproveMagang()
     // {

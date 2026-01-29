@@ -547,7 +547,7 @@ class CronController extends BaseController
             $this->email->setTo($emailUnit);
 
             // ✅ SALINAN EMAIL YANG SAMA KE ADMIN
-            $this->email->setBCC('virayukia1234@gmail.com');
+            $this->email->setBCC('musmardi@sig.id');
 
             $this->email->setSubject($subject);
             $this->email->setMailType('html');

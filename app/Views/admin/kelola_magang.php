@@ -258,7 +258,11 @@
         <div class="table-responsive">
             
 
-            <a href="<?= base_url('admin/export-peserta?bulan_masuk='.service('request')->getGet('bulan_masuk').'&bulan_keluar='.service('request')->getGet('bulan_keluar').'&tahun='.service('request')->getGet('tahun')) ?>" 
+            <!-- <a href="<?= base_url('admin/export-peserta?'.'unit_kerja='.service('request')->getGet('unit_kerja').'&tanggal_masuk='.service('request')->getGet('tanggal_masuk').'&tanggal_keluar='.service('request')->getGet('tanggal_keluar').'&') ?>" 
+                class="btn btn-success mb-3">
+                <i class="bi bi-file-earmark-excel"></i> Export Excel
+            </a> -->
+            <a href="<?= base_url('admin/export-peserta?' . http_build_query(service('request')->getGet())) ?>"
                 class="btn btn-success mb-3">
                 <i class="bi bi-file-earmark-excel"></i> Export Excel
             </a>

@@ -97,6 +97,14 @@ $routes->group('admin', ['namespace' => 'App\Controllers\Admin','filter' => ['ad
     $routes->get('manage-user-pembimbing/delete/(:num)', 'UserController::deletePembimbing/$1');
     $routes->post('manage-user-pembimbing/import', 'UserController::importExcel');
 
+    //Kelola Struktur
+    $routes->get('manage-struktur', 'StrukturController::index');
+    // $routes->get('manage-strukturnew', 'StrukturController::indexnew');
+    $routes->post('struktur/save-position', 'StrukturController::savePosition');
+    $routes->post('struktur/assign-user', 'StrukturController::assignUser');
+    $routes->get('struktur/remove-user/(:num)', 'StrukturController::removeUser/$1');
+    $routes->get('struktur/delete-position/(:num)', 'StrukturController::deletePOsition/$1');
+
 
     //Kelola Unit Kerja
     $routes->get('kelola-unit', 'UnitKerjaController::index');

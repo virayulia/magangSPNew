@@ -79,7 +79,6 @@
             <tr>
                 <th>No</th>
                 <th>Nama Mahasiswa</th>
-                <!-- <th>Jurusan</th> -->
                 <th>Judul Penelitian</th>
                 <th>Deskripsi</th>
                 <th>Tanggal Daftar</th>
@@ -91,11 +90,29 @@
           <tbody>
             <?php $no=1; foreach ($penelitian as $p): ?>
               <tr>
-                <td rowspan="2"><?= $no++ ?></td>
+                <td><?= $no++ ?></td>
                 <td><?= esc($p->fullname) ?></td>
-                <!-- <td><?= esc($p->nama_jurusan) ?></td> -->
                 <td><?= esc($p->judul_penelitian) ?></td>
-                <td><?= esc($p->deskripsi) ?></td>
+                <td>
+                    <?php
+                        $deskripsi = strip_tags($p->deskripsi);
+                        $limit = 150;
+                    ?>
+
+                    <span class="short-text">
+                        <?= esc(substr($deskripsi, 0, $limit)) ?>
+                        <?= strlen($deskripsi) > $limit ? '...' : '' ?>
+                    </span>
+
+                    <?php if (strlen($deskripsi) > $limit): ?>
+                        <span class="full-text d-none">
+                            <?= esc($deskripsi) ?>
+                        </span>
+                        <a href="javascript:void(0)" class="toggle-text text-primary" data-state="closed">
+                            Lihat selengkapnya
+                        </a>
+                    <?php endif; ?>
+                </td>
                 <td><?= date('d M Y H:i', strtotime($p->tanggal_daftar)) ?></td>
                 <td><?= esc($p->dosen_pembimbing) ?></td>
                 <td>
@@ -130,8 +147,6 @@
                         <span class="badge bg-secondary text-light">Pendaftaran</span>
                     <?php endif; ?>
                 </td>
-
-
 
                 <td>
                   <div class="aksi-wrapper">
@@ -246,8 +261,35 @@
     </form>
   </div>
 </div>
+<script>
+document.addEventListener('click', function (e) {
+    if (e.target.classList.contains('toggle-text')) {
+        let btn = e.target;
+        let td = btn.closest('td');
+
+        let shortText = td.querySelector('.short-text');
+        let fullText  = td.querySelector('.full-text');
+
+        shortText.classList.toggle('d-none');
+        fullText.classList.toggle('d-none');
+
+        // pakai state
+        if (btn.dataset.state === 'open') {
+            btn.textContent = 'Lihat selengkapnya';
+            btn.dataset.state = 'closed';
+        } else {
+            btn.textContent = 'Sembunyikan';
+            btn.dataset.state = 'open';
+        }
+    }
+});
+</script>
 
 <script>
+function linkFile(folder, filename) {
+    if (!filename) return 'Belum Ada';
+    return `<a href="<?= base_url('uploads/') ?>${folder}/${filename}" target="_blank">Lihat</a>`;
+}
 function bukaModalTerima(id) {
   $('#modalTerimaSatu').modal('show');
   $('#penelitian_id').val(id);
@@ -275,7 +317,9 @@ function bukaModalTerima(id) {
           <strong>Rencana Masuk:</strong> ${res.penelitian.rencana_masuk_formatted} (${res.penelitian.durasi} bulan)<br>
           <strong>Jurusan:</strong> ${res.penelitian.nama_jurusan}<br>
           <strong>Judul:</strong> ${res.penelitian.judul_penelitian}<br>
-          <strong>Keyword:</strong> ${res.penelitian.keywords || '-'}
+          <strong>Keyword:</strong> ${res.penelitian.keywords || '-'}<br>
+          <strong>CV:</strong> ${linkFile('cv', res.penelitian.cv)}<br>
+          <strong>Surat Permohonan:</strong> ${linkFile('cv', res.penelitian.surat_permohonan)}
         `);
       } else {
         $('#unit_id').html('<option value="">Tidak ada rekomendasi ditemukan.</option>');

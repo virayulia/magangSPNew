@@ -1413,7 +1413,200 @@ class MagangController extends BaseController
     //         'totalKuota' => $totalKuota
     //     ]);
     // }
+
     public function pesertaMagang()
+    {
+        $unitId  = $this->request->getGet('unit_kerja');
+        $bulanMasuk  = $this->request->getGet('tanggal_masuk'); 
+        $bulanKeluar = $this->request->getGet('tanggal_keluar');
+        $filter = $this->request->getGet('filter');
+        $tingkat = $this->request->getGet('tingkat');
+        $today = date('Y-m-d');
+
+        // Subquery safety – ambil percobaan TERAKHIR
+        $subSafety = "
+            (
+                SELECT js1.*
+                FROM jawaban_safety js1
+                JOIN (
+                    SELECT relasi_id, MAX(created_at) AS max_created
+                    FROM jawaban_safety
+                    WHERE tipe = 'magang'
+                    GROUP BY relasi_id
+                ) js2 
+                ON js1.relasi_id = js2.relasi_id 
+                AND js1.created_at = js2.max_created
+            ) AS js
+        ";
+
+        // Subquery RFID – ambil assignment terakhir
+        $subRfid = "
+            (
+                SELECT r1.*
+                FROM rfid_assignment r1
+                JOIN (
+                    SELECT relasi_id, MAX(assignment_id) AS max_assign
+                    FROM rfid_assignment
+                    WHERE tipe = 'magang'
+                    GROUP BY relasi_id
+                ) r2 
+                ON r1.relasi_id = r2.relasi_id 
+                AND r1.assignment_id = r2.max_assign
+            ) AS ra
+        ";
+        
+        $mapTingkat = [
+            'SMK' => ['SMK'],
+            'Perguruan Tinggi' => ['D3', 'D4/S1', 'S2']
+        ];
+
+        $builder = $this->magangModel
+            ->select('
+                magang.*,
+                unit_kerja.unit_id, unit_kerja.unit_kerja,
+                users.id as user_id, users.fullname, users.nisn_nim, users.tingkat_pendidikan,
+
+                MAX(js.nilai) as nilai_maksimal, 
+
+                rfid.rfid_no, rfid.id_rfid,
+                ra.assignment_id, ra.status as status_rfid, ra.tanggal_kembali, ra.tanggal_bayar,
+                feedback.feedback_id,
+                penilaian.nilai_disiplin, penilaian.nilai_kerajinan, penilaian.nilai_tingkahlaku, penilaian.nilai_kerjasama,
+                penilaian.nilai_kreativitas, penilaian.nilai_kemampuankerja, penilaian.nilai_tanggungjawab, penilaian.nilai_penyerapan,
+                penilaian.tgl_penilaian, penilaian.approve_kaunit, penilaian.tgl_disetujui, penilaian.approve_by, penilaian.catatan, penilaian.catatan_approval,
+                pembimbing.fullname AS nama_pembimbing, pembimbing.id AS pembimbing_id
+            ')
+            ->select("
+                CASE 
+                    WHEN MAX(js.nilai) IS NULL THEN '-'      
+                    WHEN MAX(js.nilai) >= 70 THEN 'Lulus'   
+                    ELSE 'Belum Lulus'
+                END AS status_tes
+            ", false)
+            ->join('users', 'users.id = magang.user_id')
+            ->join('unit_kerja', 'unit_kerja.unit_id = magang.unit_id')
+            ->join($subSafety, 'js.relasi_id = magang.magang_id', 'left')
+            ->join('penilaian', 'penilaian.magang_id = magang.magang_id', 'left')
+            ->join('feedback', 'feedback.magang_id = magang.magang_id', 'left')
+            ->join($subRfid, 'ra.relasi_id = magang.magang_id', 'left')
+            ->join('rfid', 'rfid.id_rfid = ra.rfid_id', 'left')
+            ->join('users pembimbing', 'pembimbing.id = magang.pembimbing_id', 'left')
+            ->where('magang.status_akhir', 'magang')
+            ->groupBy('magang.magang_id'); // tetap
+
+        // Filter tanggal masuk
+        if ($bulanMasuk) {
+            $builder->where('magang.tanggal_masuk >=', $bulanMasuk . '-01');
+            $builder->where(
+                'magang.tanggal_masuk <',
+                date('Y-m-01', strtotime($bulanMasuk . ' +1 month'))
+            );
+        }
+
+        // Filter tanggal keluar
+        if ($bulanKeluar) {
+            $builder->where('magang.tanggal_selesai >=', $bulanKeluar . '-01');
+            $builder->where(
+                'magang.tanggal_selesai <',
+                date('Y-m-01', strtotime($bulanKeluar . ' +1 month'))
+            );
+        }
+
+        if (!empty($unitId)) {
+            $builder->where('magang.unit_id', $unitId);
+        }
+
+        if (!empty($tingkat) && isset($mapTingkat[$tingkat])) {
+            $builder->whereIn('users.tingkat_pendidikan', $mapTingkat[$tingkat]);
+        }
+
+        if ($filter == 'aktif') {
+            $builder->where('magang.tanggal_masuk <=', $today)
+                    ->where('magang.tanggal_selesai >=', $today);
+        }
+
+        if ($filter == 'akan_magang') {
+            $builder->where('magang.tanggal_masuk >', $today);
+        }
+
+        if ($filter == 'belum_selesai') {
+            $builder->where('magang.tanggal_selesai <', $today);
+        }
+
+        $data = $builder->asArray()->findAll();
+
+        $unitList = $this->unitKerjaModel->findAll();
+        $rfid = $this->rfidModel->findAll();
+
+        $today = date('Y-m-d');
+
+        $chartData = [
+                'SMK' => [
+                    'proses' => 0,
+                    'aktif' => 0,
+                    'akan_masuk' => 0,
+                    'belum_lulus' => 0
+                ],
+                'Perguruan Tinggi' => [
+                    'proses' => 0,
+                    'aktif' => 0,
+                    'akan_masuk' => 0,
+                    'belum_lulus' => 0
+                ]
+            ];
+
+        foreach ($data as $row) {
+
+            // Tentukan kelompok tingkat pendidikan
+            $tingkat = $row['tingkat_pendidikan'];
+
+            // Normalisasi (karena PT punya D3, D4/S1, S2)
+            if (in_array($tingkat, ['D3', 'D4/S1', 'S2'])) {
+                $tingkat = 'Perguruan Tinggi';
+            } elseif ($tingkat === 'SMK') {
+                $tingkat = 'SMK';
+            } else {
+                continue; // skip jika bukan dua kategori ini
+            }
+
+            // 1. PROSES — status_akhir = proses
+            if ($row['status_akhir'] === 'proses') {
+                $chartData[$tingkat]['proses']++;
+            }
+
+            // 2. AKTIF — sedang magang sekarang
+            if ($row['tanggal_masuk'] <= $today && $row['tanggal_selesai'] >= $today) {
+                $chartData[$tingkat]['aktif']++;
+            }
+
+            // 3. AKAN MASUK — tanggal masuk di masa mendatang
+            if ($row['tanggal_masuk'] > $today) {
+                $chartData[$tingkat]['akan_masuk']++;
+            }
+
+            // 4. BELUM LULUS — sudah lewat tapi status akhir masih magang
+            if ($row['tanggal_selesai'] < $today && $row['status_akhir'] === 'magang') {
+                $chartData[$tingkat]['belum_lulus']++;
+            }
+        }
+
+        $unitGet = $unitId ?? '';
+
+        // atau pastikan string kosong jika null
+        if ($unitGet === null) $unitGet = '';
+
+        return view('admin/kelola_magang', [
+            'data' => $data,
+            'unitList' => $unitList,
+            'rfidList' => $rfid,
+            'chartData' => $chartData,
+            'unitGet' => $unitId ?? ''
+        ]);
+    }
+
+
+    //error js.nilai karena tidak sesuai mysql terbaru
+    public function pesertaMagangold()
     {
         $unitId  = $this->request->getGet('unit_kerja');
         $bulanMasuk  = $this->request->getGet('tanggal_masuk'); 
@@ -2442,9 +2635,127 @@ class MagangController extends BaseController
         return redirect()->back()->with('success', 'Finalisasi Berhasil & Email Terkirim');
     }
 
-
-
     public function alumniMagang()
+    {
+        $bulan = $this->request->getGet('bulan');
+        $tahun = $this->request->getGet('tahun');
+
+        // ✅ PERBAIKAN: subquery penilaian TERAKHIR
+        $subPenilaian = "
+            (
+                SELECT p1.*
+                FROM penilaian p1
+                JOIN (
+                    SELECT magang_id, MAX(penilaian_id) AS max_id
+                    FROM penilaian
+                    GROUP BY magang_id
+                ) p2 
+                ON p1.magang_id = p2.magang_id 
+                AND p1.penilaian_id = p2.max_id
+            ) AS p
+        ";
+
+        $builder = $this->magangModel->select('
+            magang.*,
+            unit_kerja.unit_kerja,
+            users.*,
+            jurusan.nama_jurusan,
+            instansi.nama_instansi,
+
+            -- penilaian terakhir (AMAN)
+            p.penilaian_id,
+            p.nilai_disiplin,
+            p.nilai_kerajinan,
+            p.nilai_tingkahlaku,
+            p.nilai_kerjasama,
+            p.nilai_kreativitas,
+            p.nilai_kemampuankerja,
+            p.nilai_tanggungjawab,
+            p.nilai_penyerapan,
+            p.tgl_penilaian,
+            p.approve_kaunit,
+            p.tgl_disetujui,
+            p.approve_by,
+            p.catatan,
+            p.catatan_approval,
+
+            province_ktp.province AS provinsi_ktp,
+            province_dom.province AS provinsi_domisili,
+            city_ktp.regency AS kota_ktp, 
+            city_ktp.type AS tipe_kota_ktp,
+            city_dom.regency AS kota_domisili,
+            city_dom.type AS tipe_kota_domisili,
+
+            MAX(jawaban_safety.nilai) AS nilai_maksimal,
+            MAX(jawaban_safety.created_at) AS tanggal_terakhir,
+            MAX(jawaban_safety.percobaan_ke) AS percobaan_terakhir,
+
+            CASE 
+                WHEN MAX(jawaban_safety.nilai) IS NULL THEN "Belum Tes"
+                WHEN MAX(jawaban_safety.nilai) >= 70 THEN "Lulus"
+                ELSE "Belum Lulus"
+            END AS status_tes,
+
+            rfid.rfid_no, 
+            rfid.id_rfid, 
+            ra.assignment_id, 
+            ra.status AS status_rfid, 
+            ra.tanggal_kembali, 
+            ra.tanggal_bayar, 
+            feedback.feedback_id
+        ')
+        ->join('users', 'users.id = magang.user_id')
+        ->join('instansi', 'instansi.instansi_id = users.instansi_id')
+        ->join('jurusan', 'jurusan.jurusan_id = users.jurusan_id')
+        ->join('provinces AS province_ktp', 'province_ktp.id = users.province_id', 'left')
+        ->join('provinces AS province_dom', 'province_dom.id = users.provinceDom_id', 'left')
+        ->join('regencies AS city_ktp', 'city_ktp.id = users.city_id', 'left')
+        ->join('regencies AS city_dom', 'city_dom.id = users.cityDom_id', 'left')
+        ->join('unit_kerja', 'magang.unit_id = unit_kerja.unit_id')
+        ->join('jawaban_safety', 'magang.magang_id = jawaban_safety.relasi_id AND jawaban_safety.tipe = "magang"', 'left')
+
+        // ❌ join penilaian lama DIHAPUS
+        ->join($subPenilaian, 'p.magang_id = magang.magang_id', 'left') // ✅ PERBAIKAN
+
+        ->join('feedback', 'feedback.magang_id = magang.magang_id', 'left')
+        ->join("(
+            SELECT r1.*
+            FROM rfid_assignment r1
+            JOIN (
+                SELECT relasi_id, MAX(tanggal_pinjam) AS max_created
+                FROM rfid_assignment
+                WHERE tipe = 'magang'
+                GROUP BY relasi_id
+            ) r2 
+            ON r1.relasi_id = r2.relasi_id 
+            AND r1.tanggal_pinjam = r2.max_created
+        ) AS ra", 'ra.relasi_id = magang.magang_id', 'left')
+        ->join('rfid', 'rfid.id_rfid = ra.rfid_id', 'left')
+        ->where('magang.status_akhir', 'lulus')
+        ->groupBy('magang.magang_id');
+
+        if (!empty($bulan)) {
+            $builder->where('MONTH(magang.tanggal_masuk)', $bulan);
+        }
+
+        if (!empty($tahun)) {
+            $builder->where('YEAR(magang.tanggal_masuk)', $tahun);
+        }
+
+        $data = $builder->findAll();
+        $unitList = $this->unitKerjaModel->findAll();
+        $rfid = $this->rfidModel->findAll();
+
+        return view('admin/kelola_alumni', [
+            'data' => $data,
+            'unitList' => $unitList,
+            'rfidList' => $rfid
+        ]);
+    }
+  
+
+    //error agregad penilaian_id
+    public function alumniMagangold()
     {
         $bulan = $this->request->getGet('bulan');
         $tahun = $this->request->getGet('tahun');
@@ -3226,10 +3537,17 @@ class MagangController extends BaseController
     public function exportPeserta()
     {
         // ambil filter 
-        $bulanMasuk = $this->request->getGet('bulan_masuk');
-        $bulanKeluar = $this->request->getGet('bulan_keluar');
-        $tahun = $this->request->getGet('tahun');
-
+        $bulanMasuk = $this->request->getGet('tanggal_masuk');
+        $bulanKeluar = $this->request->getGet('tanggal_keluar');
+        $unitKerja = $this->request->getGet('unit_kerja');
+        $filter = $this->request->getGet('filter');
+        $tingkat = $this->request->getGet('tingkat');
+        $today = date('Y-m-d');
+        
+        $mapTingkat = [
+                'SMK' => ['SMK'],
+                'Perguruan Tinggi' => ['D3', 'D4/S1', 'S2']
+        ];
         // ambil data 
         $builder = $this->magangModel->select('users.fullname, users.nisn_nim, users.tingkat_pendidikan, jurusan.nama_jurusan, instansi.nama_instansi, 
                                             unit_kerja.unit_kerja, magang.tanggal_masuk, magang.tanggal_selesai, magang.durasi')
@@ -3240,15 +3558,44 @@ class MagangController extends BaseController
                                         ->where('magang.status_akhir', 'magang');
 
 
+        // Filter tanggal masuk
         if ($bulanMasuk) {
-        $builder->where('MONTH(tanggal_masuk)', $bulanMasuk);
+            $builder->where('magang.tanggal_masuk >=', $bulanMasuk . '-01');
+            $builder->where(
+                'magang.tanggal_masuk <',
+                date('Y-m-01', strtotime($bulanMasuk . ' +1 month'))
+            );
         }
+
+        // Filter tanggal keluar
         if ($bulanKeluar) {
-            $builder->where('MONTH(tanggal_selesai)', $bulanKeluar);
+            $builder->where('magang.tanggal_selesai >=', $bulanKeluar . '-01');
+            $builder->where(
+                'magang.tanggal_selesai <',
+                date('Y-m-01', strtotime($bulanKeluar . ' +1 month'))
+            );
         }
-        if ($tahun) {
-            $builder->where('YEAR(tanggal_masuk)', $tahun);
+        if ($unitKerja) {
+            $builder->where('magang.unit_id', $unitKerja);
         }
+
+        if (!empty($tingkat) && isset($mapTingkat[$tingkat])) {
+            $builder->whereIn('users.tingkat_pendidikan', $mapTingkat[$tingkat]);
+        }
+
+        if ($filter == 'aktif') {
+            $builder->where('magang.tanggal_masuk <=', $today)
+                    ->where('magang.tanggal_selesai >=', $today);
+        }
+
+        if ($filter == 'akan_magang') {
+            $builder->where('magang.tanggal_masuk >', $today);
+        }
+
+        if ($filter == 'belum_selesai') {
+            $builder->where('magang.tanggal_selesai <', $today);
+        }
+
         $data = $builder->get()->getResultArray();
 
         $spreadsheet = new Spreadsheet();
@@ -3300,6 +3647,9 @@ class MagangController extends BaseController
         $bulanMasuk = $this->request->getGet('bulan_masuk');
         $bulanKeluar = $this->request->getGet('bulan_keluar');
         $tahun = $this->request->getGet('tahun');
+        $filter = $this->request->getGet('filter');
+        $tingkat = $this->request->getGet('tingkat');
+        $today = date('Y-m-d');
 
         // ambil data 
         $builder = $this->magangModel->select('users.fullname, users.nisn_nim, users.tingkat_pendidikan, jurusan.nama_jurusan, instansi.nama_instansi, 
