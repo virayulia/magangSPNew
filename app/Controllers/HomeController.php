@@ -96,7 +96,7 @@ class HomeController extends BaseController
             $userId = user_id();
             $cekPendaftaran = $db->table('magang')
                 ->where('user_id', $userId)
-                ->whereIn('status_akhir', ['pendaftaran', 'proses', 'magang', 'lulus'])
+                ->whereIn('status_akhir', ['pendaftaran', 'proses', 'magang'])
                 ->get()
                 ->getRow();
 

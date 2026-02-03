@@ -867,30 +867,28 @@ const makeRedirect = (filter, tingkat) => {
 
 // Data SMK
 const dataSmk = {
-    labels: ['Proses Daftar', 'Aktif Magang', 'Akan Magang', 'Belum Lulus'],
+    labels: ['Aktif Magang', 'Akan Magang', 'Belum Lulus'],
     values: [
-        <?= $chartData['SMK']['proses'] ?>,
         <?= $chartData['SMK']['aktif'] ?>,
         <?= $chartData['SMK']['akan_masuk'] ?>,
         <?= $chartData['SMK']['belum_lulus'] ?>
     ],
-    filters: ['proses', 'aktif', 'akan_magang', 'belum_selesai']
+    filters: [ 'aktif', 'akan_magang', 'belum_selesai']
 };
 
 // Data PT
 const dataPt = {
-    labels: ['Proses Daftar', 'Aktif Magang', 'Akan Magang', 'Belum Lulus'],
+    labels: [ 'Aktif Magang', 'Akan Magang', 'Belum Lulus'],
     values: [
-        <?= $chartData['Perguruan Tinggi']['proses'] ?>,
         <?= $chartData['Perguruan Tinggi']['aktif'] ?>,
         <?= $chartData['Perguruan Tinggi']['akan_masuk'] ?>,
         <?= $chartData['Perguruan Tinggi']['belum_lulus'] ?>
     ],
-    filters: ['proses', 'aktif', 'akan_magang', 'belum_selesai']
+    filters: [ 'aktif', 'akan_magang', 'belum_selesai']
 };
 
 // COLORS 
-const colors = ['#4e73df', '#1cc88a', '#36b9cc', '#5a5c69'];
+const colors = ['#1cc88a', '#36b9cc', '#5a5c69'];
 
 function makePie(canvasId, data, tingkat) {
 
