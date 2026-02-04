@@ -891,8 +891,7 @@ class MagangController extends BaseController
             ->join('rfid', 'rfid.id_rfid = ra.rfid_id', 'left')
 
             ->where('magang.status_akhir', 'magang')
-            ->where('magang.finalisasi IS NOT NULL', null, false)
-            ->whereIn('magang.unit_id', $unitIds);
+            ->where('magang.finalisasi IS NOT NULL', null, false);
 
 
         $peserta = $builder->get()->getResultArray();
@@ -1303,7 +1302,6 @@ class MagangController extends BaseController
             ->join('rfid', 'rfid.id_rfid = ra.rfid_id', 'left')
 
             ->where('magang.status_akhir', 'lulus')
-            ->whereIn('magang.unit_id', $unitIds)
             ->orderBy('magang.tanggal_approve', 'DESC');
 
 
