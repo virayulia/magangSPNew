@@ -3923,7 +3923,7 @@ class MagangController extends BaseController
                 'Perguruan Tinggi' => ['D3', 'D4/S1', 'S2']
         ];
         // ambil data 
-        $builder = $this->magangModel->select('users.fullname, users.nisn_nim, users.tingkat_pendidikan, jurusan.nama_jurusan, instansi.nama_instansi, 
+        $builder = $this->magangModel->select('users.email, users.no_hp , users.fullname, users.nisn_nim, users.tingkat_pendidikan, jurusan.nama_jurusan, instansi.nama_instansi, 
                                             unit_kerja.unit_kerja, magang.tanggal_masuk, magang.tanggal_selesai, magang.durasi')
                                         ->join('users', 'users.id = magang.user_id')
                                         ->join('instansi', 'instansi.instansi_id = users.instansi_id', 'left')
@@ -3976,28 +3976,32 @@ class MagangController extends BaseController
         $sheet = $spreadsheet->getActiveSheet();
 
         // Header kolom
-        $sheet->setCellValue('A1', 'Nama');
-        $sheet->setCellValue('B1', 'NIM/NISN');
-        $sheet->setCellValue('C1', 'Tingkatan');
-        $sheet->setCellValue('D1', 'Jurusan');
-        $sheet->setCellValue('E1', 'Nama PT/SMK');
-        $sheet->setCellValue('F1', 'Unit Kerja');
-        $sheet->setCellValue('G1', 'Tanggal Masuk');
-        $sheet->setCellValue('H1', 'Tanggal Selesai');
-        $sheet->setCellValue('I1', 'Durasi');
+        $sheet->setCellValue('A1', 'Email');
+        $sheet->setCellValue('B1', 'No HP');
+        $sheet->setCellValue('C1', 'Nama');
+        $sheet->setCellValue('D1', 'NIM/NISN');
+        $sheet->setCellValue('E1', 'Tingkatan');
+        $sheet->setCellValue('F1', 'Jurusan');
+        $sheet->setCellValue('G1', 'Nama PT/SMK');
+        $sheet->setCellValue('H1', 'Unit Kerja');
+        $sheet->setCellValue('I1', 'Tanggal Masuk');
+        $sheet->setCellValue('J1', 'Tanggal Selesai');
+        $sheet->setCellValue('K1', 'Durasi');
 
         // Isi data
         $row = 2;
         foreach ($data as $d) {
-            $sheet->setCellValue('A' . $row, $d['fullname']);
-            $sheet->setCellValue('B' . $row, $d['nisn_nim']);
-            $sheet->setCellValue('C' . $row, $d['tingkat_pendidikan']);
-            $sheet->setCellValue('D' . $row, $d['nama_jurusan']);
-            $sheet->setCellValue('E' . $row, $d['nama_instansi']);
-            $sheet->setCellValue('F' . $row, $d['unit_kerja']);
-            $sheet->setCellValue('G' . $row, date('d-m-Y', strtotime($d['tanggal_masuk'])));
-            $sheet->setCellValue('H' . $row, date('d-m-Y', strtotime($d['tanggal_selesai'])));
-            $sheet->setCellValue('I' . $row, $d['durasi']);
+            $sheet->setCellValue('A' . $row, $d['email']);
+            $sheet->setCellValue('B' . $row, $d['no_hp']);
+            $sheet->setCellValue('C' . $row, $d['fullname']);
+            $sheet->setCellValue('D' . $row, $d['nisn_nim']);
+            $sheet->setCellValue('E' . $row, $d['tingkat_pendidikan']);
+            $sheet->setCellValue('F' . $row, $d['nama_jurusan']);
+            $sheet->setCellValue('G' . $row, $d['nama_instansi']);
+            $sheet->setCellValue('H' . $row, $d['unit_kerja']);
+            $sheet->setCellValue('I' . $row, date('d-m-Y', strtotime($d['tanggal_masuk'])));
+            $sheet->setCellValue('J' . $row, date('d-m-Y', strtotime($d['tanggal_selesai'])));
+            $sheet->setCellValue('K' . $row, $d['durasi']);
             $row++;
         }
 
