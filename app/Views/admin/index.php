@@ -207,6 +207,60 @@
 </div>
 
 <script>
+function batalkanMagang(id, modalId) {
+    // Tutup modal Bootstrap dulu
+    $('#' + modalId).modal('hide');
+
+    // Delay agar modal benar-benar tertutup sebelum SweetAlert muncul
+    setTimeout(function() {
+        Swal.fire({
+            title: 'Batalkan Magang?',
+            input: 'textarea',
+            inputLabel: 'Alasan Pembatalan',
+            inputPlaceholder: 'Tulis alasan pembatalan di sini...',
+            inputAttributes: {
+                'aria-label': 'Tulis alasan pembatalan'
+            },
+            showCancelButton: true,
+            confirmButtonText: 'Kirim',
+            cancelButtonText: 'Batal',
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            preConfirm: (alasan) => {
+                if (!alasan) {
+                    Swal.showValidationMessage('Alasan pembatalan wajib diisi.');
+                }
+                return alasan;
+            }
+        }).then((result) => {
+            if (result.isConfirmed) {
+                fetch('<?= base_url('admin/batalkanMagang') ?>', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    },
+                    body: new URLSearchParams({
+                        'id': id,
+                        'alasan': result.value
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        Swal.fire('Berhasil', 'Peserta magang telah dibatalkan.', 'success')
+                            .then(() => location.reload());
+                    } else {
+                        Swal.fire('Gagal', 'Terjadi kesalahan.', 'error');
+                    }
+                });
+            }
+        });
+    }, 300); 
+}
+
+</script>
+
+<script>
 const statusLabels = [
     "Pendaftaran",
     "Proses Validasi",

@@ -262,7 +262,7 @@ $routes->group('admin', ['namespace' => 'App\Controllers\Admin','filter' => ['ad
     $routes->get('getDataPembimbingPenelitian/(:num)', 'PenelitianController::getDataPembimbing/$1');
     $routes->post('setPembimbingPenelitian/(:num)', 'PenelitianController::setPembimbing/$1');
 
-
+    $routes->get('export-peserta-penelitian', 'PenelitianController::exportPeserta');
 
 
 

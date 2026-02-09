@@ -275,11 +275,18 @@ if ($hariKe == 6) {
             <label class="form-label fw-semibold">Durasi Magang <span class="text-danger">*</span></label>
             <select class="form-select" name="durasi" id="durasiSelect" required>
             <option value="">-- Pilih Durasi --</option>
-            <?php for ($i = 1; $i <= 6; $i++): ?>
-                <option value="<?= $i ?>"><?= $i ?> bulan</option>
+            <?php 
+              $hariPerBulan = 22;
+
+              for ($i = 1; $i <= 6; $i++): 
+                  $hariKerja = $i * $hariPerBulan;
+              ?>
+                  <option value="<?= $i ?>">
+                      <?= $i ?> bulan (± <?= $hariKerja ?> hari kerja)
+                  </option>
             <?php endfor; ?>
             </select>
-            </div>
+          </div>
         </form>
       </div>
       <div class="modal-footer justify-content-between">

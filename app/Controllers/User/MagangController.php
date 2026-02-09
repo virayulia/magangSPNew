@@ -140,7 +140,7 @@ class MagangController extends BaseController
         // Cek apakah user sudah pernah daftar magang (status belum ditolak)
         $existingMagang = $this->magangModel
             ->where('user_id', $userId)
-            ->whereIn('status_akhir', ['pendaftaran', 'proses', 'magang','lulus']) // status belum ditolak
+            ->whereIn('status_akhir', ['pendaftaran', 'proses', 'magang']) // status belum ditolak
             ->first();
 
         // Cek apakah user sedang daftar penelitian (status belum ditolak)
@@ -306,6 +306,15 @@ class MagangController extends BaseController
             ->limit(1)
             ->get()
             ->getRow();
+
+        // Ambil semua riwayat pendaftaran (untuk ditampilkan sebagai histori)
+        $data['histori'] = $this->magangModel
+            ->where('user_id', $userId)
+            ->join('unit_kerja', 'unit_kerja.unit_id = magang.unit_id')
+            ->select('magang.*, unit_kerja.unit_kerja')
+            ->whereNotIn('magang.status_akhir', ['pendaftaran', 'proses', 'magang', 'batal'])
+            ->orderBy('magang.tanggal_daftar', 'DESC')
+            ->findAll();
        
 
         // Kalau sudah lulus, tampilkan view pelaksanaan normal
@@ -313,7 +322,8 @@ class MagangController extends BaseController
             'periode'   => $periode,
             'user_data' => $userData,
             'pendaftaran' => $pendaftaran,
-            'riwayat_safety' => $riwayatSafety
+            'riwayat_safety' => $riwayatSafety,
+            'histori' => $data['histori'],
         ]);
     }
 
@@ -605,6 +615,15 @@ class MagangController extends BaseController
             ->limit(1)
             ->get()
             ->getRow();
+        
+        // Ambil semua riwayat pendaftaran (untuk ditampilkan sebagai histori)
+        $data['histori'] = $this->magangModel
+            ->where('user_id', $userId)
+            ->join('unit_kerja', 'unit_kerja.unit_id = magang.unit_id')
+            ->select('magang.*, unit_kerja.unit_kerja')
+            ->whereNotIn('magang.status_akhir', ['pendaftaran', 'proses', 'magang', 'batal'])
+            ->orderBy('magang.tanggal_daftar', 'DESC')
+            ->findAll();
        
 
         // Kalau sudah lulus, tampilkan view pelaksanaan normal
@@ -612,6 +631,7 @@ class MagangController extends BaseController
             'periode'   => $periode,
             'user_data' => $userData,
             'pendaftaran' => $pendaftaran,
+            'histori' => $data['histori'],
             // 'riwayat_safety' => $riwayatSafety
         ]);
     }
@@ -757,6 +777,15 @@ class MagangController extends BaseController
                 ->get()
                 ->getRow();
         }
+
+        $data['histori'] = $this->magangModel
+            ->where('user_id', $userId)
+            ->join('unit_kerja', 'unit_kerja.unit_id = magang.unit_id')
+            ->join('sertifikat_magang','sertifikat_magang.magang_id = magang.magang_id')
+            ->select('magang.*, unit_kerja.unit_kerja, sertifikat_magang.file_sertifikat')
+            ->whereNotIn('magang.status_akhir', ['pendaftaran', 'proses', 'magang', 'batal'])
+            ->orderBy('magang.tanggal_daftar', 'DESC')
+            ->findAll();
             
         // Kalau sudah lulus, tampilkan view pelaksanaan normal
         return view('user/sertifikat-magang', [
@@ -764,7 +793,8 @@ class MagangController extends BaseController
             'user_data' => $userData,
             'penilaian' => $penilaian,
             'pendaftaran' => $pendaftaran,  
-            'feedback'    => $feedback
+            'feedback'    => $feedback,
+            'histori' => $data['histori'],
         ]);
     }
 

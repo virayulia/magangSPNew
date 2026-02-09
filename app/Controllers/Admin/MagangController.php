@@ -2379,7 +2379,8 @@ class MagangController extends BaseController
                 users.fullname, users.nisn_nim,
                 penilaian.nilai_disiplin, penilaian.nilai_kerajinan, penilaian.nilai_tingkahlaku,
                 penilaian.nilai_kerjasama, penilaian.nilai_kreativitas, penilaian.nilai_kemampuankerja,
-                penilaian.nilai_tanggungjawab, penilaian.nilai_penyerapan, penilaian.catatan, penilaian.tgl_penilaian,
+                penilaian.nilai_tanggungjawab, penilaian.nilai_penyerapan, penilaian.catatan, 
+                penilaian.tgl_penilaian, penilaian.tgl_disetujui,
                 unit_kerja.unit_kerja
             ')
             ->join('users', 'users.id = magang.user_id')
@@ -2396,6 +2397,12 @@ class MagangController extends BaseController
             $data['tgl_penilaian_format'] = format_tanggal_indonesia_dengan_jam($data['tgl_penilaian']);
         } else {
             $data['tgl_penilaian_format'] = "-";
+        }
+
+        if (!empty($data['tgl_disetujui'])) {
+            $data['tgl_disetujui_format'] = format_tanggal_indonesia_dengan_jam($data['tgl_disetujui']);
+        } else {
+            $data['tgl_disetujui_format'] = "-";
         }
 
         return $this->response->setJSON([

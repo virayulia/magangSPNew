@@ -373,7 +373,6 @@ Swal.fire({
 
 <!-- Histori Lamaran Tab -->
 <div class="tab-pane fade" id="histori-lamaran" role="tabpanel">
-    <h4 class="fw-bold mb-3">Histori Pendaftaran</h4>
     <p class="text-muted">Riwayat semua pendaftaran yang pernah diajukan.</p>
 
     <?php if (!empty($histori)) : ?>

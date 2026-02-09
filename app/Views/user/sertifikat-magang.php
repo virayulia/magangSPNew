@@ -29,11 +29,18 @@ Swal.fire({
                 Sertifikat Magang
             </button>
         </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="histori-lamaran-tab" data-bs-toggle="tab" data-bs-target="#histori-lamaran" type="button" role="tab">
+                Histori Sertifikat
+            </button>
+        </li>
     </ul>
 
-    <p class="text-muted">Unduh sertifikat magang kamu di sini.</p>
-    <hr>
-
+    
+    <div class="tab-content" id="lamaranTabContent">
+        <div class="tab-pane fade show active" id="pelaksanaan" role="tabpanel">
+            <p class="text-muted">Unduh sertifikat magang kamu di sini.</p>
+            <hr>
             <div class="card">
                 <div class="card-body">
                     <!-- <h5 class="card-title">📋 Sertifikat Magang</h5> -->
@@ -273,7 +280,53 @@ Swal.fire({
                     <?php endif; ?>
                 </div>
             </div>
+        </div>
+    </div>
+    <!-- Histori Lamaran Tab -->
+    <div class="tab-pane fade" id="histori-lamaran" role="tabpanel">
+        <p class="text-muted">Riwayat semua sertifikat magang yang telah selesai.</p>
 
+        <?php if (!empty($histori)) : ?>
+            <div class="d-flex flex-column gap-3">
+                <?php foreach ($histori as $riwayat) : ?>
+                    <div class="card shadow-sm border-0">
+                        <div class="card-body d-flex justify-content-between align-items-center flex-wrap">
+                            <div class="me-3">
+                                <h5 class="card-title mb-1"><?= esc($riwayat['unit_kerja']) ?></h5>
+                                <p class="text-muted mb-0 small">
+                                    Tanggal Pelaksanaan: <?= date('d M Y', strtotime($riwayat['tanggal_masuk'])) ?> - <?= date('d M Y', strtotime($riwayat['tanggal_selesai'])) ?>
+                                </p>
+                                <p class="text-muted mb-0 small">
+                                    <a href="<?= base_url('cetak-sertifikat') ?>" target="_blank">
+                                        <i class="fas fa-file-pdf"></i> Sertifikat Magang
+                                    </a>
+                                </p>
+                                
+                            </div>
+                            <span class="badge rounded-pill px-3 py-2 
+                                <?php
+                                    switch ($riwayat['status_akhir']) {
+                                        case 'pendaftaran': echo 'bg-secondary'; break;
+                                        case 'proses': echo 'bg-warning text-dark'; break;
+                                        case 'magang': echo 'bg-success'; break;
+                                        case 'selesai': echo 'bg-primary'; break;
+                                        case 'ditolak': echo 'bg-danger'; break;
+                                        default: echo 'bg-light text-dark'; break;
+                                    }
+                                ?>
+                            ">
+                                <?= ucfirst($riwayat['status_akhir']) ?>
+                            </span>
+                        </div>
+                    </div>
+                <?php endforeach ?>
+            </div>
+        <?php else : ?>
+            <div class="alert alert-warning mt-3">
+                Belum ada histori pelaksanaan.
+            </div>
+        <?php endif ?>
+    </div>
 </div>
 
 <!-- <script>

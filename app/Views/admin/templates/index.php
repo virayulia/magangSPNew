@@ -369,6 +369,7 @@
                                     <strong>Rata-rata Nilai:</strong> ${rataRata.toFixed(2)}<br>
                                     <strong>Kategori:</strong> ${kategori}<br>
                                     <strong>Tanggal Penilaian:</strong> ${d.tgl_penilaian_format ?? '-'}<br>
+                                    <strong>Tanggal Approve:</strong> ${d.tgl_disetujui_format ?? '-'}<br>
                                 </div>
 
                                 <div class="form-group mt-3">

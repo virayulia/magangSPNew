@@ -4,6 +4,8 @@ namespace App\Controllers\Admin;
 
 use App\Controllers\BaseController;
 use CodeIgniter\HTTP\ResponseInterface;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use App\Models\UnitKerjaModel;
 use App\Models\PenelitianModel;
 use App\Models\RfidModel;
@@ -565,11 +567,12 @@ class PenelitianController extends BaseController
     
     public function pesertaPenelitian()
     {
-        $unitId      = $this->request->getGet('unit_kerja');
-        $bulanMasuk  = $this->request->getGet('bulan_masuk');
-        $bulanKeluar = $this->request->getGet('bulan_keluar');
-        $today       = date('Y-m-d');
-
+        $unitId  = $this->request->getGet('unit_kerja');
+        $bulanMasuk  = $this->request->getGet('tanggal_masuk');
+        $bulanKeluar = $this->request->getGet('tanggal_keluar');
+        $filter = $this->request->getGet('filter');
+        $tingkat = $this->request->getGet('tingkat');
+        $today = date('Y-m-d');
         // ===============================
         // SUBQUERY SAFETY (terakhir)
         // ===============================
@@ -605,6 +608,11 @@ class PenelitianController extends BaseController
                 AND r1.assignment_id = r2.max_assign
             ) AS ra
         ";
+
+        $mapTingkat = [
+            'SMK' => ['SMK'],
+            'Perguruan Tinggi' => ['D3', 'D4/S1', 'S2']
+        ];
 
         // ===============================
         // QUERY UTAMA (TANPA GROUP BY)
@@ -644,20 +652,35 @@ class PenelitianController extends BaseController
             ->join('rfid', 'rfid.id_rfid = ra.rfid_id', 'left')
             ->where('penelitian.status_akhir', 'penelitian');
 
-        // Filter bulan masuk
         if ($bulanMasuk) {
-            $builder->where('penelitian.tanggal_masuk >=', $bulanMasuk . '-01')
-                    ->where('penelitian.tanggal_masuk <', date('Y-m-01', strtotime($bulanMasuk . ' +1 month')));
+            $builder->where('penelitian.tanggal_masuk >=', $bulanMasuk . '-01');
+            $builder->where('penelitian.tanggal_masuk <', date('Y-m-01', strtotime($bulanMasuk . ' +1 month')));
         }
 
-        // Filter bulan keluar
         if ($bulanKeluar) {
-            $builder->where('penelitian.tanggal_selesai >=', $bulanKeluar . '-01')
-                    ->where('penelitian.tanggal_selesai <', date('Y-m-01', strtotime($bulanKeluar . ' +1 month')));
+            $builder->where('penelitian.tanggal_selesai >=', $bulanKeluar . '-01');
+            $builder->where('penelitian.tanggal_selesai <', date('Y-m-01', strtotime($bulanKeluar . ' +1 month')));
         }
 
-        if ($unitId) {
+        if (!empty($unitId)) {
             $builder->where('penelitian.unit_id', $unitId);
+        }
+
+        if (!empty($tingkat) && isset($mapTingkat[$tingkat])) {
+            $builder->whereIn('users.tingkat_pendidikan', $mapTingkat[$tingkat]);
+        }
+
+        if ($filter == 'aktif') {
+            $builder->where('penelitian.tanggal_masuk <=', $today)
+                    ->where('penelitian.tanggal_selesai >=', $today);
+        }
+
+        if ($filter == 'akan_penelitian') {
+            $builder->where('penelitian.tanggal_masuk >', $today);
+        }
+
+        if ($filter == 'belum_selesai') {
+            $builder->where('penelitian.tanggal_selesai <', $today);
         }
 
         $data = $builder->get()->getResultArray();
@@ -936,6 +959,116 @@ class PenelitianController extends BaseController
 //     ]);
 // }
 
+    public function exportPeserta()
+    {
+        // ambil filter 
+        $bulanMasuk = $this->request->getGet('tanggal_masuk');
+        $bulanKeluar = $this->request->getGet('tanggal_keluar');
+        $unitKerja = $this->request->getGet('unit_kerja');
+        $filter = $this->request->getGet('filter');
+        $tingkat = $this->request->getGet('tingkat');
+        $today = date('Y-m-d');
+        
+        $mapTingkat = [
+                'SMK' => ['SMK'],
+                'Perguruan Tinggi' => ['D3', 'D4/S1', 'S2']
+        ];
+        // ambil data 
+        $builder = $this->penelitianModel->select('users.email, users.no_hp , users.fullname, users.nisn_nim, users.tingkat_pendidikan, jurusan.nama_jurusan, instansi.nama_instansi, 
+                                            unit_kerja.unit_kerja, penelitian.tanggal_masuk, penelitian.tanggal_selesai, penelitian.durasi')
+                                        ->join('users', 'users.id = penelitian.user_id')
+                                        ->join('instansi', 'instansi.instansi_id = users.instansi_id', 'left')
+                                        ->join('jurusan', 'jurusan.jurusan_id = users.jurusan_id','left')
+                                        ->join('unit_kerja', 'penelitian.unit_id = unit_kerja.unit_id')
+                                        ->where('penelitian.status_akhir', 'penelitian');
+
+
+        // Filter tanggal masuk
+        if ($bulanMasuk) {
+            $builder->where('penelitian.tanggal_masuk >=', $bulanMasuk . '-01');
+            $builder->where(
+                'penelitian.tanggal_masuk <',
+                date('Y-m-01', strtotime($bulanMasuk . ' +1 month'))
+            );
+        }
+
+        // Filter tanggal keluar
+        if ($bulanKeluar) {
+            $builder->where('penelitian.tanggal_selesai >=', $bulanKeluar . '-01');
+            $builder->where(
+                'penelitian.tanggal_selesai <',
+                date('Y-m-01', strtotime($bulanKeluar . ' +1 month'))
+            );
+        }
+        if ($unitKerja) {
+            $builder->where('penelitian.unit_id', $unitKerja);
+        }
+
+        if (!empty($tingkat) && isset($mapTingkat[$tingkat])) {
+            $builder->whereIn('users.tingkat_pendidikan', $mapTingkat[$tingkat]);
+        }
+
+        if ($filter == 'aktif') {
+            $builder->where('penelitian.tanggal_masuk <=', $today)
+                    ->where('penelitian.tanggal_selesai >=', $today);
+        }
+
+        if ($filter == 'akan_penelitian') {
+            $builder->where('penelitian.tanggal_masuk >', $today);
+        }
+
+        if ($filter == 'belum_selesai') {
+            $builder->where('penelitian.tanggal_selesai <', $today);
+        }
+
+        $data = $builder->get()->getResultArray();
+
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+
+        // Header kolom
+        $sheet->setCellValue('A1', 'Email');
+        $sheet->setCellValue('B1', 'No HP');
+        $sheet->setCellValue('C1', 'Nama');
+        $sheet->setCellValue('D1', 'NIM/NISN');
+        $sheet->setCellValue('E1', 'Tingkatan');
+        $sheet->setCellValue('F1', 'Jurusan');
+        $sheet->setCellValue('G1', 'Nama PT/SMK');
+        $sheet->setCellValue('H1', 'Unit Kerja');
+        $sheet->setCellValue('I1', 'Tanggal Masuk');
+        $sheet->setCellValue('J1', 'Tanggal Selesai');
+        $sheet->setCellValue('K1', 'Durasi');
+
+        // Isi data
+        $row = 2;
+        foreach ($data as $d) {
+            $sheet->setCellValue('A' . $row, $d['email']);
+            $sheet->setCellValue('B' . $row, $d['no_hp']);
+            $sheet->setCellValue('C' . $row, $d['fullname']);
+            $sheet->setCellValue('D' . $row, $d['nisn_nim']);
+            $sheet->setCellValue('E' . $row, $d['tingkat_pendidikan']);
+            $sheet->setCellValue('F' . $row, $d['nama_jurusan']);
+            $sheet->setCellValue('G' . $row, $d['nama_instansi']);
+            $sheet->setCellValue('H' . $row, $d['unit_kerja']);
+            $sheet->setCellValue('I' . $row, date('d-m-Y', strtotime($d['tanggal_masuk'])));
+            $sheet->setCellValue('J' . $row, date('d-m-Y', strtotime($d['tanggal_selesai'])));
+            $sheet->setCellValue('K' . $row, $d['durasi']);
+            $row++;
+        }
+
+
+        // Download file
+        $filename = 'data_peserta_penelitian_' . date('Ymd_His') . '.xlsx';
+        $writer = new Xlsx($spreadsheet);
+
+        // header untuk download
+        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        header("Content-Disposition: attachment; filename=\"$filename\"");
+        header('Cache-Control: max-age=0');
+
+        $writer->save('php://output');
+        exit;
+    }
 
     public function getDataPembimbing($unit_id)
     {

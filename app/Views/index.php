@@ -459,9 +459,9 @@ Swal.fire({
             <label for="durasi" class="form-label">Durasi Penelitian<span class="text-danger">*</span></label>
             <select class="form-control" id="durasi" name="durasi" rows="3"required>
               <option value="" disabled selected>-- Pilih Durasi Penelitian --</option>
-              <option value="1">1 Bulan</option>
-              <option value="2">2 Bulan</option>
-              <option value="3">3 Bulan</option>
+              <option value="1">1 Bulan (± 22 hari kerja)</option>
+              <option value="2">2 Bulan (± 44 hari kerja)</option>
+              <option value="3">3 Bulan (± 66 hari kerja)</option>
             </select>
           </div>
           

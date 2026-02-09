@@ -28,13 +28,13 @@ sampai dengan <strong><?= format_tanggal_indonesia($tanggal_selesai) ?></strong>
 <ol>
     <li>
         Hadir pada tanggal <strong><?= format_tanggal_indonesia($tanggal_masuk) ?> pukul 08.00 WIB</strong> 
-        di <strong>Unit Operasional SDM (Pusdiklat)</strong> PT Semen Padang dengan mengenakan 
+        di <strong><?= esc($signature['unit_kerja']) ?> (Pusdiklat)</strong> PT Semen Padang dengan mengenakan 
         <strong>pakaian formal (kemeja)</strong>. 
         <em>Tidak diperkenankan mengenakan kaos</em>. 
         Bagi peserta yang memiliki <strong>PDH</strong>, dipersilakan untuk mengenakannya.
     </li>
     <li>Mematuhi semua ketentuan dan disiplin di PT Semen Padang, serta protokol kesehatan yang berlaku.</li>
-    <li><strong>Mengupload kartu asurasni kecelakaan kerja dan buktinya paling lambat 3 hari sebelum pelaksanaan magang.</strong></li>
+    <li><strong>Mengupload kartu asuransi kecelakaan kerja dan buktinya paling lambat 3 hari sebelum pelaksanaan magang.</strong></li>
     <li>Mengisi Feedback pada Website Magang PT. Semen Padang setelah menyelesaikan Kerja Praktek/Magang.</li>
     <li>Mengupload Laporan Kerja Praktek dan Absensi maksimal 15 hari setelah magang selesai ke Website Magang PT. Semen Padang.</li>
     <li><strong>Bukti asli asuransi kecelakaan kerja dibawa pada hari pertama.</strong></li>

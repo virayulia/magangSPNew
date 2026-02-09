@@ -98,7 +98,7 @@
 <div class="card shadow mb-4">
     <div class="card-body">
         <div class="table-responsive">
-            <a href="<?= base_url('admin/export-peserta?bulan_masuk='.service('request')->getGet('bulan_masuk').'&bulan_keluar='.service('request')->getGet('bulan_keluar').'&tahun='.service('request')->getGet('tahun')) ?>" 
+            <a href="<?= base_url('admin/export-peserta-penelitian?' . http_build_query(service('request')->getGet())) ?>"
                 class="btn btn-success mb-3">
                 <i class="bi bi-file-earmark-excel"></i> Export Excel
             </a>
@@ -704,7 +704,7 @@
   <div class="modal-dialog modal-lg">
     <div class="modal-content">
       <div class="modal-header bg-info text-white">
-        <h5 class="modal-title">Detail Nilai Magang</h5>
+        <h5 class="modal-title">Detail Nilai Penelitian</h5>
         <button type="button" class="close" data-dismiss="modal" aria-label="Close">
           <span aria-hidden="true">&times;</span>
         </button>
@@ -744,7 +744,7 @@
     <form id="formEditPenelitian" method="post" action="">
       <div class="modal-content">
         <div class="modal-header bg-warning text-dark">
-          <h5 class="modal-title" id="modalEditPenelitianLabel">Edit Data Magang</h5>
+          <h5 class="modal-title" id="modalEditPenelitianLabel">Edit Data Penelitian</h5>
           <button type="button" class="close" data-dismiss="modal" aria-label="Close">
             <span>&times;</span>
           </button>
@@ -939,7 +939,7 @@ document.querySelectorAll('.finalisasi-form').forEach(function(form) {
         e.preventDefault(); // stop dulu submitnya
 
         Swal.fire({
-            title: 'Finalisasi Magang?',
+            title: 'Finalisasi Penelitian?',
             text: "Setelah difinalisasi, data tidak bisa diubah lagi. Yakin ingin melanjutkan?",
             icon: 'warning',
             showCancelButton: true,

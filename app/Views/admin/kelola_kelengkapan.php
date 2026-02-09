@@ -125,7 +125,7 @@
                         <th>Tanggal Selesai</th>
                         <th>BPJS Kes</th>
                         <th>BPJS TK</th>
-                        <th>Bukti Pembayaran</th>
+                        <th>Bukti Pembayaran (JMO)</th>
                         <th>Aksi</th>
                     </tr>
                 </thead>
