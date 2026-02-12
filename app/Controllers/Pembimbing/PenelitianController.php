@@ -188,6 +188,8 @@ class PenelitianController extends BaseController
                 $this->penelitianModel
                     ->where('penelitian_id', $id)
                     ->update(null, [
+                        'status_seleksi' => 'Diterima',
+                        'tanggal_seleksi' => date('Y-m-d H:i:s'),
                         'status_akhir' => 'proses',
                         'approve_unit' => 'Y',
                         'tanggal_approve_unit' => date('Y-m-d H:i:s')

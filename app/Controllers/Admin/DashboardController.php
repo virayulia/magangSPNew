@@ -20,7 +20,297 @@ class DashboardController extends BaseController
         $this->db = \Config\Database::connect();
     }
 
-    public function index()
+public function index()
+{
+    $today = date('Y-m-d');
+    $units = $this->unitKerjaModel->findAll();
+
+    /* =====================================================
+    *  CHART 1 : HISTOGRAM PER UNIT (ASLI - TIDAK DIUBAH)
+    * ===================================================== */
+    $labelsUnit = [];
+
+    $aktif_pt = [];
+    $aktif_smk = [];
+    $akan_pt = [];
+    $akan_smk = [];
+    $proses_pt = [];
+    $proses_smk = [];
+    $belum_pt = [];
+    $belum_smk = [];
+
+    $kuota_pt = [];
+    $kuota_smk = [];
+
+    foreach ($units as $u) {
+
+        $unitId = $u['unit_id'];
+        $labelsUnit[] = $u['unit_kerja'];
+
+        $aktif_pt[]  = $this->countMagang($unitId, [
+            'magang.tanggal_masuk <=' => $today,
+            'magang.tanggal_selesai >=' => $today,
+            'magang.status_akhir' => 'magang',
+            'users.tingkat_pendidikan <>' => 'SMK'
+        ]);
+
+        $aktif_smk[] = $this->countMagang($unitId, [
+            'magang.tanggal_masuk <=' => $today,
+            'magang.tanggal_selesai >=' => $today,
+            'magang.status_akhir' => 'magang',
+            'users.tingkat_pendidikan' => 'SMK'
+        ]);
+
+        $akan_pt[]   = $this->countMagang($unitId, [
+            'magang.tanggal_masuk >' => $today,
+            'magang.status_akhir' => 'magang',
+            'users.tingkat_pendidikan <>' => 'SMK'
+        ]);
+
+        $akan_smk[]  = $this->countMagang($unitId, [
+            'magang.tanggal_masuk >' => $today,
+            'magang.status_akhir' => 'magang',
+            'users.tingkat_pendidikan' => 'SMK'
+        ]);
+
+        $proses_pt[]  = $this->countMagang($unitId, [
+            'magang.status_akhir' => 'proses',
+            'users.tingkat_pendidikan <>' => 'SMK'
+        ]);
+
+        $proses_smk[] = $this->countMagang($unitId, [
+            'magang.status_akhir' => 'proses',
+            'users.tingkat_pendidikan' => 'SMK'
+        ]);
+
+        $belum_pt[]  = $this->countMagang($unitId, [
+            'magang.tanggal_selesai <' => $today,
+            'magang.status_akhir' => 'magang',
+            'users.tingkat_pendidikan <>' => 'SMK'
+        ]);
+
+        $belum_smk[] = $this->countMagang($unitId, [
+            'magang.tanggal_selesai <' => $today,
+            'magang.status_akhir' => 'magang',
+            'users.tingkat_pendidikan' => 'SMK'
+        ]);
+
+        $qPt = $this->db->table('kuota_unit')
+            ->select('kuota')
+            ->where('unit_id', $unitId)
+            ->where('tingkat_pendidikan !=', 'SMK')
+            ->get()->getRow();
+
+        $qSmk = $this->db->table('kuota_unit')
+            ->select('kuota')
+            ->where('unit_id', $unitId)
+            ->where('tingkat_pendidikan', 'SMK')
+            ->get()->getRow();
+
+        $kuota_pt[]  = $qPt ? (int)$qPt->kuota : 0;
+        $kuota_smk[] = $qSmk ? (int)$qSmk->kuota : 0;
+    }
+
+
+    /* =====================================================
+    *  CHART 2,3,4 : PERIODE FIX (INI YANG DIPERBAIKI)
+    * ===================================================== */
+
+    $periode = $this->request->getGet('periode') ?? 6;
+
+    $currentMonth = date('Y-m-01');
+
+    if ($periode == 6) {
+        $start = $currentMonth;
+        $months = 6;
+    }
+    elseif ($periode == 12) {
+        $start = date('Y-m-01', strtotime('-6 months', strtotime($currentMonth)));
+        $months = 12;
+    }
+    else { // 24
+        $start = date('Y-m-01', strtotime('-18 months', strtotime($currentMonth)));
+        $months = 24;
+    }
+
+    $labelsPeriode = [];
+    $bulanList = [];
+
+    for ($i = 0; $i < $months; $i++) {
+        $m = date('Y-m', strtotime("$start +$i months"));
+        $labelsPeriode[] = date('M Y', strtotime($m));
+        $bulanList[] = $m;
+    }
+
+
+    /* ===============================
+       MASUK & KELUAR
+    =============================== */
+
+    $masuk = array_fill(0, $months, 0);
+    $keluar = array_fill(0, $months, 0);
+
+    $allDates = $this->magangModel
+        ->select('tanggal_masuk, tanggal_selesai')
+        ->whereIn('status_akhir', ['proses','magang','lulus'])
+        ->findAll();
+
+    foreach ($allDates as $r) {
+
+        if ($r['tanggal_masuk']) {
+            $b = date('Y-m', strtotime($r['tanggal_masuk']));
+            $idx = array_search($b, $bulanList);
+            if ($idx !== false) $masuk[$idx]++;
+        }
+
+        if ($r['tanggal_selesai']) {
+            $b = date('Y-m', strtotime($r['tanggal_selesai']));
+            $idx = array_search($b, $bulanList);
+            if ($idx !== false) $keluar[$idx]++;
+        }
+    }
+
+
+    /* ===============================
+       AKTIF PER BULAN (sinkron card)
+    =============================== */
+
+    $aktifBulanan = array_fill(0, $months, 0);
+    $aktifPT = array_fill(0, $months, 0);
+    $aktifSMK = array_fill(0, $months, 0);
+
+    $records = $this->magangModel
+        ->join('users','users.id = magang.user_id')
+        ->select('tanggal_masuk,tanggal_selesai,users.tingkat_pendidikan')
+        ->whereIn('status_akhir',['proses','magang'])
+        ->findAll();
+
+    foreach ($records as $rec) {
+
+        $startDate = strtotime($rec['tanggal_masuk']);
+        $endDate   = strtotime($rec['tanggal_selesai']);
+
+        foreach ($bulanList as $i => $m) {
+
+            $awal  = strtotime("$m-01");
+            $akhir = strtotime(date('Y-m-t', $awal));
+
+            if ($startDate <= $akhir && $endDate >= $awal) {
+
+                $aktifBulanan[$i]++;
+
+                if ($rec['tingkat_pendidikan'] == 'SMK')
+                    $aktifSMK[$i]++;
+                else
+                    $aktifPT[$i]++;
+            }
+        }
+    }
+
+
+    /* ===============================
+       TOTAL KUOTA (TETAP)
+    =============================== */
+
+    $sumPT  = array_sum($kuota_pt);
+    $sumSMK = array_sum($kuota_smk);
+    $totalKuotaAll = $sumPT + $sumSMK;
+
+
+    /* ===============================
+       PIE & CARD (SEMUA DIPERTAHANKAN)
+    =============================== */
+
+    $totalPemagang = $this->magangModel
+        ->whereIn('status_akhir',['proses','magang'])
+        ->countAllResults();
+
+    $totalLulus = $this->magangModel
+        ->where('status_akhir','lulus')
+        ->countAllResults();
+
+    $totalTerisi = array_sum($aktif_pt)+array_sum($akan_pt)+array_sum($proses_pt)
+                 + array_sum($aktif_smk)+array_sum($akan_smk)+array_sum($proses_smk);
+
+    $totalPendaftarBulanIni = $this->magangModel
+        ->where('status_akhir','pendaftaran')
+        ->countAllResults();
+
+    $pieKuota = [
+        'terisi'=>$totalTerisi,
+        'sisa'=>max($totalKuotaAll-$totalTerisi,0)
+    ];
+
+    $durasiRecords = $this->magangModel->select('durasi')->findAll();
+    $durasiCount=[1=>0,2=>0,3=>0,4=>0,5=>0,6=>0];
+    foreach($durasiRecords as $d){
+        $dr=(int)$d['durasi'];
+        if(isset($durasiCount[$dr])) $durasiCount[$dr]++;
+    }
+
+    $gender=$this->magangModel
+        ->join('users','users.id=magang.user_id')
+        ->select('users.jenis_kelamin')
+        ->findAll();
+
+    $genderCount=['L'=>0,'P'=>0];
+    foreach($gender as $g){
+        $jk=strtoupper($g['jenis_kelamin']);
+        if($jk=='L')$genderCount['L']++;
+        if($jk=='P')$genderCount['P']++;
+    }
+
+
+    /* =====================================================
+    * RETURN VIEW (STRUKTUR 100% SAMA)
+    * ===================================================== */
+
+    return view('admin/dashboard', [
+        'chart' => [
+            'labels' => $labelsUnit,
+            'aktif_pt' => $aktif_pt,
+            'aktif_smk' => $aktif_smk,
+            'akan_pt' => $akan_pt,
+            'akan_smk' => $akan_smk,
+            'proses_pt' => $proses_pt,
+            'proses_smk' => $proses_smk,
+            'belum_pt' => $belum_pt,
+            'belum_smk' => $belum_smk,
+            'kuota_pt' => $kuota_pt,
+            'kuota_smk' => $kuota_smk,
+        ],
+
+        'chartMasukKeluar'=>[
+            'labels'=>$labelsPeriode,
+            'masuk'=>$masuk,
+            'keluar'=>$keluar
+        ],
+
+        'chartAktifPerBulan'=>[
+            'labels'=>$labelsPeriode,
+            'aktif_total'=>$aktifBulanan,
+            'aktif_smk'=>$aktifSMK,
+            'aktif_pt'=>$aktifPT,
+            'kuota_total'=>$totalKuotaAll,
+            'kuota_smk'=>$sumSMK,
+            'kuota_pt'=>$sumPT
+        ],
+
+        'pieKuota'=>$pieKuota,
+        'durasiCount'=>$durasiCount,
+        'genderCount'=>$genderCount,
+        'totalAktif'=>$aktifBulanan[0],
+        'totalPendaftar'=>$totalPendaftarBulanIni,
+        'totalLulus'=>$totalLulus,
+        'totalPemagang'=>$totalPemagang,
+        'periode'=>$periode
+    ]);
+}
+
+
+
+
+    public function indexold()
     {
         $today = date('Y-m-d');
         $units = $this->unitKerjaModel->findAll();

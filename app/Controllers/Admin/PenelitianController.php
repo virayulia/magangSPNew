@@ -228,8 +228,8 @@ class PenelitianController extends BaseController
             'unit_id' => $unit_id,
             'tanggal_masuk' => $start->format('Y-m-d'),
             'tanggal_selesai' => $end->format('Y-m-d'),
-            'status_seleksi' => 'Diterima',
-            'tanggal_seleksi' => date('Y-m-d H:i:s')
+            // 'status_seleksi' => 'Diterima',
+            // 'tanggal_seleksi' => date('Y-m-d H:i:s')
         ];
 
         // Jika unit_id berbeda dengan sebelumnya dan approve_unit = 'N'
