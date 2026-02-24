@@ -27,9 +27,14 @@ sampai dengan <strong><?= format_tanggal_indonesia($tanggal_selesai) ?></strong>
 <p><strong>Persyaratan yang harus dipenuhi:</strong></p>
 <ol>
     <li>Hadir pada tanggal <strong><?= format_tanggal_indonesia($tanggal_masuk) ?> jam 08.00 WIB</strong> 
-        di <strong>Unit Operasional SDM (Pusdiklat)</strong> PT Semen Padang.</li>
+        di <strong><?= esc($signature['unit_kerja']) ?> (Pusdiklat)</strong> PT Semen Padang dengan mengenakan 
+        <strong>pakaian formal (kemeja)</strong>. 
+        <em>Tidak diperkenankan mengenakan kaos</em>. 
+        Bagi peserta yang memiliki <strong>PDH</strong>, dipersilakan untuk mengenakannya.
+    </li>
     <li>Mematuhi semua ketentuan dan disiplin di PT Semen Padang, serta protokol kesehatan yang berlaku.</li>
     <li><strong>Mengupload kartu asuransi kecelakaan kerja dan buktinya paling lambat 3 hari sebelum pelaksanaan penelitian.</strong></li>
+    <li>Mencetak Tanda Pengenal, Formulir Penelitian dan Lembar Presensi, serta dibawa pada hari pertama.</li>
     <li>Mengisi Feedback pada Website Magang & Penelitian PT. Semen Padang setelah menyelesaikan Penelitian.</li>
     <li>Mengupload Formulir Penelitian dan Absensi setelah selesai penelitian ke Website Magang PT. Semen Padang.</li>
     <li><strong>Bukti asli asuransi kecelakaan kerja dibawa pada hari pertama.</strong></li>

@@ -9,67 +9,52 @@ use App\Models\UserModel;
 
 class UnitKerjaController extends BaseController
 {
-    protected $unitKerjaModel;
+    protected $unitModel;
     protected $userModel; 
 
     public function __construct()
     {
-        $this->unitKerjaModel = new UnitKerjaModel();
+        $this->unitModel = new UnitKerjaModel();
         $this->userModel = new UserModel();
     }
     
     public function index()
     {
-        // Ambil periode aktif saat ini
-       $unit = $this->unitKerjaModel
-                    ->orderBy('active', 'DESC')
-                    ->orderBy('unit_kerja', 'ASC')
-                    ->findAll();
-                
-        return view('admin/kelola_unit', ['unit' => $unit]);
+        $data['units'] = $this->unitModel
+            ->where('deleted_at', null)
+            ->findAll();
+
+        return view('admin/unit/index', $data);
     }
 
     public function save()
     {
+        $id = $this->request->getPost('id');
+
         $data = [
-            'unit_kerja' => $this->request->getPost('unit_kerja'),
-            'nama_pimpinan' => $this->request->getPost('nama_pimpinan'),
-            'email_pimpinan' => $this->request->getPost('email_pimpinan'),
-            'safety' => $this->request->getPost('safety'),
-            'pembimbing_id' => '1',
-            'active' => $this->request->getPost('active'),
+            'kode'      => $this->request->getPost('kode'),
+            'nama'      => $this->request->getPost('nama'),
+            'is_active' => $this->request->getPost('is_active') ?? 1,
         ];
 
-        $this->unitKerjaModel->insert($data);
-
-        return redirect()->back()->with('success', 'Unit Kerja berhasil ditambahkan.');
+        if ($id) {
+            $this->unitModel->update($id, $data);
+            return $this->response->setJSON(['status' => 'updated']);
+        } else {
+            $this->unitModel->insert($data);
+            return $this->response->setJSON(['status' => 'created']);
+        }
     }
 
-
-    public function update($id)
+    public function edit($id)
     {
-        // Ambil periode aktif saat ini
-        $data = [
-            'unit_kerja'  => $this->request->getPost('unit_kerja'),
-            'nama_pimpinan'  => $this->request->getPost('nama_pimpinan'),
-            'email_pimpinan'  => $this->request->getPost('email_pimpinan'),
-            'safety' => $this->request->getPost('safety'),
-            'active' => $this->request->getPost('active'),
-        ];
-
-        $this->unitKerjaModel->update($id, $data);
-   
-        return redirect()->back()->with('success', 'Periode berhasil diperbarui.');
+        $data = $this->unitModel->find($id);
+        return $this->response->setJSON($data);
     }
 
     public function delete($id)
     {
-        $data = $this->unitKerjaModel->find($id);
-        if(!$data){
-            return redirect()->back()->with('error', 'Unit Kerja tidak ditemukan');
-        }
-
-        $this->unitKerjaModel->delete($id);
-        return redirect()->back()->with('success', 'Berhasil menghapus Unit Kerja');
+        $this->unitModel->delete($id);
+        return $this->response->setJSON(['status' => 'deleted']);
     }
 }

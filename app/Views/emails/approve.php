@@ -35,6 +35,7 @@ sampai dengan <strong><?= format_tanggal_indonesia($tanggal_selesai) ?></strong>
     </li>
     <li>Mematuhi semua ketentuan dan disiplin di PT Semen Padang, serta protokol kesehatan yang berlaku.</li>
     <li><strong>Mengupload kartu asuransi kecelakaan kerja dan buktinya paling lambat 3 hari sebelum pelaksanaan magang.</strong></li>
+    <li>Mencetak Tanda Pengenal, dan Lembar Presensi, serta dibawa pada hari pertama.</li>
     <li>Mengisi Feedback pada Website Magang PT. Semen Padang setelah menyelesaikan Kerja Praktek/Magang.</li>
     <li>Mengupload Laporan Kerja Praktek dan Absensi maksimal 15 hari setelah magang selesai ke Website Magang PT. Semen Padang.</li>
     <li><strong>Bukti asli asuransi kecelakaan kerja dibawa pada hari pertama.</strong></li>

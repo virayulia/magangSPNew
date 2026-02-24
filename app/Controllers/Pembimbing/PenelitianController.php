@@ -61,7 +61,7 @@ class PenelitianController extends BaseController
             ->join('penelitian_keyword pk','pk.penelitian_id = p.penelitian_id')
             ->join('keyword k','k.keyword_id = pk.keyword_id')
             ->whereIn('p.status_akhir', ['pendaftaran', 'proses'])
-            ->where('p.status_seleksi', 'Diterima')
+            ->where('p.unit_id !=', NULL)
             ->where('p.approve_unit', NULL)
             ->groupBy('p.penelitian_id')
             ->orderBy('p.tanggal_daftar', 'ASC');

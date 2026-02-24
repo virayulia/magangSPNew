@@ -119,7 +119,7 @@
                     <?php if ($p->status_seleksi == 'Ditolak'): ?>
                         <span class="badge bg-danger text-light">Ditolak Admin</span>
 
-                    <?php elseif ($p->status_seleksi == 'Diterima'): ?>
+                    <?php elseif ($p->unit_id != NULL ): ?>
 
                         <?php if (is_null($p->approve_unit)): ?>
                             <span class="badge bg-warning text-light">Menunggu Approval</span>
