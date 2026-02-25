@@ -38,6 +38,7 @@ class UnitKerjaController extends BaseController
             'safety' => $this->request->getPost('safety'),
             'pembimbing_id' => '1',
             'active' => $this->request->getPost('active'),
+            'catatan' => $this->request->getPost('catatan'),
         ];
 
         $this->unitKerjaModel->insert($data);
@@ -55,6 +56,7 @@ class UnitKerjaController extends BaseController
             'email_pimpinan'  => $this->request->getPost('email_pimpinan'),
             'safety' => $this->request->getPost('safety'),
             'active' => $this->request->getPost('active'),
+            'catatan' => $this->request->getPost('catatan'),
         ];
 
         $this->unitKerjaModel->update($id, $data);

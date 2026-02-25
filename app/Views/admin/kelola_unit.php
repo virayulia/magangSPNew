@@ -69,6 +69,10 @@
                                         <option value="0">Non active</option>
                                     </select>
                                 </div>
+                                <div class="form-group">
+                                    <label for="catatan">Catatan</label>
+                                    <input type="text" class="form-control" id="catatan" name="catatan" required>
+                                </div>
                             </div>
 
                             <div class="modal-footer">
@@ -88,6 +92,7 @@
                         <th>Email Pimpinan</th>
                         <th>Safety(APD)</th>
                         <th>Active</th>
+                        <th>Catatan</th>
                         <th>Action</th>
                     </tr>
                 </thead>
@@ -108,6 +113,7 @@
                             <?php else : ?>
                                 <td>Tidak Aktif</td>
                             <?php endif; ?>
+                            <td><?= esc($item['catatan']); ?></td>
                             <td class="text-center">
                                 <div class="aksi-wrapper">
                                     <button class="btn btn-warning btn-sm" title="Edit" data-toggle="modal" data-target="#editModal<?= $item['unit_id']; ?>">
@@ -160,6 +166,10 @@
                                                 <option value="0" <?= ((string)$item['active'] === '0') ? 'selected' : ''; ?>>Tidak Aktif</option>
                                                 <option value="1" <?= ((string)$item['active'] === '1') ? 'selected' : ''; ?>>Aktif</option>
                                             </select>
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="catatan_<?= $item['unit_id']; ?>">Catatan</label>
+                                            <input type="text" class="form-control" name="catatan" id="catatan_<?= $item['unit_id']; ?>" value="<?= esc($item['catatan']); ?>">
                                         </div>
                                     </div>
 
