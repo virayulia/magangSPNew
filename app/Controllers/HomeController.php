@@ -346,7 +346,7 @@ class HomeController extends BaseController
     public function getImages()
     {
         $folderPath = FCPATH . 'assets/img/masthead/';
-        $urlBase = base_url('assets/img/masthead/');
+        $urlBase = str_replace(['http://', 'https://'], '//', base_url('assets/img/masthead/'));
         $allowed = ['jpg', 'jpeg', 'png', 'gif'];
 
         $imageFiles = [];

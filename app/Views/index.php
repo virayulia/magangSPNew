@@ -117,7 +117,7 @@ Swal.fire({
 <!-- Tambah AOS -->
 <link href="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.css" rel="stylesheet" />
 <script>
-  const getImageUrl = "<?= base_url('get-images') ?>";
+  const getImageUrl = "<?= str_replace(['http://', 'https://'], '//', base_url('get-images')) ?>";
 </script>
 <script>
     $.getJSON(getImageUrl, function (data) {
@@ -132,7 +132,7 @@ Swal.fire({
 <!-- Masthead -->
 <header class="masthead">
   <div class="container px-4 px-lg-5 h-100">
-    <?php if (logged_in() && !$userHasMagang): ?>
+    <?php if (logged_in() && empty($userHasMagang)): ?>
         <div class="alert alert-warning fw-semibold mb-3" role="alert" style="font-size: 1rem;">
             ⚠️ Kamu belum melakukan pendaftaran magang. 
             Silakan pilih unit kerja dan daftar di menu <a href="/magang">'Ketersediaan'</a> .
@@ -432,7 +432,7 @@ Swal.fire({
             <label for="keyword" class="form-label">Kata Kunci Penelitian<span class="text-danger">*</span></label>
             <!-- <input type="text" class="form-control" id="bidang" name="bidang" placeholder="Contoh: Teknologi Semen, Lingkungan, dll" required> -->
             <select class="form-control select2" multiple="multiple" id="keyword" name="keyword_ids[]" required>
-              <?php foreach ($keyword as $item): ?>
+              <?php foreach ($keyword ?? [] as $item): ?>
                 <option value="<?= $item['keyword_id'] ?>">
                   <?= esc($item['keyword_nama']) ?>
                 </option>
@@ -448,7 +448,7 @@ Swal.fire({
             <label for="rencana_masuk" class="form-label">Pilih Rencana Mulai Penelitian<span class="text-danger">*</span></label>
             <select class="form-control" id="rencana_masuk" name="rencana_masuk" required>
               <option value="">-- Pilih Tanggal --</option>
-              <?php foreach ($pilihanTanggal as $tgl): ?>
+              <?php foreach ($pilihanTanggal ?? [] as $tgl): ?>
                 <option value="<?= $tgl ?>">
                   <?= format_tanggal_indonesia($tgl) ?>
                 </option>

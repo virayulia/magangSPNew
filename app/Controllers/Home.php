@@ -59,14 +59,26 @@ class Home extends BaseController
         $filteredData = [];
         $filterByUserJurusan = false;
         $userJurusan = null;
+        $userHasMagang = false;
 
         if (logged_in()) {
+            $userId = user_id();
             $user = $db->table('users')
-                ->where('id', user_id())
+                ->where('id', $userId)
                 ->get()
                 ->getRow();
             if ($user) {
                 $userJurusan = $user->jurusan_id;
+            }
+
+            $cekPendaftaran = $db->table('magang')
+                ->where('user_id', $userId)
+                ->whereIn('status_akhir', ['pendaftaran', 'proses', 'magang'])
+                ->get()
+                ->getRow();
+
+            if ($cekPendaftaran) {
+                $userHasMagang = true;
             }
         }
 
@@ -112,6 +124,35 @@ class Home extends BaseController
 
         $isProfilComplite = $this->isProfilComplite();
 
+        $today = new \DateTime();
+        $dates = [];
+
+        for ($i = 1; $i <= 3; $i++) {
+            $month = (clone $today)->modify("+{$i} month");
+            $year = $month->format('Y');
+            $monthNum = $month->format('m');
+
+            $awal = new \DateTime("$year-$monthNum-01");
+            $tengah = new \DateTime("$year-$monthNum-15");
+
+            foreach ([$awal, $tengah] as $tgl) {
+                $hari = $tgl->format('N');
+                if ($hari == 6) {
+                    $tgl->modify('+2 days');
+                } elseif ($hari == 7) {
+                    $tgl->modify('+1 day');
+                }
+
+                $diff = $today->diff($tgl)->days;
+                if ($tgl > $today && $diff >= 7) {
+                    $dates[] = $tgl->format('Y-m-d');
+                }
+            }
+        }
+
+        $keywordModel = new \App\Models\KeywordModel();
+        $keyword = $keywordModel->findAll();
+
         return view('index', [
             'periode'          => $periode,
             'data_unit'        => $filteredData,
@@ -122,6 +163,9 @@ class Home extends BaseController
             'pendidikanDipilih'=> $pendidikanDipilih,
             'jurusanDipilih'   => $jurusanDipilih,
             'filterByUserJurusan' => $filterByUserJurusan,
+            'userHasMagang'    => $userHasMagang,
+            'pilihanTanggal'   => $dates,
+            'keyword'          => $keyword,
         ]);
     }
     
