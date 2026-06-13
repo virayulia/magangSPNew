@@ -117,28 +117,38 @@ Swal.fire({
 <!-- Tambah AOS -->
 <link href="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.css" rel="stylesheet" />
 <?php
-  $folderPath = FCPATH . 'assets/img/masthead/';
-  $allowed = ['jpg', 'jpeg', 'png', 'gif'];
+  // Use pre-compressed images (1920px, quality 65%) from compressed/ subfolder
+  $folderPath = rtrim(FCPATH, '/\\') . '/assets/img/masthead/compressed/';
+  $allowed = ['jpg', 'jpeg', 'png'];
   $imageFiles = [];
 
   if (is_dir($folderPath)) {
       foreach (scandir($folderPath) as $file) {
           if (in_array(strtolower(pathinfo($file, PATHINFO_EXTENSION)), $allowed)) {
-              // Create protocol-relative URL
-              $imageFiles[] = str_replace(['http://', 'https://'], '//', base_url('assets/img/masthead/' . $file));
+              $imageFiles[] = parse_url(base_url('assets/img/masthead/compressed/' . $file), PHP_URL_PATH);
           }
       }
   }
-?>
-<script>
-  const images = <?= json_encode($imageFiles) ?>;
-  if (images.length > 0) {
-    $(".masthead").backstretch(images, {
-      duration: 3000,
-      fade: 1000,
-    });
+
+  // Fallback: if compressed folder is not readable, use original images
+  if (empty($imageFiles)) {
+      $origFolder = rtrim(FCPATH, '/\\') . '/assets/img/masthead/';
+      if (is_dir($origFolder)) {
+          foreach (scandir($origFolder) as $file) {
+              if (in_array(strtolower(pathinfo($file, PATHINFO_EXTENSION)), ['jpg', 'jpeg', 'png', 'gif']) && $file !== '.' && $file !== '..') {
+                  $imageFiles[] = parse_url(base_url('assets/img/masthead/' . $file), PHP_URL_PATH);
+              }
+          }
+      }
   }
-</script>
+
+  // Last resort fallback: hardcoded compressed image paths
+  if (empty($imageFiles)) {
+      for ($i = 1; $i <= 21; $i++) {
+          $imageFiles[] = parse_url(base_url("assets/img/masthead/compressed/img-{$i}.jpg"), PHP_URL_PATH);
+      }
+  }
+?>
 
 
 <!-- Masthead -->
@@ -171,6 +181,18 @@ Swal.fire({
     </div>
   </div>
 </header>
+
+<script>
+  const images = <?= json_encode($imageFiles) ?>;
+  $(document).ready(function() {
+    if (images.length > 0) {
+      $(".masthead").backstretch(images, {
+        duration: 3000,
+        fade: 1000,
+      });
+    }
+  });
+</script>
 
 
 <!-- Program -->
