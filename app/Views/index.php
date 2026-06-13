@@ -116,16 +116,28 @@ Swal.fire({
 
 <!-- Tambah AOS -->
 <link href="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.css" rel="stylesheet" />
+<?php
+  $folderPath = FCPATH . 'assets/img/masthead/';
+  $allowed = ['jpg', 'jpeg', 'png', 'gif'];
+  $imageFiles = [];
+
+  if (is_dir($folderPath)) {
+      foreach (scandir($folderPath) as $file) {
+          if (in_array(strtolower(pathinfo($file, PATHINFO_EXTENSION)), $allowed)) {
+              // Create protocol-relative URL
+              $imageFiles[] = str_replace(['http://', 'https://'], '//', base_url('assets/img/masthead/' . $file));
+          }
+      }
+  }
+?>
 <script>
-  const getImageUrl = "<?= str_replace(['http://', 'https://'], '//', base_url('get-images')) ?>";
-</script>
-<script>
-    $.getJSON(getImageUrl, function (data) {
-    $(".masthead").backstretch(data, {
+  const images = <?= json_encode($imageFiles) ?>;
+  if (images.length > 0) {
+    $(".masthead").backstretch(images, {
       duration: 3000,
       fade: 1000,
     });
-  });
+  }
 </script>
 
 
