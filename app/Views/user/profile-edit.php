@@ -245,7 +245,7 @@ $(document).ready(function() {
             delay: 250,
             data: function (params) {
                 return {
-                    state_id: $('#state_id').val(), // ini sudah benar
+                    provinsi: $('#state_id').val(),
                     searchTerm: params.term
                 };
             },
@@ -270,7 +270,7 @@ $(document).ready(function() {
             delay: 250,
             data: function (params) {
                 return {
-                    stateDom_id: $('#stateDom_id').val(), // pastikan ini sesuai
+                    provinsi: $('#stateDom_id').val(),
                     searchTerm: params.term
                 };
             },
