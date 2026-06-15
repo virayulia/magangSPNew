@@ -24,6 +24,7 @@ $routes->post('logout', 'AuthController::logout');
 $routes->get('register', 'AuthController::register');
 $routes->post('register/process', 'AuthController::attemptRegister');
 $routes->get('/api/kota', 'AuthController::getCities');
+$routes->get('/api/kotaDom', 'AuthController::getCities');
 $routes->get('/get-instansi', 'AuthController::getInstansi');
 
 $routes->get('active-account', 'AuthController::activateAccount');
