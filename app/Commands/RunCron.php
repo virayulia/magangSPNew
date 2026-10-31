@@ -58,6 +58,7 @@ class RunCron extends BaseCommand
         $jobTarget = strtolower($params[0] ?? 'all');
         $token     = 'semen123';
         $cron      = new \App\Controllers\CronController();
+        $cron->initController(\Config\Services::request(), \Config\Services::response(), \Config\Services::logger());
 
         $jobDefinitions = [
             'auto-tolak' => [

@@ -17,8 +17,10 @@ class CronController extends BaseController
 
     public function __construct()
     {
-        $this->db    = Database::connect();
-        $this->email = Services::email();
+        $this->db       = Database::connect();
+        $this->email    = Services::email();
+        $this->response = Services::response();
+        $this->request  = Services::request();
     }
 
     /* =====================================================
