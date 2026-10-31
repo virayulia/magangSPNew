@@ -33,7 +33,7 @@ class RunCron extends BaseCommand
      *
      * @var string
      */
-    protected $usage = 'cron:run [job_name]';
+    protected $usage = 'cron:run [job_name] [date|kemarin]';
 
     /**
      * The Command's Arguments
@@ -42,6 +42,7 @@ class RunCron extends BaseCommand
      */
     protected $arguments = [
         'job_name' => 'Pilihan tugas: auto-tolak | remind-pembimbing | remind-unit | remind-laporan | email-akhir | remind-berkas | all',
+        'date'     => 'Opsional: tanggal target masuk (misal 2026-11-02) atau keyword "kemarin" untuk kompensasi job terlewat',
     ];
 
     /**
@@ -56,8 +57,19 @@ class RunCron extends BaseCommand
         ini_set('memory_limit', '512M');
 
         $jobTarget = strtolower($params[0] ?? 'all');
-        $token     = 'semen123';
-        $cron      = new \App\Controllers\CronController();
+        $dateParam = $params[1] ?? null;
+        $customDate = null;
+        if ($dateParam) {
+            if (in_array(strtolower($dateParam), ['kemarin', 'yesterday'])) {
+                // Kondisi kemarin: H-3 dari kemarin (yesterday + 3 days)
+                $customDate = date('Y-m-d', strtotime('-1 day +3 days'));
+            } elseif (strtotime($dateParam) !== false) {
+                $customDate = date('Y-m-d', strtotime($dateParam));
+            }
+        }
+
+        $token = 'semen123';
+        $cron  = new \App\Controllers\CronController();
         $cron->initController(\Config\Services::request(), \Config\Services::response(), \Config\Services::logger());
 
         $jobDefinitions = [
@@ -70,8 +82,8 @@ class RunCron extends BaseCommand
                 'handler' => fn() => $cron->remindSetPembimbing($token),
             ],
             'remind-unit' => [
-                'name'    => 'Reminder Unit Kerja H-3 Masuk',
-                'handler' => fn() => $cron->remindUnit($token),
+                'name'    => 'Reminder Unit Kerja H-3 Masuk' . ($customDate ? " (Target Masuk: $customDate)" : ""),
+                'handler' => fn() => $cron->remindUnit($token, $customDate),
             ],
             'remind-laporan' => [
                 'name'    => 'Reminder Upload Laporan & Absensi',

@@ -34,13 +34,13 @@ class CronController extends BaseController
     /* =====================================================
      * REMINDER UNIT MASUK (H-3)
      * ===================================================== */
-    public function remindUnit($token = null)
+    public function remindUnit($token = null, $customDate = null)
     {
         if (!$this->auth($token)) {
             return $this->response->setStatusCode(403)->setJSON(['error' => 'Unauthorized']);
         }
 
-        $date = date('Y-m-d', strtotime('+3 days'));
+        $date = $customDate ?? date('Y-m-d', strtotime('+3 days'));
 
         return $this->response->setJSON([
             'magang'     => $this->remindUnitMasuk('magang', 'emails/reminder_magang', 'Peserta Magang', $date),
