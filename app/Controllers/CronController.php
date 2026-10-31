@@ -185,10 +185,10 @@ class CronController extends BaseController
 
         foreach ($data as $row) {
             $kosong = [];
-            if (empty($data->bpjs_tk)) {
+            if (empty($row->bpjs_tk)) {
                 $kosong[] = 'Kartu BPJS Ketenagakerjaan';
             }
-            if (empty($data->buktibpjs_tk)) {
+            if (empty($row->buktibpjs_tk)) {
                 $kosong[] = 'Bukti Pembayaran/Masa Berlaku BPJS Ketenagakerjaan';
             }
             $sent += $this->sendEmail(
@@ -666,6 +666,8 @@ class CronController extends BaseController
             'signature' => getSignature($this->unitId)
         ])));
 
-        return $this->email->send() ? 1 : 0;
+        $sent = $this->email->send();
+        usleep(300000); // jeda 0.3 detik mencegah rate limit Outlook
+        return $sent ? 1 : 0;
     }
 }
