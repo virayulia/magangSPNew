@@ -48,9 +48,11 @@ if [ -f "composer.json" ]; then
 fi
 
 # 4. Pastikan Direktori Writable & Permissions Siap
-echo -e "\n-> Menyesuaikan hak akses direktori writable dan log..."
+echo -e "\n-> Menyesuaikan hak akses direktori writable dan upload..."
 mkdir -p writable/cache writable/logs writable/session writable/uploads
 chmod -R 775 writable/
+mkdir -p public/uploads
+chmod -R 775 public/uploads/
 chmod +x spark
 
 # 5. Bersihkan Cache CodeIgniter
