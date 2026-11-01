@@ -12,7 +12,7 @@
   "require": {
     "php": "^8.2",
     "codeigniter4/framework": "^4.6",
-    "endroid/qr-code": "^6.0",
+    "endroid/qr-code": "~6.0.0",
     "myth/auth": "dev-develop",
     "phpoffice/phpspreadsheet": "^5.1",
     "tecnickcom/tcpdf": "^6.10"
@@ -37,9 +37,13 @@
     }
   },
   "config": {
+    "platform": {
+      "php": "8.2.0"
+    },
     "optimize-autoloader": true,
     "preferred-install": "dist",
-    "sort-packages": true
+    "sort-packages": true,
+    "platform-check": false
   },
   "scripts": {
     "test": "phpunit",

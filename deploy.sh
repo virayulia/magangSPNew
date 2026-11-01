@@ -23,6 +23,8 @@ echo -e "-> Direktori Proyek: ${GREEN}$PROJECT_DIR${NC}"
 
 if command -v php8.2 &> /dev/null; then
     PHP_BIN="$(command -v php8.2)"
+elif command -v php8.3 &> /dev/null; then
+    PHP_BIN="$(command -v php8.3)"
 elif command -v php &> /dev/null; then
     PHP_BIN="$(command -v php)"
 else
@@ -41,10 +43,13 @@ fi
 if [ -f "composer.json" ]; then
     echo -e "\n-> Mengoptimasi dependencies dengan Composer..."
     if command -v composer &> /dev/null; then
-        composer install --no-dev --optimize-autoloader --no-interaction
+        $PHP_BIN $(command -v composer) install --no-dev --optimize-autoloader --no-interaction
+    elif [ -f "composer.phar" ]; then
+        $PHP_BIN composer.phar install --no-dev --optimize-autoloader --no-interaction
     else
         echo -e "${YELLOW}Composer tidak ditemukan di PATH, melewati composer install.${NC}"
     fi
+    rm -f vendor/composer/platform_check.php
 fi
 
 # 4. Pastikan Direktori Writable & Permissions Siap

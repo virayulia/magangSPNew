@@ -194,7 +194,7 @@ stateDiagram-v2
 ---
 
 ### 4.8. Algoritma Otomasi Cron Job (SLA Enforcement)
-- **Lokasi Kode**: [`App\Controllers\CronController`](file:///Users/fernandaep/Projects/magangsp/app/Controllers/CronController.php), [`App\Services\ProgramCronService`](file:///Users/fernandaep/Projects/magangsp/app/Services/ProgramCronServices.php), dan CLI Runner [`App\Commands\RunCron`](file:///Users/fernandaep/Projects/magangsp/app/Commands/RunCron.php).
+- **Lokasi Kode**: [`App\Controllers\CronController`](file:///Users/fernandaep/Projects/magangsp/app/Controllers/CronController.php), [`App\Services\ProgramCronService`](file:///Users/fernandaep/Projects/magangsp/app/Services/ProgramCronService.php), dan CLI Runner [`App\Commands\RunCron`](file:///Users/fernandaep/Projects/magangsp/app/Commands/RunCron.php).
 - **Eksekusi Produksi**: Menggunakan Spark CLI Command (`php spark cron:run [job_name]`) untuk mencegah 504 Gateway Timeout dan batasan web server. Deployment otomatis diatur via [`deploy.sh`](file:///Users/fernandaep/Projects/magangsp/deploy.sh).
 - **Jadwal & Aksi**:
   1. `[07:00] auto-tolak`: Membatalkan pendaftaran peserta yang telah diterima seleksi namun tidak melakukan konfirmasi dalam kurun waktu $\ge 3$ hari ($tanggal\_seleksi \le today - 3\text{ hari}$).
