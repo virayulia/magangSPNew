@@ -32,24 +32,24 @@ class Services extends BaseService
      * }
      */
 
-    public static function activator(bool $getShared = true)
+    public static function activator(?\Myth\Auth\Config\Auth $config = null, bool $getShared = true): \Myth\Auth\Authentication\Activators\ActivatorInterface
     {
         if ($getShared) {
-            return static::getSharedInstance('activator');
+            return static::getSharedInstance('activator', $config);
         }
 
-        $config = config('Auth');
+        $config ??= config('Auth');
 
         return new EmailActivator($config);
     }
 
-    public static function resetter(bool $getShared = true)
+    public static function resetter(?\Myth\Auth\Config\Auth $config = null, bool $getShared = true): \Myth\Auth\Authentication\Resetters\ResetterInterface
     {
         if ($getShared) {
-            return static::getSharedInstance('resetter');
+            return static::getSharedInstance('resetter', $config);
         }
 
-        $config = config('Auth');
+        $config ??= config('Auth');
         return new EmailResetter($config);
     }
 
