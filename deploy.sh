@@ -36,6 +36,7 @@ echo -e "-> Menggunakan PHP CLI: ${GREEN}$PHP_BIN${NC} ($($PHP_BIN -r 'echo PHP_
 # 2. Git Pull (Jika dijalankan di Git Repository)
 if [ -d ".git" ]; then
     echo -e "\n-> Mengambil update terbaru dari Git repository..."
+    git checkout -f main 2>/dev/null || true
     git pull origin main || git pull origin master || echo -e "${YELLOW}Peringatan: Git pull dilewati atau branch berbeda.${NC}"
 fi
 
