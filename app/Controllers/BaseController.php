@@ -57,7 +57,15 @@ abstract class BaseController extends Controller
 
         // E.g.: $this->session = service('session');
 
-        $userId = user()->id ?? null;
+        helper('auth');
+        if (! function_exists('user')) {
+            $authHelper = ROOTPATH . 'vendor/myth/auth/src/Helpers/auth_helper.php';
+            if (file_exists($authHelper)) {
+                require_once $authHelper;
+            }
+        }
+
+        $userId = function_exists('user_id') ? user_id() : (function_exists('user') ? (user()->id ?? null) : null);
         $db = \Config\Database::connect();
 
         // cek punya data magang atau penelitian
